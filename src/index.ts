@@ -1,23 +1,22 @@
-import * as path from 'path';
-
-import * as express from "express";
-
-import { VHandler, VEvent } from "vig";
 
 
-const event = VEvent.getInstance();
-let scope;
+import { VApplication } from "./app";
+
+const app = VApplication.getInstance();
+
+app.addDir(__dirname, "./wallet");
 
 
+let port = 8080;
+if (process.env.PORT) {
+  port = parseInt(process.env.PORT);
+}
 
-const app = express();
-app.enable("trust proxy 1");
+app.start(port).then(() => {
+  app.print("vigcoin:wallet", "Successfully started webapi at: " + port);
+}).catch((e) => {
+  app.print("vigcoin:wallet", "error start webapi : " + e);
+});
 
-
-const realPath = path.resolve(__dirname, "./wallet");
-
-const handler = new VHandler(undefined, realPath);
-
-handler.attach(app);
 
 

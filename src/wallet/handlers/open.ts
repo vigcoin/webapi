@@ -16,7 +16,9 @@ export = {
     }
   },
   routers: {
-    post: async (req, res, scope) => {
+    post: async () => {
+
+      console.log("inside post");
 
 
     }
