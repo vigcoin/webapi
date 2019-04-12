@@ -1,7 +1,39 @@
+# http://docs.travis-ci.com/user/workers/container-based-infrastructure/
+sudo: required
+dist: xenial
+# http://docs.travis-ci.com/user/languages/javascript-with-nodejs/
 language: node_js
 node_js:
-  - 'node' # use latest stable nodejs version
+  - 8
+  - 10
+
+# https://docs.travis-ci.com/user/languages/javascript-with-nodejs#Node.js-v4-(or-io.js-v3)-compiler-requirements
+env:
+  - CXX=g++-4.8
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-4.8
+
+cache:
+  directories:
+    - $HOME/.npm
+    - node_modules
+
+# http://docs.travis-ci.com/user/build-lifecycle/
+before_install:
+  - curl https://sh.rustup.rs -sSf | sh -s -- -y
+  - source "$HOME/.cargo/env"
+
+install:
+  - npm install
+  - npm build
+
+# http://docs.travis-ci.com/user/pull-requests/
 script:
-  - npm run coverage # jest test with coverage flag does coverage too
-after_script:
-  - 'cat coverage/lcov.info | ./node_modules/.bin/coveralls' # sends the coverage report to coveralls
+  - npm test
+
+notifications:
+email: false
