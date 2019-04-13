@@ -4,7 +4,7 @@ import { unlinkSync } from "fs";
 
 export = {
   urls: [
-    "/wallet/open"
+    "/wallet/login"
   ],
   bodies: {
     post: {
@@ -47,9 +47,14 @@ export = {
   validations: {
     post: {
       body: {
-        password: {
+        spend: {
           type: "string",
-        }
+          required: true
+        },
+        view: {
+          type: "string",
+          required: true
+        },
       }
     }
   }

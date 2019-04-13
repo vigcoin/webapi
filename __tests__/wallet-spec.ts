@@ -13,7 +13,7 @@ test('Should file a wallet', (done) => {
     .expect(200)
     .end(function (err, res) {
       assert(!err);
-      assert.deepEqual(res.body, { "code": 0, "name": "Success", "message": "成功！", "data": { "address": "BFrj6s15vg47Za5ipA46m8CjV59nsEeeNSSozZzs9WEo759Prf3zXke4caP22RESH5Yj2GJubQ6WPCDBR78MX3myNaHsWME" } }
+      assert.deepEqual(res.body, {"code": 0, "data": {"address": "BFrj6s15vg47Za5ipA46m8CjV59nsEeeNSSozZzs9WEo759Prf3zXke4caP22RESH5Yj2GJubQ6WPCDBR78MX3myNaHsWME", "keys": {"spend": "32e4e5f72797c2fc0e2dda4e80e61bd0093934a305af08c9d3b942715844aa08", "view": "95a27c683df6a73bfc238d78fc55f414c699735d60fad4e3a999806763cb340d"}}, "message": "成功！", "name": "Success"}
       );
       done(err);
     });
@@ -30,7 +30,7 @@ test('Should file a wallet with password', (done) => {
     .expect(200)
     .end(function (err, res) {
       assert(!err);
-      assert.deepEqual(res.body, { "code": 0, "name": "Success", "message": "成功！", "data": { "address": "BFrj6s15vg47Za5ipA46m8CjV59nsEeeNSSozZzs9WEo759Prf3zXke4caP22RESH5Yj2GJubQ6WPCDBR78MX3myNaHsWME" } }
+      assert.deepEqual(res.body, {"code": 0, "data": {"address": "BFrj6s15vg47Za5ipA46m8CjV59nsEeeNSSozZzs9WEo759Prf3zXke4caP22RESH5Yj2GJubQ6WPCDBR78MX3myNaHsWME", "keys": {"spend": "32e4e5f72797c2fc0e2dda4e80e61bd0093934a305af08c9d3b942715844aa08", "view": "95a27c683df6a73bfc238d78fc55f414c699735d60fad4e3a999806763cb340d"}}, "message": "成功！", "name": "Success"}
       );
       done(err);
     });
