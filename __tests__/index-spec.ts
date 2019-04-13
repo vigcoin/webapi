@@ -1,5 +1,5 @@
-import { Wallet } from '../src/wallet';
+import { VApplication } from '../src/app';
 
 test('Should have Wallet available', () => {
-  expect(Wallet).toBeTruthy();
+  expect(VApplication).toBeTruthy();
 });

@@ -28,6 +28,7 @@ export class VApplication {
     this.event = VEvent.getInstance();
     this.log = debug;
     this.config = config;
+    this.init();
   }
 
   init() {

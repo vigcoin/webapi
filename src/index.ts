@@ -12,11 +12,17 @@ if (process.env.PORT) {
   port = parseInt(process.env.PORT);
 }
 
-app.start(port).then(() => {
-  app.print("vigcoin:wallet", "Successfully started webapi at: " + port);
-}).catch((e) => {
-  app.print("vigcoin:wallet", "error start webapi : " + e);
-});
+if (!module.parent) {
+  app.start(port).then(() => {
+    app.print("vigcoin:wallet", "Successfully started webapi at: " + port);
+  }).catch((e) => {
+    app.print("vigcoin:wallet", "error start webapi : " + e);
+  });
+}
+
+
+
+export { app };
 
 
 

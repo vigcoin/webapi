@@ -1,7 +1,8 @@
-[![Build Status](https://travis-ci.org/vigcoin/webapi.svg?branch=master)](https://travis-ci.org/vigcoin/webapi.svg?branch=master)
+[![Build Status](https://travis-ci.com/vigcoin/webapi.svg?branch=master)](https://travis-ci.com/vigcoin/webapi.svg?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/vigcoin/webapi/badge.svg?branch=master)](https://coveralls.io/github/vigcoin/webapi?branch=master)
-[![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 # Web Api for vigcoin
 
-## Wallet
+
+## Wallet API
