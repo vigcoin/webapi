@@ -4,6 +4,20 @@
 
 # Web Api for vigcoin
 
+# Run Web API server
+
+platform: ubuntu 18.04/16.04
+
+1. `git clone https://github.com/vigcoin/webapi.git`
+
+2. `cd webapi && npm install`
+
+3. `npm install -g ts-node`
+
+4. `ts-node src/index.ts`
+
+
+# Web APIs
 
 ## Wallet API
 
