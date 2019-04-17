@@ -56,6 +56,8 @@ test('Should create a wallet', (done) => {
     .expect(200)
     .end(function (err, res) {
       assert(!err);
+      console.log(res.text);
+      console.log(res.body);
       const { address, spend, view } = res.body.data;
       console.log(res.body.data);
       console.log(address);
