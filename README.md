@@ -22,21 +22,21 @@ platform: ubuntu 18.04/16.04
 ## Wallet API
 
 
-### 创建钱包
+### Create Wallet
 
 1. url
 
 `/wallet/create`
 
-2. 参数
+2. Parameters
 
-无
+None
 
-3. 返回参数
+3. Response JSON
 
-address: 钱包地址.
-spend: 花费时使用的密钥
-view: 查看时使用的密钥
+address: Address for the wallet
+spend: Private key for spending.
+view: Private key for viewing.
 
 ```
 {
@@ -52,24 +52,24 @@ view: 查看时使用的密钥
 ```
 
 
-### 打开钱包
+### Open Wallet
 
 1. url
 
 `/wallet/open`
 
-2. 参数
+2. Parameters
 
-| 参数名 | 类型 | 是否可选 |
+| Parameter Name | Type | Optional |
 | --- | --- | --- |
 | file | File | N |
 | password | String | Y |
 
-3. 返回参数
+3. Response JSON
 
-address: 钱包地址.
-spend: 花费时使用的密钥
-view: 查看时使用的密钥
+address: Address for the wallet
+spend: Private key for spending.
+view: Private key for viewing.
 
 ```
 {
