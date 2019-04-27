@@ -1,11 +1,8 @@
-
-
-import { VApplication } from "./app";
+import { VApplication } from './app';
 
 const app = VApplication.getInstance();
 
-app.addDir(__dirname, "./wallet");
-
+app.addDir(__dirname, './wallet');
 
 let port = 8080;
 if (process.env.PORT) {
@@ -13,16 +10,14 @@ if (process.env.PORT) {
 }
 
 if (!module.parent) {
-  app.start(port).then(() => {
-    app.print("vigcoin:wallet", "Successfully started webapi at: " + port);
-  }).catch((e) => {
-    app.print("vigcoin:wallet", "error start webapi : " + e);
-  });
+  app
+    .start(port)
+    .then(() => {
+      app.print('vigcoin:wallet', 'Successfully started webapi at: ' + port);
+    })
+    .catch(e => {
+      app.print('vigcoin:wallet', 'error start webapi : ' + e);
+    });
 }
 
-
-
 export { app };
-
-
-

@@ -1,8 +1,10 @@
 import { Wallet } from '@vigcoin/neon';
 import { unlinkSync } from 'fs';
+import { tmpdir } from 'os';
+import { resolve } from 'path';
 
 export = {
-  urls: ['/wallet/open'],
+  urls: ['/wallet/refine'],
   bodies: {
     post: {
       file: true,
@@ -15,7 +17,6 @@ export = {
   },
   routers: {
     post: async (req: any, res: any, scope: any) => {
-      const { errors } = scope;
       let password = '';
       if (scope.extracted && scope.extracted.body) {
         password = scope.extracted.body.password;
@@ -23,17 +24,16 @@ export = {
 
       const files = await req.storage('file');
       const file = files[0].fd;
-
       try {
         let wallet = new Wallet(file, password);
-        let address = wallet.toAddress(0x3d);
-        let keys = wallet.getPrivateKeys();
-        res.errorize(errors.Success, {
-          address,
-          keys,
+        let newFile = resolve(tmpdir(), 'refined.wallet');
+        wallet.save(newFile, password);
+        res.sendFile(newFile, function () {
+          unlinkSync(newFile);
         });
       } catch (e) {
-        res.errorize(errors.Failure, e.message);
+        console.error(e);
+        res.status(500).end();
       }
       unlinkSync(file);
     },

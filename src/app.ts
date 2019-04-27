@@ -1,9 +1,8 @@
-
 import * as path from 'path';
 
-import * as express from "express";
-import { Express } from "express";
-import * as debug from "debug";
+import * as express from 'express';
+import { Express } from 'express';
+import * as debug from 'debug';
 import { VEvent, VHandler } from 'vig';
 import { Server } from 'net';
 
@@ -20,7 +19,6 @@ export class VApplication {
       VApplication.instance = new VApplication(express());
     }
     return VApplication.instance;
-
   }
 
   private constructor(app: Express, config: any = null) {
@@ -32,12 +30,12 @@ export class VApplication {
   }
 
   init() {
-    this.app.enable("trust proxy 1");
+    this.app.enable('trust proxy 1');
   }
 
-  start(port = 8080, ip = "localhost") {
+  start(port = 8080, ip = 'localhost') {
     return new Promise((resolve, reject) => {
-      this.server = this.app.listen(port, ip, (e) => {
+      this.server = this.app.listen(port, ip, e => {
         if (e) {
           return reject(e);
         }

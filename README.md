@@ -4,11 +4,23 @@
 
 # Web Api for vigcoin
 
+# Setup
+
+Webapi is tested on ubuntu 16.04. Other Linux platform can easily adapte to use vigcoin webapi.
+
+Before running webapi, here are some bash steps you should follow:
+
+```
+sudo apt-get install gcc
+curl https://sh.rustup.rs -sSf | sh -s -- -y
+source "$HOME/.cargo/env"
+```
+
 # Run Web API server
 
 platform: ubuntu 18.04/16.04
 
-1. `git clone https://github.com/vigcoin/webapi.git`
+1. `git clone --depth 1 https://github.com/vigcoin/webapi.git`
 
 2. `cd webapi && npm install`
 
@@ -85,3 +97,28 @@ view: Private key for viewing.
   "name": "Success"
 }
 ```
+
+### Refine Wallet
+
+Old vigcoin saves cache in wallet file. New vigcoin wallet will use no cache in wallet file.
+
+cache files will be separated from wallet.
+
+1. url
+
+`/wallet/refine`
+
+2. Parameters
+
+| Parameter Name | Type | Optional |
+| --- | --- | --- |
+| file | File | N |
+| password | String | Y |
+
+3. Response File
+
+will retrun an file which is in a vigcoin wallet format
+
+or 
+
+return status 500 if wrong.
