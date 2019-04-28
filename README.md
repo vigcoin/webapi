@@ -28,6 +28,7 @@ platform: ubuntu 18.04/16.04
 
 4. `ts-node src/index.ts`
 
+> default port is 8080, use `PORT=8081 ts-node src/index.ts` to change port number
 
 # Web APIs
 
