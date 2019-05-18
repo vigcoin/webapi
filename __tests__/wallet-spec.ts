@@ -3,7 +3,7 @@ import { app } from '../src/index';
 import * as http from 'supertest';
 import * as assert from 'assert';
 import * as path from 'path';
-import { writeFileSync } from 'fs';
+import { writeFileSync, unlinkSync } from 'fs';
 
 import { Wallet } from '@vigcoin/neon';
 
@@ -177,6 +177,21 @@ test('Should export a wallet from private keys', done => {
         keys.view ===
         '95a27c683df6a73bfc238d78fc55f414c699735d60fad4e3a999806763cb340d'
       );
+      unlinkSync(outFile);
+      done(err);
+    });
+});
+
+test('Should export a wallet from private keys', done => {
+  const req = http(app.app);
+  req
+    .post('/wallet/export')
+    .type('form')
+    .field('spend', '32e4e5f72797c2fc0e2dde80e61bd0093934a305af08c9d3b942715844aa08')
+    .field('view', '95a27c683df6a73bfc238d7855f414c699735d60fad4e3a999806763cb340d')
+    .expect(500)
+    .end((err) => {
+      assert(!err);
       done(err);
     });
 });

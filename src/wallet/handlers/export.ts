@@ -50,13 +50,11 @@ export = {
         spend: {
           type: 'string',
           // tslint:disable-next-line: object-literal-sort-keys
-          length: 64,
           required: true
         },
         view: {
           type: 'string',
           // tslint:disable-next-line: object-literal-sort-keys
-          length: 64,
           required: true
         }
       },
