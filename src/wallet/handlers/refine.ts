@@ -17,6 +17,9 @@ export = {
   },
   routers: {
     post: async (req: any, res: any, scope: any) => {
+      const { configs: {
+        tempfile: { refined }
+      } } = scope;
       let password = '';
       if (scope.extracted && scope.extracted.body) {
         password = scope.extracted.body.password;
@@ -25,8 +28,8 @@ export = {
       const files = await req.storage('file');
       const file = files[0].fd;
       try {
-        let wallet = new Wallet(file, password);
-        let newFile = resolve(tmpdir(), 'refined.wallet');
+        const wallet = new Wallet(file, password);
+        const newFile = resolve(tmpdir(), refined);
         wallet.save(newFile, password);
         res.sendFile(newFile, function () {
           unlinkSync(newFile);

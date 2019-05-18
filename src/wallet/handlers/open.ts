@@ -3,6 +3,7 @@ import { unlinkSync } from 'fs';
 
 export = {
   urls: ['/wallet/open'],
+  // tslint:disable-next-line: object-literal-sort-keys
   bodies: {
     post: {
       file: true,

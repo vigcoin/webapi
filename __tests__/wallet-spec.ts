@@ -8,14 +8,13 @@ import { writeFileSync } from 'fs';
 import { Wallet } from '@vigcoin/neon';
 
 test('Should file a wallet', done => {
-  console.log(app.app.routes);
-  var req = http(app.app);
+  const req = http(app.app);
   req
     .post('/wallet/open')
     .type('form')
     .attach('file', path.resolve(__dirname, './wallets/vig.wallet'))
     .expect(200)
-    .end(function (err, res) {
+    .end((err, res) => {
       assert(!err);
       assert.deepEqual(res.body, {
         code: 0,
@@ -37,14 +36,14 @@ test('Should file a wallet', done => {
 });
 
 test('Should file a wallet with password', done => {
-  var req = http(app.app);
+  const req = http(app.app);
   req
     .post('/wallet/open')
     .type('form')
     .field('password', 'abcd$1234')
     .attach('file', path.resolve(__dirname, './wallets/vig-enc.wallet'))
     .expect(200)
-    .end(function (err, res) {
+    .end((err, res) => {
       assert(!err);
       assert.deepEqual(res.body, {
         code: 0,
@@ -66,14 +65,14 @@ test('Should file a wallet with password', done => {
 });
 
 test("Should don't file a wallet", done => {
-  var req = http(app.app);
+  const req = http(app.app);
   req
     .post('/wallet/open')
     .type('form')
     .field('password', 'aaaa')
     .attach('file', path.resolve(__dirname, './wallets/vig.wallet'))
     .expect(200)
-    .end(function (err, res) {
+    .end((err, res) => {
       assert(!err);
       assert.deepEqual(
         res.body.data,
@@ -84,21 +83,20 @@ test("Should don't file a wallet", done => {
 });
 
 test('Should refine a wallet', done => {
-  var req = http(app.app);
+  const req = http(app.app);
   req
     .post('/wallet/refine')
     .type('form')
     .attach('file', path.resolve(__dirname, './wallets/vig.wallet'))
     .expect(200)
-    .end(function (err, res) {
-      console.log(err, res);
+    .end((err, res) => {
       assert(!err);
-      let outFile = path.resolve(__dirname, './wallets/refined.wallet');
+      const outFile = path.resolve(__dirname, './wallets/refined.wallet');
 
       writeFileSync(outFile, res.body);
 
-      let wallet = new Wallet(outFile, '');
-      let keys = wallet.getPrivateKeys();
+      const wallet = new Wallet(outFile, '');
+      const keys = wallet.getPrivateKeys();
       assert(
         keys.spend ===
         '32e4e5f72797c2fc0e2dda4e80e61bd0093934a305af08c9d3b942715844aa08'
@@ -112,22 +110,21 @@ test('Should refine a wallet', done => {
 });
 
 test('Should refine a wallet', done => {
-  var req = http(app.app);
+  const req = http(app.app);
   req
     .post('/wallet/refine')
     .type('form')
     .field('password', 'abcd$1234')
     .attach('file', path.resolve(__dirname, './wallets/vig-enc.wallet'))
     .expect(200)
-    .end(function (err, res) {
-      console.log(err, res);
+    .end((err, res) => {
       assert(!err);
-      let outFile = path.resolve(__dirname, './wallets/refined-enc.wallet');
+      const outFile = path.resolve(__dirname, './wallets/refined-enc.wallet');
 
       writeFileSync(outFile, res.body);
 
-      let wallet = new Wallet(outFile, 'abcd$1234');
-      let keys = wallet.getPrivateKeys();
+      const wallet = new Wallet(outFile, 'abcd$1234');
+      const keys = wallet.getPrivateKeys();
       assert(
         keys.spend ===
         '32e4e5f72797c2fc0e2dda4e80e61bd0093934a305af08c9d3b942715844aa08'
@@ -141,14 +138,14 @@ test('Should refine a wallet', done => {
 });
 
 test('Should not refine a wallet', done => {
-  var req = http(app.app);
+  const req = http(app.app);
   req
     .post('/wallet/refine')
     .type('form')
     .field('password', 'wrongpassword')
     .attach('file', path.resolve(__dirname, './wallets/vig-enc.wallet'))
     .expect(500)
-    .end(function (err) {
+    .end(err => {
       assert(!err);
       done(err);
     });
@@ -156,20 +153,14 @@ test('Should not refine a wallet', done => {
 
 
 test('Should create a wallet', done => {
-  var req = http(app.app);
+  const req = http(app.app);
   req
     .post('/wallet/create')
     .type('form')
     .expect(200)
-    .end(function (err, res) {
+    .end((err, res) => {
       assert(!err);
-      console.log(res.text);
-      console.log(res.body);
       const { address, spend, view } = res.body.data;
-      console.log(res.body.data);
-      console.log(address);
-      console.log(spend);
-      console.log(view);
       assert(address[0] === 'B');
       assert(spend.length === 64);
       assert(view.length === 64);
