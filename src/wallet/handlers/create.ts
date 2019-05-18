@@ -4,9 +4,11 @@ export = {
   urls: ['/wallet/create'],
   routers: {
     post: async (_req: any, res: any, scope: any) => {
-      const { errors } = scope;
+      const { errors, configs: {
+        currency: { prefix }
+      } } = scope;
       let wallet = new Wallet('', '');
-      let address = wallet.create(0x3d);
+      let address = wallet.create(prefix);
       res.errorize(errors.Success, address);
     },
   },

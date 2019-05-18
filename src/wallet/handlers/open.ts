@@ -15,7 +15,9 @@ export = {
   },
   routers: {
     post: async (req: any, res: any, scope: any) => {
-      const { errors } = scope;
+      const { errors, configs: {
+        currency: { prefix }
+      } } = scope;
       let password = '';
       if (scope.extracted && scope.extracted.body) {
         password = scope.extracted.body.password;
@@ -25,9 +27,9 @@ export = {
       const file = files[0].fd;
 
       try {
-        let wallet = new Wallet(file, password);
-        let address = wallet.toAddress(0x3d);
-        let keys = wallet.getPrivateKeys();
+        const wallet = new Wallet(file, password);
+        const address = wallet.toAddress(prefix);
+        const keys = wallet.getPrivateKeys();
         res.errorize(errors.Success, {
           address,
           keys,
