@@ -123,3 +123,26 @@ will retrun an file which is in a vigcoin wallet format
 or 
 
 return status 500 if wrong.
+
+### Generate Wallet from Keys
+
+1. url
+
+`/wallet/export`
+
+2. Parameters
+
+| Parameter Name | Type | Optional |
+| --- | --- | --- |
+| spend | String | N |
+| view | String | N |
+
+spend/view are spend and view private keys.
+
+3. Response File
+
+will retrun an file which is in a vigcoin wallet format
+
+or 
+
+return status 500 if wrong.
