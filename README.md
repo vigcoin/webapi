@@ -19,6 +19,47 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 ```
 
+# config npm (For Chinese)
+
+If you are in China and find it very slow to install npm packages. The following instruction will be helpful.
+
+Create a file
+
+```
+touch ~/.npmrc
+```
+
+with the following content.
+
+```
+registry=https://registry.npm.taobao.org/
+```
+
+You can add the following optional content when necessary:
+
+```
+disturl=https://npm.taobao.org/dist
+chromedriver_cdnurl=http://cdn.npm.taobao.org/dist/chromedriver
+operadriver_cdnurl=http://cdn.npm.taobao.org/dist/operadriver
+phantomjs_cdnurl=http://cdn.npm.taobao.org/dist/phantomjs
+fse_binary_host_mirror=https://npm.taobao.org/mirrors/fsevents
+sass_binary_site=http://cdn.npm.taobao.org/dist/node-sass
+electron_mirror=http://cdn.npm.taobao.org/dist/electron/
+```创建
+
+~/.npmrc
+
+文件，并添加如下的内容
+
+registry=https://registry.npm.taobao.org/
+disturl=https://npm.taobao.org/dist
+chromedriver_cdnurl=http://cdn.npm.taobao.org/dist/chromedriver
+operadriver_cdnurl=http://cdn.npm.taobao.org/dist/operadriver
+phantomjs_cdnurl=http://cdn.npm.taobao.org/dist/phantomjs
+fse_binary_host_mirror=https://npm.taobao.org/mirrors/fsevents
+sass_binary_site=http://cdn.npm.taobao.org/dist/node-sass
+electron_mirror=http://cdn.npm.taobao.org/dist/electron/
+
 
 # Run Web API server
 
