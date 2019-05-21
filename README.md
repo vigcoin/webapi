@@ -14,7 +14,11 @@ Before running webapi, here are some bash steps you should follow:
 sudo apt-get install gcc
 curl https://sh.rustup.rs -sSf | sh -s -- -y
 source "$HOME/.cargo/env"
+curl -o- https://raw.githubusercontent.com/calidion/chinese-noder-the-easy-way/master/install.sh | bash
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 ```
+
 
 # Run Web API server
 
