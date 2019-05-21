@@ -45,25 +45,14 @@ phantomjs_cdnurl=http://cdn.npm.taobao.org/dist/phantomjs
 fse_binary_host_mirror=https://npm.taobao.org/mirrors/fsevents
 sass_binary_site=http://cdn.npm.taobao.org/dist/node-sass
 electron_mirror=http://cdn.npm.taobao.org/dist/electron/
-```创建
-
-~/.npmrc
-
-文件，并添加如下的内容
-
-registry=https://registry.npm.taobao.org/
-disturl=https://npm.taobao.org/dist
-chromedriver_cdnurl=http://cdn.npm.taobao.org/dist/chromedriver
-operadriver_cdnurl=http://cdn.npm.taobao.org/dist/operadriver
-phantomjs_cdnurl=http://cdn.npm.taobao.org/dist/phantomjs
-fse_binary_host_mirror=https://npm.taobao.org/mirrors/fsevents
-sass_binary_site=http://cdn.npm.taobao.org/dist/node-sass
-electron_mirror=http://cdn.npm.taobao.org/dist/electron/
-
+```
 
 # Run Web API server
 
+
 platform: ubuntu 18.04/16.04
+
+## Run with ts-node
 
 1. `git clone --depth 1 https://github.com/vigcoin/webapi.git`
 
@@ -74,6 +63,19 @@ platform: ubuntu 18.04/16.04
 4. `ts-node src/index.ts`
 
 > default port is 8080, use `PORT=8081 ts-node src/index.ts` to change port number
+
+## Run with pm2
+
+
+1. `git clone --depth 1 https://github.com/vigcoin/webapi.git`
+
+2. `cd webapi && npm install`
+
+3. `npm install -g pm2 && pm2 install typescript`
+
+4. `pm2 start src/index.ts`
+
+
 
 # Web APIs
 
