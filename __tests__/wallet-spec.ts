@@ -99,11 +99,11 @@ test('Should refine a wallet', done => {
       const keys = wallet.getPrivateKeys();
       assert(
         keys.spend ===
-        '32e4e5f72797c2fc0e2dda4e80e61bd0093934a305af08c9d3b942715844aa08'
+          '32e4e5f72797c2fc0e2dda4e80e61bd0093934a305af08c9d3b942715844aa08'
       );
       assert(
         keys.view ===
-        '95a27c683df6a73bfc238d78fc55f414c699735d60fad4e3a999806763cb340d'
+          '95a27c683df6a73bfc238d78fc55f414c699735d60fad4e3a999806763cb340d'
       );
       done(err);
     });
@@ -127,11 +127,11 @@ test('Should refine a wallet', done => {
       const keys = wallet.getPrivateKeys();
       assert(
         keys.spend ===
-        '32e4e5f72797c2fc0e2dda4e80e61bd0093934a305af08c9d3b942715844aa08'
+          '32e4e5f72797c2fc0e2dda4e80e61bd0093934a305af08c9d3b942715844aa08'
       );
       assert(
         keys.view ===
-        '95a27c683df6a73bfc238d78fc55f414c699735d60fad4e3a999806763cb340d'
+          '95a27c683df6a73bfc238d78fc55f414c699735d60fad4e3a999806763cb340d'
       );
       done(err);
     });
@@ -151,14 +151,19 @@ test('Should not refine a wallet', done => {
     });
 });
 
-
 test('Should export a wallet from private keys', done => {
   const req = http(app.app);
   req
     .post('/wallet/export')
     .type('form')
-    .field('spend', '32e4e5f72797c2fc0e2dda4e80e61bd0093934a305af08c9d3b942715844aa08')
-    .field('view', '95a27c683df6a73bfc238d78fc55f414c699735d60fad4e3a999806763cb340d')
+    .field(
+      'spend',
+      '32e4e5f72797c2fc0e2dda4e80e61bd0093934a305af08c9d3b942715844aa08'
+    )
+    .field(
+      'view',
+      '95a27c683df6a73bfc238d78fc55f414c699735d60fad4e3a999806763cb340d'
+    )
     .expect(200)
     .end((err, res) => {
       assert(!err);
@@ -171,11 +176,11 @@ test('Should export a wallet from private keys', done => {
       const keys = wallet.getPrivateKeys();
       assert(
         keys.spend ===
-        '32e4e5f72797c2fc0e2dda4e80e61bd0093934a305af08c9d3b942715844aa08'
+          '32e4e5f72797c2fc0e2dda4e80e61bd0093934a305af08c9d3b942715844aa08'
       );
       assert(
         keys.view ===
-        '95a27c683df6a73bfc238d78fc55f414c699735d60fad4e3a999806763cb340d'
+          '95a27c683df6a73bfc238d78fc55f414c699735d60fad4e3a999806763cb340d'
       );
       unlinkSync(outFile);
       done(err);
@@ -187,15 +192,20 @@ test('Should export a wallet from private keys', done => {
   req
     .post('/wallet/export')
     .type('form')
-    .field('spend', '32e4e5f72797c2fc0e2dde80e61bd0093934a305af08c9d3b942715844aa08')
-    .field('view', '95a27c683df6a73bfc238d7855f414c699735d60fad4e3a999806763cb340d')
+    .field(
+      'spend',
+      '32e4e5f72797c2fc0e2dde80e61bd0093934a305af08c9d3b942715844aa08'
+    )
+    .field(
+      'view',
+      '95a27c683df6a73bfc238d7855f414c699735d60fad4e3a999806763cb340d'
+    )
     .expect(500)
-    .end((err) => {
+    .end(err => {
       assert(!err);
       done(err);
     });
 });
-
 
 test('Should create a wallet', done => {
   const req = http(app.app);

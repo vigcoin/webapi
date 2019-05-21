@@ -11,7 +11,7 @@ if (process.env.PORT) {
 
 if (!module.parent) {
   app
-    .start(port)
+    .start(port, process.env.IP)
     .then(() => {
       app.print('vigcoin:wallet', 'Successfully started webapi at: ' + port);
     })

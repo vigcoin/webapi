@@ -6,9 +6,12 @@ export = {
   routers: {
     // tslint:disable-next-line: variable-name
     post: async (_req: any, res: any, scope: any) => {
-      const { errors, configs: {
-        currency: { prefix }
-      } } = scope;
+      const {
+        errors,
+        configs: {
+          currency: { prefix },
+        },
+      } = scope;
       const wallet = new Wallet('', '');
       const address = wallet.create(prefix);
       res.errorize(errors.Success, address);

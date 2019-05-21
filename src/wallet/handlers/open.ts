@@ -16,9 +16,12 @@ export = {
   },
   routers: {
     post: async (req: any, res: any, scope: any) => {
-      const { errors, configs: {
-        currency: { prefix }
-      } } = scope;
+      const {
+        errors,
+        configs: {
+          currency: { prefix },
+        },
+      } = scope;
       let password = '';
       if (scope.extracted && scope.extracted.body) {
         password = scope.extracted.body.password;

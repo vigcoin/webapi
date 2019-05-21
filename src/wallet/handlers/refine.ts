@@ -17,9 +17,11 @@ export = {
   },
   routers: {
     post: async (req: any, res: any, scope: any) => {
-      const { configs: {
-        tempfile: { refined }
-      } } = scope;
+      const {
+        configs: {
+          tempfile: { refined },
+        },
+      } = scope;
       let password = '';
       if (scope.extracted && scope.extracted.body) {
         password = scope.extracted.body.password;
@@ -31,7 +33,7 @@ export = {
         const wallet = new Wallet(file, password);
         const newFile = resolve(tmpdir(), refined);
         wallet.save(newFile, password);
-        res.sendFile(newFile, function () {
+        res.sendFile(newFile, function() {
           unlinkSync(newFile);
         });
       } catch (e) {

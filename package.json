@@ -18,6 +18,8 @@
   "main": "lib/index",
   "types": "lib/index",
   "scripts": {
+    "preserve": "npm run build",
+    "serve": "ts-node src/index.ts",
     "clean": "rimraf lib && rimraf coverage",
     "format": "prettier --write \"{src,__tests__}/**/*.ts\" --single-quote --trailing-comma es5",
     "lint": "tslint --force --format verbose \"src/**/*.ts\"",
