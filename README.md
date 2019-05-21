@@ -60,9 +60,9 @@ platform: ubuntu 18.04/16.04
 
 3. `npm install -g ts-node`
 
-4. `ts-node src/index.ts`
+4. `ts-node src/main.ts`
 
-> default port is 8080, use `PORT=8081 ts-node src/index.ts` to change port number
+> default port is 8080, use `PORT=8081 ts-node src/main.ts` to change port number
 
 ## Run with pm2
 
@@ -73,7 +73,7 @@ platform: ubuntu 18.04/16.04
 
 3. `npm install -g pm2 && pm2 install typescript`
 
-4. `pm2 start src/index.ts`
+4. `pm2 start src/main.ts`
 
 
 

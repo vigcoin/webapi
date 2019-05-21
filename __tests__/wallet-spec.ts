@@ -1,4 +1,4 @@
-import { app } from '../src/index';
+import { app } from '../src/main';
 
 import * as http from 'supertest';
 import * as assert from 'assert';

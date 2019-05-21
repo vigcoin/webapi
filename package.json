@@ -2,7 +2,7 @@
   "name": "@vigcoin/webapi",
   "version": "0.1.0",
   "description": "webapi",
-  "license": "MIT",
+  "license": "GPLv3",
   "repository": "",
   "author": {
     "name": "",
@@ -19,7 +19,7 @@
   "types": "lib/index",
   "scripts": {
     "preserve": "npm run build",
-    "serve": "ts-node src/index.ts",
+    "serve": "ts-node src/main.ts",
     "clean": "rimraf lib && rimraf coverage",
     "format": "prettier --write \"{src,__tests__}/**/*.ts\" --single-quote --trailing-comma es5",
     "lint": "tslint --force --format verbose \"src/**/*.ts\"",
@@ -38,6 +38,7 @@
     "vig": "^1.0.0-rc-2"
   },
   "devDependencies": {
+    "@types/debug": "^4.1.4",
     "@types/jest": "^23.3.3",
     "@types/node": "^10.11.4",
     "coveralls": "^3.0.2",
