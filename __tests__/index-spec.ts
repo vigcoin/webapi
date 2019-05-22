@@ -1,7 +1,7 @@
 import { VApplication } from '../src/app';
-import webapi from '../src/index';
 import * as express from 'express';
 
+const webapi = require("../src/index");
 const app = express();
 
 test('Should have Wallet available', () => {
