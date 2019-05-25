@@ -34,6 +34,7 @@ install:
 # http://docs.travis-ci.com/user/pull-requests/
 script:
   - npm test
-
+after_script:
+- 'cat coverage/lcov.info | ./node_modules/.bin/coveralls' # sends the coverage report to coveralls
 notifications:
 email: false

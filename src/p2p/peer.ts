@@ -43,7 +43,7 @@ export class Peer {
     console.log(data);
   }
 
-  public async stop() {
+  public stop() {
     console.log("stopping");
     this.socket.end();
   }

@@ -17,16 +17,7 @@ export class Server {
 
   public async start() {
 
-    const seeds = this.config.seedNode;
-    for (const seed of seeds) {
-      const peer = new Peer(seed.port, seed.host);
-      try {
-        await peer.start();
-        this.peerList.push(peer);
-      } catch (e) {
-        console.error(e);
-      }
-    }
+    await this.connectPeers();
   }
 
   public async stop() {
@@ -37,5 +28,18 @@ export class Server {
 
   public getPeers() {
     return this.peerList;
+  }
+
+  protected async connectPeers() {
+    const seeds = this.config.seedNode;
+    for (const seed of seeds) {
+      const peer = new Peer(seed.port, seed.host);
+      try {
+        await peer.start();
+        this.peerList.push(peer);
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }
 }

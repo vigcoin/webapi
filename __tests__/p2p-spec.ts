@@ -26,6 +26,7 @@ describe("test connection", () => {
 
     for (const peer of peers) {
       expect(peer.isConnected()).toBeTruthy();
+      peer.stop();
     }
   });
 });
