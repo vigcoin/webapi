@@ -33,7 +33,7 @@ export class VApplication {
     this.app.enable('trust proxy 1');
   }
 
-  start(port = 8080, ip = 'localhost') {
+  async start(port = 8080, ip = 'localhost') {
     return new Promise((resolve, reject) => {
       this.server = this.app.listen(port, ip, e => {
         if (e) {

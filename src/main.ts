@@ -1,4 +1,4 @@
-import { VApplication } from './app';
+import { VApplication } from './servers/app';
 
 const app = VApplication.getInstance();
 

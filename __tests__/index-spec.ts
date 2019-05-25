@@ -1,4 +1,4 @@
-import { VApplication } from '../src/app';
+import { VApplication } from '../src/servers/app';
 import * as express from 'express';
 
 const webapi = require('../src/index');

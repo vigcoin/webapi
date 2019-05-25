@@ -5,7 +5,8 @@ export class Server {
   private config: IConfig;
   private folder: string;
   private filename: string;
-  private peerList: Peer[];
+  private peerList: Peer[] = [];
+
   constructor(config: IConfig,
     folder: string,
     filename: string) {
@@ -13,18 +14,28 @@ export class Server {
     this.folder = folder;
     this.filename = filename;
   }
+
   public async start() {
+
     const seeds = this.config.seedNode;
-    seeds.forEach(async (seed) => {
+    for (const seed of seeds) {
       const peer = new Peer(seed.port, seed.host);
-      await peer.start();
-      this.peerList.push(peer);
-    });
+      try {
+        await peer.start();
+        this.peerList.push(peer);
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }
 
   public async stop() {
     this.peerList.forEach(async (peer) => {
       await peer.stop();
     });
+  }
+
+  public getPeers() {
+    return this.peerList;
   }
 }
