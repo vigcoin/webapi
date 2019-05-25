@@ -1,7 +1,7 @@
 import { IConfig, P2PServer } from "../p2p/index";
 
 const config: IConfig = {
-  address: '127.0.0.1',
+  host: '127.0.0.1',
   port: 19800,
 };
 config.isAllowLocalIp = true;

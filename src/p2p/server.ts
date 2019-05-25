@@ -28,7 +28,15 @@ export class P2PServer {
       await peer.stop();
     }
     if (this.server) {
-      this.server.close();
+      await new Promise((resolve, reject) => {
+        this.server.close((e) => {
+          if (e) {
+            return reject(e);
+          }
+          resolve();
+        });
+
+      });
     }
   }
 
