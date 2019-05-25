@@ -16,14 +16,13 @@ export class Server {
   }
 
   public async start() {
-
     await this.connectPeers();
   }
 
   public async stop() {
-    this.peerList.forEach(async (peer) => {
+    for (const peer of this.peerList) {
       await peer.stop();
-    });
+    }
   }
 
   public getPeers() {

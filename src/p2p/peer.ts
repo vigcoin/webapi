@@ -13,8 +13,6 @@ export class Peer {
     return new Promise(async (resolve, reject) => {
       const s = createConnection({ port: this.port, host: this.host }, (e) => {
         if (e) {
-          console.error(e);
-          console.log("error connecting" + this.host + ":" + this.port);
           s.destroy();
           reject(e);
         } else {

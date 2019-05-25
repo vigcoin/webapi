@@ -26,8 +26,11 @@ describe("test connection", () => {
 
     for (const peer of peers) {
       expect(peer.isConnected()).toBeTruthy();
-      peer.stop();
     }
+  });
+
+  test('Should stop peers', async () => {
+    await server.stop();
   });
 });
 
