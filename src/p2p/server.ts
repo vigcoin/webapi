@@ -1,11 +1,14 @@
 import { Peer } from "./peer";
 import { IConfig } from "./types";
+import { Server, Socket, createServer } from "net";
 
-export class Server {
+export class P2PServer {
   private config: IConfig;
   private folder: string;
   private filename: string;
   private peerList: Peer[] = [];
+  private clientList: Socket[] = [];
+  private server: Server;
 
   constructor(config: IConfig,
     folder: string,
@@ -16,6 +19,7 @@ export class Server {
   }
 
   public async start() {
+    await this.startServer();
     await this.connectPeers();
   }
 
@@ -23,10 +27,30 @@ export class Server {
     for (const peer of this.peerList) {
       await peer.stop();
     }
+    if (this.server) {
+      this.server.close();
+    }
   }
 
   public getPeers() {
     return this.peerList;
+  }
+
+  protected async startServer() {
+    return new Promise((resolve, reject) => {
+      const server = createServer((s) => {
+        this.onClient(s);
+      });
+      const { port, host } = this.config;
+      server.listen({ port, host }, (e) => {
+        if (e) {
+          this.server = null;
+          return reject(e);
+        }
+        resolve(server);
+      });
+      this.server = server;
+    });
   }
 
   protected async connectPeers() {
@@ -39,6 +63,12 @@ export class Server {
       } catch (e) {
         console.error(e);
       }
+    }
+  }
+
+  protected onClient(s: Socket) {
+    if (this.clientList.indexOf(s) === -1) {
+      this.clientList.push(s);
     }
   }
 }

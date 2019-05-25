@@ -11,7 +11,7 @@ export interface IPeerEntry {
 
 export interface IConfig {
   port: number,
-  address: string,
+  host: string,
   externalPort?: number,
   isAllowLocalIp?: boolean,
   peers?: IPeerEntry[],
