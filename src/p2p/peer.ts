@@ -1,4 +1,7 @@
 import { createConnection, Socket } from "net";
+import { ICoreSyncData, INodeData, Version } from "./types";
+import { Hash, NULL_HASH } from "../crypto/types";
+
 export class Peer {
   private socket: Socket;
   private port: number;
@@ -53,6 +56,28 @@ export class Peer {
 
   public isConnected() {
     return this.connected;
+  }
+
+  // Protocols 
+
+  public prepareNodeData(port: number, uuid: string): INodeData {
+    return {
+      localTime: new Date(),
+      myPort: port,
+      networkId: uuid,
+      peerId: Math.floor((Math.random() * 10000000000000000)),
+      version: Version.CURRENT
+    };
+  }
+
+  public prepareCoreData(hash: Hash = NULL_HASH, height: number = 0): ICoreSyncData {
+    return {
+      currentHeight: height,
+      hash
+    };
+  }
+  public async handshake(coreData: ICoreSyncData, nodeData: INodeData) {
+    
   }
 
 }
