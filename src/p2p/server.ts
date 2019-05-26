@@ -2,8 +2,6 @@ import { createServer, Server, Socket } from "net";
 import * as path from "path";
 import { INetworkPeer, INodeData, IServerConfig, Version } from "../cryptonote/p2p";
 import { Peer } from "./peer";
-import { BlockChain } from "../blockchain";
-
 export class P2PServer {
   private config: IServerConfig;
   private folder: string;
