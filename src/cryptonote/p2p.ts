@@ -35,21 +35,25 @@ export interface INetwork {
   sendPeerListSize: number;
 }
 
+export interface INetworkPeer {
+  network: INetwork,
+  id: number
+}
+
 export interface INodeData {
-  networkId: string,
+  networkId: number[],
   version: Version,
   localTime: Date,
   myPort: number,
   peerId: number
 }
 
-
 export interface ICoreSyncData {
   currentHeight: number,
   hash: Hash
 }
 
-export interface IConfig {
+export interface IServerConfig {
   port: number,
   host: string,
   externalPort?: number,

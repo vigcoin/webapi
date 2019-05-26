@@ -8,7 +8,7 @@ import { writeFileSync, unlinkSync } from 'fs';
 import { Wallet } from '@vigcoin/neon';
 
 test('Should file a wallet', done => {
-  const req = http(app.app);
+  const req = http(app.get());
   req
     .post('/wallet/open')
     .type('form')
@@ -36,7 +36,7 @@ test('Should file a wallet', done => {
 });
 
 test('Should file a wallet with password', done => {
-  const req = http(app.app);
+  const req = http(app.get());
   req
     .post('/wallet/open')
     .type('form')
@@ -65,7 +65,7 @@ test('Should file a wallet with password', done => {
 });
 
 test("Should don't file a wallet", done => {
-  const req = http(app.app);
+  const req = http(app.get());
   req
     .post('/wallet/open')
     .type('form')
@@ -83,7 +83,7 @@ test("Should don't file a wallet", done => {
 });
 
 test('Should refine a wallet', done => {
-  const req = http(app.app);
+  const req = http(app.get());
   req
     .post('/wallet/refine')
     .type('form')
@@ -110,7 +110,7 @@ test('Should refine a wallet', done => {
 });
 
 test('Should refine a wallet', done => {
-  const req = http(app.app);
+  const req = http(app.get());
   req
     .post('/wallet/refine')
     .type('form')
@@ -138,7 +138,7 @@ test('Should refine a wallet', done => {
 });
 
 test('Should not refine a wallet', done => {
-  const req = http(app.app);
+  const req = http(app.get());
   req
     .post('/wallet/refine')
     .type('form')
@@ -152,7 +152,7 @@ test('Should not refine a wallet', done => {
 });
 
 test('Should export a wallet from private keys', done => {
-  const req = http(app.app);
+  const req = http(app.get());
   req
     .post('/wallet/export')
     .type('form')
@@ -188,7 +188,7 @@ test('Should export a wallet from private keys', done => {
 });
 
 test('Should export a wallet from private keys', done => {
-  const req = http(app.app);
+  const req = http(app.get());
   req
     .post('/wallet/export')
     .type('form')
@@ -208,7 +208,7 @@ test('Should export a wallet from private keys', done => {
 });
 
 test('Should create a wallet', done => {
-  const req = http(app.app);
+  const req = http(app.get());
   req
     .post('/wallet/create')
     .type('form')

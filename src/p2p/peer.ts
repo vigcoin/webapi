@@ -1,6 +1,7 @@
 import { createConnection, Socket } from "net";
-import { ICoreSyncData, INodeData, Version } from "./types";
+import * as uuid from "uuid/v5";
 import { Hash, NULL_HASH } from "../crypto/types";
+import { ICoreSyncData, INodeData, Version } from "../cryptonote/p2p";
 
 export class Peer {
   private socket: Socket;
@@ -8,9 +9,13 @@ export class Peer {
   private host: string;
   private id: number;
   private connected: boolean = false;
+  // private connectionId: [];
+  private started: Date;
+
   constructor(port: number, host: string) {
     this.port = port;
     this.host = host;
+    // this.connectionId = uuid('vigcoin', uuid.DNS);
   }
   public async  start() {
     return new Promise(async (resolve, reject) => {
@@ -58,18 +63,6 @@ export class Peer {
     return this.connected;
   }
 
-  // Protocols 
-
-  public prepareNodeData(port: number, uuid: string): INodeData {
-    return {
-      localTime: new Date(),
-      myPort: port,
-      networkId: uuid,
-      peerId: Math.floor((Math.random() * 10000000000000000)),
-      version: Version.CURRENT
-    };
-  }
-
   public prepareCoreData(hash: Hash = NULL_HASH, height: number = 0): ICoreSyncData {
     return {
       currentHeight: height,
@@ -77,7 +70,8 @@ export class Peer {
     };
   }
   public async handshake(coreData: ICoreSyncData, nodeData: INodeData) {
-    
+    this.started = new Date();
+
   }
 
 }
