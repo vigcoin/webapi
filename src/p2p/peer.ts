@@ -1,7 +1,6 @@
-import { createConnection, Socket } from "net";
-import * as uuid from "uuid/v5";
-import { Hash, NULL_HASH } from "../crypto/types";
-import { ICoreSyncData, INodeData, Version } from "../cryptonote/p2p";
+import { createConnection, Socket } from 'net';
+import { Hash, NULL_HASH } from '../crypto/types';
+import { ICoreSyncData, INodeData, Version } from '../cryptonote/p2p';
 
 export class Peer {
   private socket: Socket;
@@ -9,17 +8,15 @@ export class Peer {
   private host: string;
   private id: number;
   private connected: boolean = false;
-  // private connectionId: [];
   private started: Date;
 
   constructor(port: number, host: string) {
     this.port = port;
     this.host = host;
-    // this.connectionId = uuid('vigcoin', uuid.DNS);
   }
-  public async  start() {
+  public async start() {
     return new Promise(async (resolve, reject) => {
-      const s = createConnection({ port: this.port, host: this.host }, (e) => {
+      const s = createConnection({ port: this.port, host: this.host }, e => {
         if (e) {
           s.destroy();
           reject(e);
@@ -29,28 +26,27 @@ export class Peer {
         }
       });
       this.socket = s;
-      s.on('data', async (data) => {
+      s.on('data', async data => {
         await this.update(data);
       });
       s.on('end', async () => {
         await this.onEnd();
       });
     });
-
   }
 
   public async onConnected() {
     this.connected = true;
-    console.log("connected");
+    console.log('connected');
   }
 
   public async update(data) {
-    console.log("updating");
+    console.log('updating');
     console.log(data);
   }
 
   public stop() {
-    console.log("stopping");
+    console.log('stopping');
     this.socket.end();
   }
 
@@ -63,15 +59,16 @@ export class Peer {
     return this.connected;
   }
 
-  public prepareCoreData(hash: Hash = NULL_HASH, height: number = 0): ICoreSyncData {
+  public prepareCoreData(
+    hash: Hash = Hash.getNullHash(),
+    height: number = 0
+  ): ICoreSyncData {
     return {
       currentHeight: height,
-      hash
+      hash,
     };
   }
   public async handshake(coreData: ICoreSyncData, nodeData: INodeData) {
     this.started = new Date();
-
   }
-
 }

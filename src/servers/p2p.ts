@@ -1,5 +1,5 @@
-import { server } from "../p2p/init";
+import { server } from '../p2p/init';
 
 server.start().then(() => {
-  console.log("p2p server started");
+  console.log('p2p server started');
 });

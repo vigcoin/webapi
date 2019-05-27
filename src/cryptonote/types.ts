@@ -1,6 +1,4 @@
-import { KeyImage, PublicKey, Signature, Hash } from "../crypto/types";
-
-
+import { KeyImage, PublicKey, Signature, Hash } from '../crypto/types';
 
 // Input Transactions
 export interface IInputBase {
@@ -35,7 +33,7 @@ export type ITransactionOutputTarget = IOutputKey | IOutputSignature;
 
 export interface ITransactionOutput {
   amount: number;
-  target: ITransactionOutputTarget
+  target: ITransactionOutputTarget;
 }
 
 export interface ITransactionPrefix {
@@ -43,7 +41,7 @@ export interface ITransactionPrefix {
   unlockTime: number;
   inputs: ITransactionInput[];
   outputs: ITransactionOutput[];
-  extra: Buffer
+  extra: Buffer;
 }
 
 export interface ITransaction {
@@ -58,22 +56,22 @@ export interface IVersion {
 }
 
 export interface IBlockHeader {
-  version: IVersion,
+  version: IVersion;
   nonce: number;
   timestamp: number;
-  preHash: Buffer
+  preHash: Buffer;
 }
 
 export interface IBlock {
-  header: IBlockHeader,
-  transaction: ITransaction,
+  header: IBlockHeader;
+  transaction: ITransaction;
   transactionHashes: Hash[];
 }
 
 export type IDifficulty = number;
 
 export interface ITransactionEntry {
-  tx: ITransaction,
+  tx: ITransaction;
   globalOutputIndexes: number[];
 }
 
@@ -81,7 +79,7 @@ export interface IBlockEntry {
   block: IBlock;
   height: number;
   size: number;
-  difficulty: IDifficulty,
+  difficulty: IDifficulty;
   generatedCoins: number;
   transactions: ITransactionEntry;
 }

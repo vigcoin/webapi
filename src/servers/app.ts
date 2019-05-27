@@ -9,7 +9,6 @@ import { Server } from 'net';
 import { VEvent, VHandler } from 'vig';
 
 export class VApplication {
-
   public static getInstance(): VApplication {
     if (!VApplication.instance) {
       VApplication.instance = new VApplication(express());

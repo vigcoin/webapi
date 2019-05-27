@@ -1,4 +1,4 @@
-import { Hash } from "../crypto/types";
+import { Hash } from '../crypto/types';
 
 export enum State {
   BEFORE_HANDSHAKE = 0,
@@ -7,8 +7,7 @@ export enum State {
   NORMAL,
   SYNC_REQUIRED,
   POOL_SYNC_REQUIRED,
-};
-
+}
 
 export interface IConnection {
   version: number;

@@ -18,7 +18,7 @@
   "main": "lib/index",
   "types": "lib/index",
   "scripts": {
-    "preserve": "npm run build",
+    "pretest": "npm run build",
     "serve": "ts-node src/main.ts",
     "clean": "rimraf lib && rimraf coverage",
     "format": "prettier --write \"{src,__tests__}/**/*.ts\" --single-quote --trailing-comma es5",

@@ -1,6 +1,6 @@
-import { server } from "../src/p2p/init"
+import { server } from '../src/p2p/init';
 
-describe("test connection", () => {
+describe('test connection', () => {
   beforeEach(() => {
     jest.setTimeout(10000);
   });
@@ -20,5 +20,3 @@ describe("test connection", () => {
     await server.stop();
   });
 });
-
-

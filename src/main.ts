@@ -22,4 +22,4 @@ if (!module.parent) {
 
 export { app };
 
-export * from "./p2p";
+export * from './p2p';

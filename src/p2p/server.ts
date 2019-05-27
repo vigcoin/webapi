@@ -1,7 +1,12 @@
-import { createServer, Server, Socket } from "net";
-import * as path from "path";
-import { INetworkPeer, INodeData, IServerConfig, Version } from "../cryptonote/p2p";
-import { Peer } from "./peer";
+import { createServer, Server, Socket } from 'net';
+import * as path from 'path';
+import {
+  INetworkPeer,
+  INodeData,
+  IServerConfig,
+  Version,
+} from '../cryptonote/p2p';
+import { Peer } from './peer';
 export class P2PServer {
   private config: IServerConfig;
   private folder: string;
@@ -19,14 +24,15 @@ export class P2PServer {
     networkPeer: INetworkPeer,
     networkId: number[],
     folder: string,
-    filename: string) {
+    filename: string
+  ) {
     this.config = config;
     this.networkPeer = networkPeer;
     this.networkId = networkId;
     this.folder = folder;
     this.filename = filename;
     this.absoluteFileName = path.resolve(folder, filename);
-    this.peerId = Math.floor((Math.random() * 10000000000000000));
+    this.peerId = Math.floor(Math.random() * 10000000000000000);
   }
 
   public async start() {
@@ -42,13 +48,12 @@ export class P2PServer {
     }
     if (this.server) {
       await new Promise((resolve, reject) => {
-        this.server.close((e) => {
+        this.server.close(e => {
           if (e) {
             return reject(e);
           }
           resolve();
         });
-
       });
     }
   }
@@ -62,17 +67,16 @@ export class P2PServer {
       for (const peer of this.peerList) {
         await this.handshake(peer);
       }
-
     }, 1000);
   }
 
   protected async startServer() {
     return new Promise((resolve, reject) => {
-      const server = createServer((s) => {
+      const server = createServer(s => {
         this.onClient(s);
       });
       const { port, host } = this.config;
-      server.listen({ port, host }, (e) => {
+      server.listen({ port, host }, e => {
         if (e) {
           this.server = null;
           return reject(e);
@@ -112,7 +116,7 @@ export class P2PServer {
       myPort: this.hidePort ? 0 : this.config.port,
       networkId: this.networkId,
       peerId: this.peerId,
-      version: Version.CURRENT
+      version: Version.CURRENT,
     };
   }
 }
