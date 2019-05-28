@@ -1,5 +1,5 @@
 import { createConnection, Socket } from 'net';
-import { Hash, NULL_HASH } from '../crypto/types';
+import { Hash, BaseBuffer } from '../crypto/types';
 import { ICoreSyncData, INodeData, Version } from '../cryptonote/p2p';
 
 export class Peer {
@@ -60,7 +60,7 @@ export class Peer {
   }
 
   public prepareCoreData(
-    hash: Hash = Hash.getNullHash(),
+    hash: Hash = BaseBuffer.getBuffer(),
     height: number = 0
   ): ICoreSyncData {
     return {

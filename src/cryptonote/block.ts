@@ -4,7 +4,7 @@ import { IBlock, IBlockEntry, ITransaction } from './types';
 
 export class Block {
   public static genesis(conf: Configuration.IBlock) {
-    // const genesis = Buffer.from(conf.genesisCoinbaseTxHex, 'hex');
+    const genesis = Buffer.from(conf.genesisCoinbaseTxHex, 'hex');
     // const transaction: ITransaction = Serializer.parseTransaction(genesis);
     // const blockEntry: IBlockEntry = {
     //   block: {

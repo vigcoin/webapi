@@ -1,17 +1,19 @@
 import * as assert from 'assert';
+import { type } from 'os';
 
 export const HASH_LENGTH = 32;
+export const SIGNATURE_LENGTH = 64;
 export const NULL_HASH: Buffer = new Buffer(HASH_LENGTH);
 
-export class Hash {
-  public static getNullHash() {
-    return new Hash(new Buffer(32));
+export class BaseBuffer {
+  public static getBuffer(length = HASH_LENGTH) {
+    return new BaseBuffer(new Buffer(HASH_LENGTH));
   }
   private data: Buffer;
 
-  constructor(data: Buffer) {
+  constructor(data: Buffer, length = HASH_LENGTH) {
     assert(data);
-    assert(data.length === HASH_LENGTH);
+    assert(data.length === length);
     this.data = data;
   }
 
@@ -20,6 +22,7 @@ export class Hash {
   }
 }
 
+export type Hash = BaseBuffer;
 export type Key = Hash;
 export type PublicKey = Hash;
 export type PrivateKey = Hash;

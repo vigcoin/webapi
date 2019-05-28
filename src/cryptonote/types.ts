@@ -1,4 +1,4 @@
-import { KeyImage, PublicKey, Signature, Hash } from '../crypto/types';
+import { Hash, KeyImage, PublicKey, Signature } from '../crypto/types';
 
 // Input Transactions
 export interface IInputBase {
@@ -81,5 +81,33 @@ export interface IBlockEntry {
   size: number;
   difficulty: IDifficulty;
   generatedCoins: number;
-  transactions: ITransactionEntry;
+  transactions: ITransactionEntry[];
+}
+
+// Verification
+
+// tslint:disable-next-line: no-namespace
+export namespace VerificationContext {
+  export interface IVCTx {
+    shouldBeRelayed: boolean;
+    verifivationFailed: boolean;
+    verifivationImpossible: boolean;
+    addedToPool: boolean;
+    txFeeTooSmall: boolean;
+  }
+
+  export interface IVCBlock {
+    addedToMainChain: boolean;
+    verificationFailed: boolean;
+    markedAsOrphaned: boolean;
+    alreadyExists: boolean;
+    switchedToAltChain: boolean;
+  }
+}
+
+// Serialization/Unserialization
+
+export interface ISerializer<T> {
+  serialize(data: T): boolean;
+  unserialize(data: T): boolean;
 }
