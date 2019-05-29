@@ -135,10 +135,10 @@ export class Transaction {
       case 0xff:
         return 0;
       case 0x02:
-        const key: any = input.target;
+        const key: IInputKey = input.target as IInputKey;
         return key.outputIndexes.length;
       case 0x03:
-        const signature: any = input.target;
+        const signature: IInputSignature = input.target as IInputSignature;
         return signature.count;
     }
   }
