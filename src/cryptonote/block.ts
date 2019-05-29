@@ -1,23 +1,24 @@
 import { Configuration } from '../config/types';
 import { IBlock, IBlockEntry, ITransaction } from './types';
-// import { Serializer } from "./serializer";
+import { Transaction } from './transaction';
+import { BufferStreamReader } from './serialize/reader';
+import { BaseBuffer } from '../crypto/types';
 
 export class Block {
-  public static genesis(conf: Configuration.IBlock) {
+  public static genesis(conf: Configuration.IBlock): IBlock {
     const genesis = Buffer.from(conf.genesisCoinbaseTxHex, 'hex');
-    // const transaction: ITransaction = Serializer.parseTransaction(genesis);
-    // const blockEntry: IBlockEntry = {
-    //   block: {
-    //     header: {
-    //       version: conf.version,
-    //       nonce: 70,
-    //       timestamp: 0,
-    //       preHash: new Buffer(32)
-    //     },
-    //     transactionHashes: [],
-    //     transaction
-    //   }
-    // }
+    const reader: BufferStreamReader = new BufferStreamReader(genesis);
+    const transaction: ITransaction = Transaction.parse(reader);
+    return {
+      header: {
+        version: conf.version,
+        nonce: 70,
+        timestamp: 0,
+        preHash: BaseBuffer.getBuffer().get(),
+      },
+      transactionHashes: [],
+      transaction,
+    };
   }
 
   private block: IBlockEntry;
