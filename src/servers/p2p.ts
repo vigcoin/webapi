@@ -1,5 +1,8 @@
-import { server } from '../p2p/init';
+import * as debug from 'debug';
+import { server } from '../init/p2p';
+
+const logger = debug('vigcoin:p2p');
 
 server.start().then(() => {
-  console.log('p2p server started');
+  logger('p2p server started');
 });

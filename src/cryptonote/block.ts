@@ -6,8 +6,10 @@ import { BufferStreamWriter } from './serialize/writer';
 import { BaseBuffer, Hash } from '../crypto/types';
 
 export class Block {
-
-  public static writeBlockHeader(writer: BufferStreamWriter, header: IBlockHeader) {
+  public static writeBlockHeader(
+    writer: BufferStreamWriter,
+    header: IBlockHeader
+  ) {
     writer.writeVarint(header.version.major);
     writer.writeVarint(header.version.minor);
     writer.writeVarint(header.timestamp);
@@ -19,9 +21,7 @@ export class Block {
     const buffer = BaseBuffer.getBuffer().get();
     const writer = new BufferStreamWriter(buffer);
     this.writeBlockHeader(writer, block.header);
-    Transaction.write(writer);
-
-
+    Transaction.write(writer, block.transaction);
     return buffer;
   }
 

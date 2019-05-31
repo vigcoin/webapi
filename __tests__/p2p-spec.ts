@@ -1,4 +1,4 @@
-import { server } from '../src/p2p/init';
+import { server } from '../src/init/p2p';
 
 describe('test connection', () => {
   beforeEach(() => {

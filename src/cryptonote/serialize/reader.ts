@@ -32,20 +32,22 @@ export class BufferStreamReader {
     let value = 0;
     let shift = 0;
     let bytes = 0;
+    let i = this.index;
+    let piece = 0;
 
-    for (let i = this.index; i < this.buffer.length; i++) {
-      const piece = this.buffer[i];
+    do {
+      piece = this.buffer[i++];
       // tslint:disable-next-line: no-bitwise
-      value |= (piece & 0x7f) << shift;
+      if (shift < 28) {
+        value += (piece & 0x7f) << shift;
+      } else {
+        value += Math.pow(2, shift);
+      }
       shift += 7;
       bytes++;
-      // tslint:disable-next-line: no-bitwise
-      if ((piece & 0x80) === 0) {
-        break;
-      }
-    }
-    this.index += bytes;
+    } while (piece >= 0x80);
 
+    this.index += bytes;
     return value;
   }
 

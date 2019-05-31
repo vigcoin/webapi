@@ -3,7 +3,7 @@ import { INetworkPeer, IServerConfig, P2PServer } from '../p2p/index';
 
 const config: IServerConfig = {
   host: '127.0.0.1',
-  port: 19800,
+  port: 29800,
 };
 
 config.isAllowLocalIp = true;

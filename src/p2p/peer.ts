@@ -60,7 +60,7 @@ export class Peer {
   }
 
   public prepareCoreData(
-    hash: Hash = BaseBuffer.getBuffer(),
+    hash: Hash = BaseBuffer.getBuffer().get(),
     height: number = 0
   ): ICoreSyncData {
     return {

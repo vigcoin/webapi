@@ -1,5 +1,5 @@
 import assert = require('assert');
-import { BaseBuffer, KeyImage, Signature } from '../crypto/types';
+import { KeyImage, Signature } from '../crypto/types';
 import { BufferStreamReader } from './serialize/reader';
 import {
   IInputBase,
@@ -62,7 +62,10 @@ export class TransactionPrefix {
     return { tag, target };
   }
 
-  public static writeInput(writer: BufferStreamWriter, input: ITransactionInput) {
+  public static writeInput(
+    writer: BufferStreamWriter,
+    input: ITransactionInput
+  ) {
     writer.writeUInt8(input.tag);
     let target: ITransactionInputTarget;
     switch (input.tag) {
@@ -109,7 +112,7 @@ export class TransactionPrefix {
           amount,
           tag,
           target: {
-            key: new BaseBuffer(reader.readHash()),
+            key: reader.readHash(),
           },
         };
         break;
@@ -120,7 +123,6 @@ export class TransactionPrefix {
       //   tag,
       //   target: {
 
-
       //   }
       // };
       default:
@@ -129,7 +131,10 @@ export class TransactionPrefix {
     return output;
   }
 
-  public static writeOutput(writer: BufferStreamWriter, output: ITransactionOutput) {
+  public static writeOutput(
+    writer: BufferStreamWriter,
+    output: ITransactionOutput
+  ) {
     writer.writeVarint(output.amount);
     writer.writeUInt8(output.tag);
     switch (output.tag) {
@@ -215,8 +220,15 @@ export class TransactionPrefix {
 
 // tslint:disable-next-line: max-classes-per-file
 export class Transaction {
-  public static getSubSignature(reader: BufferStreamReader): Signature {
-    return new BaseBuffer(reader.read(64));
+  public static readSubSignature(reader: BufferStreamReader): Signature {
+    return reader.read(64);
+  }
+
+  public static writeSubSignature(
+    writer: BufferStreamWriter,
+    signature: Signature
+  ) {
+    writer.write(signature);
   }
   public static readSignatureCount(input: ITransactionInput) {
     switch (input.tag) {
@@ -227,20 +239,6 @@ export class Transaction {
         return key.outputIndexes.length;
       case 0x03:
         const signature: any = input.target;
-        return signature.count;
-    }
-  }
-
-  public static writeSignatureCount(writer: BufferStreamWriter, input: ITransactionInput) {
-    switch (input.tag) {
-      case 0xff:
-
-        return 0;
-      case 0x02:
-        const key: IInputKey = input.target as IInputKey;
-        return key.outputIndexes.length;
-      case 0x03:
-        const signature: IInputSignature = input.target as IInputSignature;
         return signature.count;
     }
   }
@@ -256,7 +254,7 @@ export class Transaction {
 
       const subSig: Signature[] = [];
       for (let j = 0; j < count; j++) {
-        subSig.push(Transaction.getSubSignature(reader));
+        subSig.push(Transaction.readSubSignature(reader));
       }
       signatures[i] = subSig;
     }
@@ -269,15 +267,10 @@ export class Transaction {
     signatures: any[][]
   ) {
     const size = signatures.length;
-    // const signatures = [];
     for (let i = 0; i < size; i++) {
-      Transaction.writeSignatureCount(writer, signatures);
-
-      const subSig: Signature[] = [];
-      for (let j = 0; j < count; j++) {
-        subSig.push(Transaction.getSubSignature(reader));
+      for (let j = 0; j < signatures[i].length; j++) {
+        Transaction.writeSubSignature(writer, signatures[i][j]);
       }
-      signatures[i] = subSig;
     }
     return signatures;
   }
@@ -290,11 +283,9 @@ export class Transaction {
     };
   }
 
-
-
-
   public static write(writer: BufferStreamWriter, transaction: ITransaction) {
     TransactionPrefix.write(writer, transaction.prefix);
-    this.writeSignatures(writer, transaction.signatures);
+    assert(transaction.signatures.length === transaction.prefix.inputs.length);
+    this.writeSignatures(writer, transaction.prefix, transaction.signatures);
   }
 }

@@ -20,6 +20,10 @@ export class BufferStreamWriter {
     }
   }
 
+  getBuffer(): Buffer {
+    return this.buffer;
+  }
+
   public writeUInt8(value: number) {
     this.checkBuffer(1);
     this.buffer.writeUInt8(value, this.index);
@@ -41,22 +45,23 @@ export class BufferStreamWriter {
   public writeVarint(value: number) {
     while (value >= 0x80) {
       this.checkBuffer(1);
-      this.buffer.writeUInt8(value | 0x80, this.index++);
-      value >>= 7;
+      const temp = (value | 0x80) & 0xff;
+      this.buffer.writeUInt8(temp, this.index++);
+      value >>>= 7;
     }
     this.checkBuffer(1);
-    this.buffer.writeUInt8(value, this.index++);
+    const temp = value & 0xff;
+    this.buffer.writeUInt8(temp, this.index++);
   }
 
-  public writeHash(hash: Buffer) {
+  public writeHash(hash: Hash) {
     assert(hash.length === HASH_LENGTH);
-    return this.write(hash);
+    this.write(hash);
   }
 
   public write(buffer: Buffer) {
     this.checkBuffer(buffer.length);
     buffer.copy(this.buffer, this.index, 0, buffer.length);
     this.index += buffer.length;
-    return buffer;
   }
 }
