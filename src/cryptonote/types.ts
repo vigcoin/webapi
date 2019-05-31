@@ -8,7 +8,7 @@ export interface IInputBase {
 export interface IInputKey {
   amount: number;
   outputIndexes: number[];
-  keyImage: KeyImage;
+  keyImage: Buffer;
 }
 
 export interface IInputSignature {
@@ -20,11 +20,11 @@ export interface IInputSignature {
 // Output Transactions
 
 export interface IOutputKey {
-  key: PublicKey;
+  key: Buffer;
 }
 
 export interface IOutputSignature {
-  keys: PublicKey[];
+  keys: Buffer[];
   count: number;
 }
 
@@ -32,6 +32,7 @@ export type ITransactionInputTarget = IInputBase | IInputKey | IInputSignature;
 export type ITransactionOutputTarget = IOutputKey | IOutputSignature;
 
 export interface ITransactionOutput {
+  tag: number;
   amount: number;
   target: ITransactionOutputTarget;
 }

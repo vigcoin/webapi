@@ -10,4 +10,24 @@ export namespace Configuration {
     genesisCoinbaseTxHex: string;
     version: IVersion;
   }
+
+  export interface IBlockFile {
+    date: string;
+    index: string;
+    cache: string;
+    chain: string;
+  }
+
+  export interface IHardfork {
+    version: number;
+    height: number;
+    threshold: number;
+    time: Date;
+  }
+
+  export interface ICurrency {
+    block: IBlock;
+    blockFiles: IBlockFile;
+    hardfork: IHardfork[];
+  }
 }
