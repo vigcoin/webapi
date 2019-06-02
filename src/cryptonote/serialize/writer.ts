@@ -1,5 +1,5 @@
 import assert = require('assert');
-import { HASH_LENGTH, Hash } from '../../crypto/types';
+import { Hash, HASH_LENGTH } from '../../crypto/types';
 
 export class BufferStreamWriter {
   private buffer: Buffer;
@@ -12,15 +12,15 @@ export class BufferStreamWriter {
     this.index = 0;
   }
 
-  checkBuffer(size: number) {
-    let diff = this.buffer.length - this.index - size;
+  public checkBuffer(size: number) {
+    const diff = this.buffer.length - this.index - size;
     if (diff < 0) {
       const buffer = new Buffer(Math.abs(diff));
       this.buffer = Buffer.concat([this.buffer, buffer]);
     }
   }
 
-  getBuffer(): Buffer {
+  public getBuffer(): Buffer {
     return this.buffer;
   }
 

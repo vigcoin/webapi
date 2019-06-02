@@ -1,9 +1,9 @@
 import { Configuration } from '../config/types';
-import { IBlock, IBlockEntry, ITransaction, IBlockHeader } from './types';
-import { Transaction } from './transaction';
+import { BaseBuffer } from '../crypto/types';
 import { BufferStreamReader } from './serialize/reader';
 import { BufferStreamWriter } from './serialize/writer';
-import { BaseBuffer, Hash } from '../crypto/types';
+import { Transaction } from './transaction';
+import { IBlock, IBlockEntry, IBlockHeader, ITransaction } from './types';
 
 export class Block {
   public static writeBlockHeader(
@@ -31,13 +31,13 @@ export class Block {
     const transaction: ITransaction = Transaction.read(reader);
     return {
       header: {
-        version: conf.version,
         nonce: 70,
-        timestamp: 0,
         preHash: BaseBuffer.getBuffer().get(),
+        timestamp: 0,
+        version: conf.version,
       },
-      transactionHashes: [],
       transaction,
+      transactionHashes: [],
     };
   }
 

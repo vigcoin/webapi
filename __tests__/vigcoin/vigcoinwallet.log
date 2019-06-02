@@ -1,0 +1,24 @@
+2019-Jun-01 03:25:14.788933 ERROR [txpool] Failed to load memory pool from file /home/eric/.vigcoin/poolstate.bin
+2019-Jun-01 03:25:14.789351 INFO [Blockchain] Blockchain not loaded, generating genesis block.
+2019-Jun-01 03:25:14.872030 INFO [Blockchain] Blockchain initialized. last block: 0, d213503964759649.h2.m25.s30 time ago, current difficulty: 1
+2019-Jun-01 03:25:14.874551 INFO [node_server] Binding on 0.0.0.0:19800
+2019-Jun-01 03:25:14.874715 INFO [node_server] Net service binded on 0.0.0.0:19800
+2019-Jun-01 03:25:14.874807 INFO [node_server] Attempting to add IGD port mapping.
+2019-Jun-01 03:25:15.989151 INFO [node_server] Added IGD port mapping.
+2019-Jun-01 03:25:15.989435 INFO [node_server] Starting node_server
+2019-Jun-01 03:25:36.612796 INFO [protocol] [144.202.10.183:19800 OUT] Sync data returned unknown top block: 0 -> 289032 [289032 blocks (401 days) behind] 
+2019-Jun-01 03:25:36.612796 INFO [protocol] SYNCHRONIZATION started
+2019-Jun-01 03:25:42.560217 INFO [node_server] Stop signal sent
+2019-Jun-01 03:25:42.635596 INFO [node_server] Stopping NodeServer and it's1 connections...
+2019-Jun-01 03:25:42.636995 INFO [core] 
+2019-Jun-01 03:25:42.636995 INFO [core] **********************************************************************
+2019-Jun-01 03:25:42.636995 INFO [core] The daemon will start synchronizing with the network. It may take up to several hours.
+2019-Jun-01 03:25:42.636995 INFO [core] 
+2019-Jun-01 03:25:42.636995 INFO [core] You can set the level of process detailization* through "set_log <level>" command*, where <level> is between 0 (no details) and 4 (very verbose).
+2019-Jun-01 03:25:42.636995 INFO [core] 
+2019-Jun-01 03:25:42.636995 INFO [core] Use "help" command to see the list of available commands.
+2019-Jun-01 03:25:42.636995 INFO [core] 
+2019-Jun-01 03:25:42.636995 INFO [core] Note: in case you need to interrupt the process, use "exit" command. Otherwise, the current progress won't be saved.
+2019-Jun-01 03:25:42.636995 INFO [core] **********************************************************************
+2019-Jun-01 03:25:43.637763 INFO [node_server] NodeServer loop stopped
+2019-Jun-01 03:25:43.638655 INFO [miner] Mining has been stopped, 0 finished
