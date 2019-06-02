@@ -45,13 +45,11 @@ export class BufferStreamWriter {
   public writeVarint(value: number) {
     while (value >= 0x80) {
       this.checkBuffer(1);
-      const temp = (value | 0x80) & 0xff;
-      this.buffer.writeUInt8(temp, this.index++);
+      this.buffer.writeUInt8((value | 0x80) & 0xff, this.index++);
       value >>>= 7;
     }
     this.checkBuffer(1);
-    const temp = value & 0xff;
-    this.buffer.writeUInt8(temp, this.index++);
+    this.buffer.writeUInt8(value & 0xff, this.index++);
   }
 
   public writeHash(hash: Hash) {
