@@ -6,12 +6,10 @@ export class BlockIndex {
   private offsets: number[];
   private fd: number;
   private height: number;
-  private writer: BufferStreamWriter;
 
   constructor(filename: string) {
     this.filename = filename;
     this.offsets = [];
-    this.writer = new BufferStreamWriter(new Buffer(0));
   }
 
   public init() {
@@ -32,23 +30,28 @@ export class BlockIndex {
   }
 
   public writeHeight(height: number) {
-    this.writer.writeUInt32(height);
-    this.writer.writeUInt32(0);
+    const buffer = new Buffer(4);
+    buffer.writeInt32LE(height, 0);
+    writeSync(this.fd, buffer);
+    buffer.writeInt32LE(0, 0);
+    writeSync(this.fd, buffer);
   }
 
   public writeItem(offset: number) {
-    this.writer.writeUInt32(offset);
+    const buffer = new Buffer(4);
+    buffer.writeInt32LE(offset, 0);
+    writeSync(this.fd, buffer);
   }
 
   public flush() {
-    writeSync(this.fd, this.writer.getBuffer());
+    // writeSync(this.fd, this.writer.getBuffer());
   }
 
   public readHeight(): number {
     const buffer = new Buffer(8);
     readSync(this.fd, buffer, 0, buffer.length, null);
     const low = buffer.readUInt32LE(0);
-    const height = buffer.readInt32LE(4);
+    // const height = buffer.readInt32LE(4);
     return low; // should be readUint64
   }
 
