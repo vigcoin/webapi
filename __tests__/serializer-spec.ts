@@ -63,4 +63,11 @@ describe('test serializer', () => {
     const reader = new BufferStreamReader(writer.getBuffer());
     assert(t === reader.readVarint());
   });
+
+  test('Should get shift value', async () => {
+    const reader = new BufferStreamReader(new Buffer(0));
+    const value = reader.getShiftValue(28, 1);
+    assert(268435456 === reader.getShiftValue(28, 1));
+    assert(536870912 === reader.getShiftValue(28, 2));
+  });
 });

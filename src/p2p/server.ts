@@ -95,6 +95,7 @@ export class P2PServer {
         await peer.start();
         this.peerList.push(peer);
       } catch (e) {
+        // tslint:disable-next-line:no-console
         console.error(e);
       }
     }

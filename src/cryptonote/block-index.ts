@@ -10,6 +10,8 @@ export class BlockIndex {
   constructor(filename: string) {
     this.filename = filename;
     this.offsets = [];
+    this.fd = null;
+    this.height = 0;
   }
 
   public init() {
@@ -43,10 +45,6 @@ export class BlockIndex {
     writeSync(this.fd, buffer);
   }
 
-  public flush() {
-    // writeSync(this.fd, this.writer.getBuffer());
-  }
-
   public readHeight(): number {
     const buffer = new Buffer(8);
     readSync(this.fd, buffer, 0, buffer.length, null);
@@ -66,5 +64,9 @@ export class BlockIndex {
 
   public getOffsets() {
     return this.offsets;
+  }
+
+  public empty(): boolean {
+    return this.offsets.length === 0;
   }
 }

@@ -10,18 +10,20 @@ describe('test raw block', () => {
 
   test('Should create block index', () => {
     blockIndex = new BlockIndex(indexFile);
+    assert(blockIndex.empty());
   });
 
   test('Should test block index loading', () => {
     blockIndex.init();
-    const items = blockIndex.getOffsets();
-    assert(items.length > 0);
+    // const items = blockIndex.getOffsets();
+    // assert(items.length > 0);
+    assert(!blockIndex.empty());
   });
 });
 
 describe('test raw block', () => {
   const indexFile = path.resolve(__dirname, './vigcoin/blockindexes1.dat');
-  const items = [100, 1122, 2, 1010];
+  const items = [100, 1122, 2, 1010, 0x7fffffff];
 
   test('Should create block index', () => {
     blockIndex = new BlockIndex(indexFile);
@@ -33,7 +35,6 @@ describe('test raw block', () => {
     for (const item of items) {
       blockIndex.writeItem(item);
     }
-    blockIndex.flush();
     blockIndex.deinit();
   });
 

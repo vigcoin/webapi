@@ -5,6 +5,7 @@ import { resolve } from 'path';
 
 export = {
   urls: ['/wallet/refine'],
+  // tslint:disable-next-line:object-literal-sort-keys
   bodies: {
     post: {
       file: true,
@@ -33,10 +34,11 @@ export = {
         const wallet = new Wallet(file, password);
         const newFile = resolve(tmpdir(), refined);
         wallet.save(newFile, password);
-        res.sendFile(newFile, function() {
+        res.sendFile(newFile, () => {
           unlinkSync(newFile);
         });
       } catch (e) {
+        // tslint:disable-next-line:no-console
         console.error(e);
         res.status(500).end();
       }

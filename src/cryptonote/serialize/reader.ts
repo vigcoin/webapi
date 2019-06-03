@@ -28,6 +28,15 @@ export class BufferStreamReader {
     return v;
   }
 
+  public getShiftValue(shift: number, piece: number) {
+    if (shift < 28) {
+      // tslint:disable-next-line: no-bitwise
+      return (piece & 0x7f) << shift;
+    }
+    // tslint:disable-next-line:no-bitwise
+    return (piece & 0x7f) * Math.pow(2, shift);
+  }
+
   public readVarint() {
     let value = 0;
     let shift = 0;
@@ -37,12 +46,7 @@ export class BufferStreamReader {
 
     do {
       piece = this.buffer[i++];
-      if (shift < 28) {
-        // tslint:disable-next-line: no-bitwise
-        value += (piece & 0x7f) << shift;
-      } else {
-        value += Math.pow(2, shift);
-      }
+      value += this.getShiftValue(shift, piece);
       shift += 7;
       bytes++;
     } while (piece >= 0x80);

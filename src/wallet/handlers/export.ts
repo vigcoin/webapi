@@ -17,7 +17,7 @@ export = {
     },
   },
   routers: {
-    post: async (_req: any, res: any, scope: any) => {
+    post: async (req: any, res: any, scope: any) => {
       const {
         configs: {
           currency: { prefix },
