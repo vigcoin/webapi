@@ -22,7 +22,7 @@ export class Block {
     const writer = new BufferStreamWriter(buffer);
     this.writeBlockHeader(writer, block.header);
     Transaction.write(writer, block.transaction);
-    return buffer;
+    return writer.getBuffer();
   }
 
   public static genesis(conf: Configuration.IBlock): IBlock {

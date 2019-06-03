@@ -12,6 +12,10 @@ export class BufferStreamReader {
     this.index = 0;
   }
 
+  public getBuffer() {
+    return this.buffer;
+  }
+
   public readUInt8(): number {
     return this.buffer.readUInt8(this.index++);
   }

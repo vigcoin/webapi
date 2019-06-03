@@ -126,7 +126,7 @@ export class TransactionPrefix {
       //   }
       // };
       default:
-        throw new Error('Unknown output variant tag');
+        throw new Error('Reading unknown ouput variant tag');
     }
     return output;
   }
@@ -151,7 +151,7 @@ export class TransactionPrefix {
       //   }
       // };
       default:
-        throw new Error('Unknown output variant tag');
+        throw new Error('Writing unknown output variant tag');
     }
   }
 
@@ -188,7 +188,7 @@ export class TransactionPrefix {
     const sizeOutput = reader.readVarint();
     const outputs = [];
     for (let i = 0; i < sizeOutput; i++) {
-      outputs[i] = outputs.push(TransactionPrefix.readOutput(reader));
+      outputs.push(TransactionPrefix.readOutput(reader));
     }
 
     const extra = TransactionPrefix.readExtra(reader);

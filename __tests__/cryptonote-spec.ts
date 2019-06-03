@@ -5,7 +5,7 @@ import { IBlock } from '../src/cryptonote/types';
 test('Should init genesis', () => {
   const blockConf: Configuration.IBlock = {
     genesisCoinbaseTxHex:
-      '013c01ff000101029b2e4c0281c0b02e7c53291a94d1d0cbff8883f8024f5142ee494ffbbd0880712101398fb9ec4e76aeef124dfb779de715022efd619e63d7516f8b1470266f5da1fd',
+      '013c01ff000101029b2e4c0281c0b02e7c53291a94d1d0cbff8883f8024f5142ee494ffbbd0880712101a9a4569f7e10164a32324b2b878ae32d98be0949ce6e0150ba1d7e54d60969e5',
     version: {
       major: 1,
       minor: 0,
