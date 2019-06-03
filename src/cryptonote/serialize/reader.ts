@@ -37,8 +37,8 @@ export class BufferStreamReader {
 
     do {
       piece = this.buffer[i++];
-      // tslint:disable-next-line: no-bitwise
       if (shift < 28) {
+        // tslint:disable-next-line: no-bitwise
         value += (piece & 0x7f) << shift;
       } else {
         value += Math.pow(2, shift);

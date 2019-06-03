@@ -1,18 +1,18 @@
 import assert = require('assert');
-import { KeyImage, Signature } from '../crypto/types';
+import { Signature } from '../crypto/types';
 import { BufferStreamReader } from './serialize/reader';
+import { BufferStreamWriter } from './serialize/writer';
 import {
   IInputBase,
+  IInputKey,
+  IInputSignature,
   IOutputKey,
   ITransaction,
   ITransactionInput,
+  ITransactionInputTarget,
   ITransactionOutput,
   ITransactionPrefix,
-  IInputKey,
-  IInputSignature,
-  ITransactionInputTarget,
 } from './types';
-import { BufferStreamWriter } from './serialize/writer';
 
 export class TransactionPrefix {
   public static readInput(reader: BufferStreamReader): ITransactionInput {
@@ -194,6 +194,7 @@ export class TransactionPrefix {
     const extra = TransactionPrefix.readExtra(reader);
     return {
       version,
+      // tslint:disable-next-line:object-literal-sort-keys
       unlockTime,
       inputs,
       outputs,
@@ -268,8 +269,8 @@ export class Transaction {
   ) {
     const size = signatures.length;
     for (let i = 0; i < size; i++) {
-      for (let j = 0; j < signatures[i].length; j++) {
-        Transaction.writeSubSignature(writer, signatures[i][j]);
+      for (const signature of signatures[i]) {
+        Transaction.writeSubSignature(writer, signature);
       }
     }
     return signatures;

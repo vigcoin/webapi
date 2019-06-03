@@ -45,10 +45,13 @@ export class BufferStreamWriter {
   public writeVarint(value: number) {
     while (value >= 0x80) {
       this.checkBuffer(1);
+      // tslint:disable-next-line: no-bitwise
       this.buffer.writeUInt8((value | 0x80) & 0xff, this.index++);
+      // tslint:disable-next-line: no-bitwise
       value >>>= 7;
     }
     this.checkBuffer(1);
+    // tslint:disable-next-line: no-bitwise
     this.buffer.writeUInt8(value & 0xff, this.index++);
   }
 

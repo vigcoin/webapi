@@ -1,6 +1,6 @@
 import { createConnection, Socket } from 'net';
-import { Hash, BaseBuffer } from '../crypto/types';
-import { ICoreSyncData, INodeData, Version } from '../cryptonote/p2p';
+import { BaseBuffer, Hash } from '../crypto/types';
+import { ICoreSyncData, INodeData } from '../cryptonote/p2p';
 
 export class Peer {
   private socket: Socket;
