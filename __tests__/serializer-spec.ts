@@ -2,10 +2,12 @@ import { HASH_LENGTH } from '../src/crypto/types';
 import { BufferStreamReader } from '../src/cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../src/cryptonote/serialize/writer';
 import assert = require('assert');
+import { read } from 'fs';
 
 describe('test serializer', () => {
   test('Should write/read types and Buffer', async () => {
     const writer = new BufferStreamWriter(new Buffer(8));
+    // tslint:disable-next-line:no-bitwise
     const uint8 = 1 << 7;
     const uint32 = 0xffffffff;
     const t = new Date().getDate();
@@ -66,8 +68,9 @@ describe('test serializer', () => {
 
   test('Should get shift value', async () => {
     const reader = new BufferStreamReader(new Buffer(0));
-    const value = reader.getShiftValue(28, 1);
     assert(268435456 === reader.getShiftValue(28, 1));
     assert(536870912 === reader.getShiftValue(28, 2));
+    const buffer = reader.getBuffer();
+    assert(buffer.length === 0);
   });
 });

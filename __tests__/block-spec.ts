@@ -85,5 +85,11 @@ describe('test raw block', () => {
 
   test('Should get block hash', () => {
     const hash = Block.hash(block);
+    console.log(
+      hash
+        .toString('hex')
+        .match(/../g)
+        .join(' 0x')
+    );
   });
 });

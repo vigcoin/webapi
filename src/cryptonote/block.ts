@@ -18,10 +18,15 @@ export class Block {
   }
 
   public static hash(block: IBlock): Buffer {
-    const buffer = BaseBuffer.getBuffer().get();
-    const writer = new BufferStreamWriter(buffer);
+    const writer = new BufferStreamWriter(new Buffer(0));
     this.writeBlockHeader(writer, block.header);
-    Transaction.write(writer, block.transaction);
+    const hash = Transaction.hash(block.transaction);
+    console.log(hash);
+    // Transaction.write(writer, block.transaction);
+    const hashes = [hash];
+    for (const h of block.transactionHashes) {
+      hashes.push(h);
+    }
     return writer.getBuffer();
   }
 

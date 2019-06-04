@@ -15,8 +15,6 @@ describe('test block indexes', () => {
 
   test('Should test block index loading', () => {
     blockIndex.init();
-    // const items = blockIndex.getOffsets();
-    // assert(items.length > 0);
     assert(!blockIndex.empty());
   });
 });
