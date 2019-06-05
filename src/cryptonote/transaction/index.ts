@@ -81,7 +81,8 @@ export class Transaction {
     const writer = new BufferStreamWriter(new Buffer(0));
     Transaction.write(writer, transaction);
     const buffer = writer.getBuffer();
-    const hash = Buffer.from(getFastHash(buffer), 'hex');
+    const hashStr = getFastHash(buffer);
+    const hash = Buffer.from(hashStr, 'hex');
     return hash;
   }
 }
