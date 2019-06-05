@@ -1,10 +1,9 @@
 import assert = require('assert');
-import { unlinkSync } from 'fs';
 import * as path from 'path';
 import { Configuration } from '../src/config/types';
 import { Block } from '../src/cryptonote/block';
-import { IBlock, IInputBase, IOutputKey } from '../src/cryptonote/types';
 import { BlockIndex } from '../src/cryptonote/block-index';
+import { IBlock, IInputBase, IOutputKey } from '../src/cryptonote/types';
 
 let block: IBlock;
 
@@ -90,5 +89,29 @@ describe('test raw block', () => {
       'hex'
     );
     assert(hash.equals(temp));
+  });
+});
+
+describe('read from file', () => {
+  const indexFile = path.resolve(__dirname, './vigcoin/blockindexes.dat');
+  const blockFile = path.resolve(__dirname, './vigcoin/blocks.dat');
+  let blockIndex: BlockIndex;
+  // tslint:disable-next-line:no-shadowed-variable
+  let block: Block;
+
+  test('should init index & block', () => {
+    blockIndex = new BlockIndex(indexFile);
+    blockIndex.init();
+    block = new Block(blockFile);
+  });
+
+  test('should read items', () => {
+    const items = blockIndex.getOffsets();
+
+    let offset = 0;
+    for (const item of items) {
+      const blockItem = block.read(offset, item);
+      offset += item;
+    }
   });
 });

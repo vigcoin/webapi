@@ -4,7 +4,12 @@ import { Hash, Signature } from '../../crypto/types';
 import { BufferStreamReader } from '../serialize/reader';
 import { BufferStreamWriter } from '../serialize/writer';
 import { TransactionPrefix } from '../transaction/prefix';
-import { ITransaction, ITransactionInput, ITransactionPrefix } from '../types';
+import {
+  ITransaction,
+  ITransactionEntry,
+  ITransactionInput,
+  ITransactionPrefix,
+} from '../types';
 
 // tslint:disable-next-line: max-classes-per-file
 export class Transaction {
@@ -68,6 +73,24 @@ export class Transaction {
     return {
       prefix,
       signatures: Transaction.readSignatures(reader, prefix),
+    };
+  }
+
+  public static readEntry(reader: BufferStreamReader): ITransactionEntry {
+    const tx = Transaction.read(reader);
+    const size = reader.readVarint();
+
+    const globalOutputIndexes = [];
+
+    for (let i = 0; i < size; i++) {
+      const index = reader.readVarint();
+      globalOutputIndexes.push(index);
+    }
+
+    return {
+      tx,
+      // tslint:disable-next-line:object-literal-sort-keys
+      globalOutputIndexes,
     };
   }
 

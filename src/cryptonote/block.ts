@@ -1,5 +1,6 @@
 import { getFastHash } from '@vigcoin/neon';
 import * as assert from 'assert';
+import { closeSync, openSync, read, readFileSync, readSync } from 'fs';
 import { Configuration } from '../config/types';
 import { BaseBuffer, Hash } from '../crypto/types';
 import { BufferStreamReader } from './serialize/reader';
@@ -17,6 +18,25 @@ export class Block {
     writer.writeVarint(header.timestamp);
     writer.write(header.preHash);
     writer.writeUInt32(header.nonce);
+  }
+
+  public static readBlockHeader(reader: BufferStreamReader): IBlockHeader {
+    const major = reader.readVarint();
+    const minor = reader.readVarint();
+    const timestamp = reader.readVarint();
+    const preHash = reader.readHash();
+    const nonce = reader.readUInt32();
+    return {
+      version: {
+        major,
+        minor,
+        patch: 0,
+      },
+      // tslint:disable-next-line:object-literal-sort-keys
+      timestamp,
+      preHash,
+      nonce,
+    };
   }
 
   public static merkleHash(hashes: Hash[], start: number, end: number) {
@@ -50,6 +70,7 @@ export class Block {
     }
   }
 
+  // Generate Hash for a block
   public static hash(block: IBlock): Buffer {
     const writer = new BufferStreamWriter(new Buffer(0));
     this.writeBlockHeader(writer, block.header);
@@ -69,6 +90,7 @@ export class Block {
     return Buffer.from(getFastHash(finalWriter.getBuffer()), 'hex');
   }
 
+  // Generate genesis block
   public static genesis(conf: Configuration.IBlock): IBlock {
     const genesis = Buffer.from(conf.genesisCoinbaseTxHex, 'hex');
     const reader: BufferStreamReader = new BufferStreamReader(genesis);
@@ -85,5 +107,51 @@ export class Block {
     };
   }
 
-  private block: IBlockEntry;
+  private blocks;
+  private filename: string;
+
+  constructor(filename: string) {
+    this.filename = filename;
+  }
+
+  public read(offset: number, length: number): IBlockEntry {
+    const fd = openSync(this.filename, 'r');
+    const buffer = new Buffer(length);
+    readSync(fd, buffer, 0, length, offset);
+    const reader = new BufferStreamReader(buffer);
+    const header = Block.readBlockHeader(reader);
+    const transaction = Transaction.read(reader);
+    const count = reader.readVarint();
+    const transactionHashes = [];
+    for (let i = 0; i < count; i++) {
+      transactionHashes.push(reader.readHash());
+    }
+    const height = reader.readVarint();
+    const size = reader.readVarint();
+    const difficulty = reader.readVarint();
+    const generatedCoins = reader.readVarint();
+    const transactionSize = reader.readVarint();
+    const transactions = [];
+    for (let i = 0; i < transactionSize; i++) {
+      transactions.push(Transaction.readEntry(reader));
+    }
+    closeSync(fd);
+    return {
+      block: {
+        header,
+        transaction,
+        transactionHashes,
+      },
+      height,
+      size,
+      // tslint:disable-next-line:object-literal-sort-keys
+      difficulty,
+      generatedCoins,
+      transactions,
+    };
+  }
+  public write(offset: number, blockEntry: IBlockEntry) {
+    const fd = openSync(this.filename, 'r+');
+    closeSync(fd);
+  }
 }
