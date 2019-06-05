@@ -107,6 +107,30 @@ export class Block {
     };
   }
 
+  public static readBlock(reader): IBlock {
+    const header = Block.readBlockHeader(reader);
+    const transaction = Transaction.read(reader);
+    const count = reader.readVarint();
+    const transactionHashes = [];
+    for (let i = 0; i < count; i++) {
+      transactionHashes.push(reader.readHash());
+    }
+    return {
+      header,
+      transaction,
+      transactionHashes,
+    };
+  }
+
+  public static writeBlock(writer: BufferStreamWriter, block: IBlock) {
+    Block.writeBlockHeader(writer, block.header);
+    Transaction.write(writer, block.transaction);
+    writer.writeVarint(block.transactionHashes.length);
+    for (const hash of block.transactionHashes) {
+      writer.writeHash(hash);
+    }
+  }
+
   private blocks;
   private filename: string;
 
@@ -119,13 +143,7 @@ export class Block {
     const buffer = new Buffer(length);
     readSync(fd, buffer, 0, length, offset);
     const reader = new BufferStreamReader(buffer);
-    const header = Block.readBlockHeader(reader);
-    const transaction = Transaction.read(reader);
-    const count = reader.readVarint();
-    const transactionHashes = [];
-    for (let i = 0; i < count; i++) {
-      transactionHashes.push(reader.readHash());
-    }
+    const block = Block.readBlock(reader);
     const height = reader.readVarint();
     const size = reader.readVarint();
     const difficulty = reader.readVarint();
@@ -137,11 +155,7 @@ export class Block {
     }
     closeSync(fd);
     return {
-      block: {
-        header,
-        transaction,
-        transactionHashes,
-      },
+      block,
       height,
       size,
       // tslint:disable-next-line:object-literal-sort-keys
@@ -151,6 +165,17 @@ export class Block {
     };
   }
   public write(offset: number, blockEntry: IBlockEntry) {
+    const writer = new BufferStreamWriter(new Buffer(0));
+    Block.writeBlock(writer, blockEntry.block);
+    writer.writeVarint(blockEntry.height);
+    writer.writeVarint(blockEntry.size);
+    writer.writeVarint(blockEntry.difficulty);
+    writer.writeVarint(blockEntry.generatedCoins);
+    writer.writeVarint(blockEntry.transactions.length);
+    for (const tx of blockEntry.transactions) {
+      Transaction.writeEntry(writer, tx);
+    }
+
     const fd = openSync(this.filename, 'r+');
     closeSync(fd);
   }

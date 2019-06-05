@@ -94,6 +94,17 @@ export class Transaction {
     };
   }
 
+  public static writeEntry(
+    writer: BufferStreamWriter,
+    entry: ITransactionEntry
+  ) {
+    Transaction.write(writer, entry.tx);
+    writer.writeVarint(entry.globalOutputIndexes.length);
+    for (const index of entry.globalOutputIndexes) {
+      writer.writeVarint(index);
+    }
+  }
+
   public static write(writer: BufferStreamWriter, transaction: ITransaction) {
     TransactionPrefix.write(writer, transaction.prefix);
     assert(transaction.signatures.length === transaction.prefix.inputs.length);
