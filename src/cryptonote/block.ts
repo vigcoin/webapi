@@ -1,11 +1,11 @@
+import { getFastHash } from '@vigcoin/neon';
+import * as assert from 'assert';
 import { Configuration } from '../config/types';
 import { BaseBuffer, Hash } from '../crypto/types';
 import { BufferStreamReader } from './serialize/reader';
 import { BufferStreamWriter } from './serialize/writer';
 import { Transaction } from './transaction';
 import { IBlock, IBlockEntry, IBlockHeader, ITransaction } from './types';
-import { getFastHash } from '@vigcoin/neon';
-import * as assert from 'assert';
 
 export class Block {
   public static writeBlockHeader(
@@ -27,16 +27,25 @@ export class Block {
     assert(gap < hashes.length);
     switch (gap) {
       case 0:
-        return getFastHash(Buffer.concat([hashes[start], hashes[start]]));
+        return Buffer.from(
+          getFastHash(Buffer.concat([hashes[start], hashes[start]])),
+          'hex'
+        );
       case 1:
-        return getFastHash(Buffer.concat([hashes[start], hashes[start + 1]]));
+        return Buffer.from(
+          getFastHash(Buffer.concat([hashes[start], hashes[start + 1]])),
+          'hex'
+        );
       default:
         const mid = gap / 2;
-        return getFastHash(
-          Buffer.concat([
-            Block.merkleHash(hashes, start, mid),
-            Block.merkleHash(hashes, mid + 1, end),
-          ])
+        return Buffer.from(
+          getFastHash(
+            Buffer.concat([
+              Block.merkleHash(hashes, start, mid),
+              Block.merkleHash(hashes, mid + 1, end),
+            ])
+          ),
+          'hex'
         );
     }
   }
@@ -50,7 +59,14 @@ export class Block {
       hashes.push(h);
     }
     const finalHash = Block.merkleHash(hashes, 0, hashes.length - 1);
-    return finalHash;
+
+    writer.writeHash(finalHash);
+    writer.writeVarint(block.transactionHashes.length + 1);
+
+    const finalWriter = new BufferStreamWriter(new Buffer(0));
+    finalWriter.writeVarint(writer.getBuffer().length);
+    finalWriter.write(writer.getBuffer());
+    return Buffer.from(getFastHash(finalWriter.getBuffer()), 'hex');
   }
 
   public static genesis(conf: Configuration.IBlock): IBlock {

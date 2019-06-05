@@ -85,46 +85,10 @@ describe('test raw block', () => {
 
   test('Should get block hash', () => {
     const hash = Block.hash(block);
-    const temp = Buffer.from([
-      81,
-      131,
-      30,
-      137,
-      17,
-      68,
-      149,
-      122,
-      23,
-      4,
-      105,
-      195,
-      35,
-      123,
-      221,
-      255,
-      230,
-      192,
-      96,
-      73,
-      129,
-      38,
-      117,
-      210,
-      237,
-      178,
-      168,
-      52,
-      82,
-      247,
-      162,
-      80,
-    ]);
-    hash.equals(temp);
-    console.log(
-      hash
-        .toString('hex')
-        .match(/../g)
-        .join(' 0x')
+    const temp = Buffer.from(
+      'ab7f4044c541c1ba28b65010ad6191f8f6c981550141fcbca814e7e026627031',
+      'hex'
     );
+    assert(hash.equals(temp));
   });
 });
