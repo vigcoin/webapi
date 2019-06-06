@@ -12,7 +12,7 @@ export namespace Configuration {
   }
 
   export interface IBlockFile {
-    date: string;
+    data: string;
     index: string;
     cache: string;
     chain: string;

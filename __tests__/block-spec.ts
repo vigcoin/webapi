@@ -107,7 +107,6 @@ describe('read from file', () => {
 
   test('should read items', () => {
     const items = blockIndex.getOffsets();
-
     let offset = 0;
     for (const item of items) {
       const blockItem = block.read(offset, item);

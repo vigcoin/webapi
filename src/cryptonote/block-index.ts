@@ -1,4 +1,11 @@
-import { closeSync, existsSync, openSync, readSync, writeSync } from 'fs';
+import {
+  close,
+  closeSync,
+  existsSync,
+  openSync,
+  readSync,
+  writeSync,
+} from 'fs';
 import { BufferStreamWriter } from './serialize/writer';
 
 export class BlockIndex {
