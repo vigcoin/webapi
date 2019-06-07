@@ -1,5 +1,5 @@
 import { Configuration } from '../config/types';
-import { Block } from './block';
+import { Block } from './block/block';
 import { IBlock } from './types';
 
 export class Currency {

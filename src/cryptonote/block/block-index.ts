@@ -6,7 +6,7 @@ import {
   readSync,
   writeSync,
 } from 'fs';
-import { BufferStreamWriter } from './serialize/writer';
+import { BufferStreamWriter } from '../serialize/writer';
 
 export class BlockIndex {
   private filename: string;

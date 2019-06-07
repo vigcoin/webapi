@@ -8,12 +8,12 @@ import {
   readSync,
   writeSync,
 } from 'fs';
-import { Configuration } from '../config/types';
-import { BaseBuffer, Hash } from '../crypto/types';
-import { BufferStreamReader } from './serialize/reader';
-import { BufferStreamWriter } from './serialize/writer';
-import { Transaction } from './transaction';
-import { IBlock, IBlockEntry, IBlockHeader, ITransaction } from './types';
+import { Configuration } from '../../config/types';
+import { BaseBuffer, Hash } from '../../crypto/types';
+import { BufferStreamReader } from '../serialize/reader';
+import { BufferStreamWriter } from '../serialize/writer';
+import { Transaction } from '../transaction';
+import { IBlock, IBlockEntry, IBlockHeader, ITransaction } from '../types';
 
 export class Block {
   public static writeBlockHeader(

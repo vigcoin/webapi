@@ -1,7 +1,7 @@
 import assert = require('assert');
 import { unlinkSync } from 'fs';
 import * as path from 'path';
-import { BlockIndex } from '../src/cryptonote/block-index';
+import { BlockIndex } from '../src/cryptonote/block/block-index';
 
 let blockIndex: BlockIndex;
 

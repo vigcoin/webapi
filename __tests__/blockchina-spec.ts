@@ -1,10 +1,10 @@
 import assert = require('assert');
 import * as path from 'path';
 import { Configuration } from '../src/config/types';
-import { Block } from '../src/cryptonote/block';
-import { BlockIndex } from '../src/cryptonote/block-index';
+import { Block } from '../src/cryptonote/block/block';
+import { BlockIndex } from '../src/cryptonote/block/block-index';
+import { BlockChain } from '../src/cryptonote/block/blockchain';
 import { IBlock, IInputBase, IOutputKey } from '../src/cryptonote/types';
-import { BlockChain } from '../src/cryptonote/blockchain';
 
 let block: IBlock;
 

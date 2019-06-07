@@ -1,8 +1,8 @@
 import * as assert from 'assert';
-import { Configuration } from '../config/types';
+import { Configuration } from '../../config/types';
+import { IBlockEntry } from '../types';
 import { Block } from './block';
 import { BlockIndex } from './block-index';
-import { IBlockEntry } from './types';
 
 // tslint:disable-next-line:max-classes-per-file
 export class BlockChain {
@@ -36,4 +36,6 @@ export class BlockChain {
     assert(height >= 0);
     return this.block.read(this.offsets[height], this.offsets[height + 1]);
   }
+
+  public synchronize() {}
 }
