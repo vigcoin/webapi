@@ -15,7 +15,7 @@ export class BufferStreamWriter {
   public checkBuffer(size: number) {
     const diff = this.buffer.length - this.index - size;
     if (diff < 0) {
-      const buffer = new Buffer(Math.abs(diff));
+      const buffer = Buffer.alloc(Math.abs(diff));
       this.buffer = Buffer.concat([this.buffer, buffer]);
     }
   }

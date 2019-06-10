@@ -64,7 +64,7 @@ export class BufferStreamReader {
   }
 
   public read(i: number) {
-    const buffer = new Buffer(i);
+    const buffer = Buffer.alloc(i);
     this.buffer.copy(buffer, 0, this.index, this.index + i);
     this.index += i;
     return buffer;

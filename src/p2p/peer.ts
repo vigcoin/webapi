@@ -2,6 +2,10 @@ import { createConnection, Socket } from 'net';
 import { BaseBuffer, Hash } from '../crypto/types';
 import { ICoreSyncData, INodeData } from '../cryptonote/p2p';
 
+import * as debug from 'debug';
+
+const logger = debug('vigcoin:p2p:peer');
+
 export class Peer {
   private socket: Socket;
   private port: number;
@@ -16,11 +20,15 @@ export class Peer {
   }
   public async start() {
     return new Promise(async (resolve, reject) => {
+      logger('start connecting: ' + this.host + ':' + this.port);
       const s = createConnection({ port: this.port, host: this.host }, e => {
         if (e) {
+          logger('Error connection: ' + this.host + ':' + this.port);
+          logger(e);
           s.destroy();
           reject(e);
         } else {
+          logger('Successfually connection: ' + this.host + ':' + this.port);
           this.onConnected();
           resolve();
         }
@@ -30,6 +38,7 @@ export class Peer {
         await this.update(data);
       });
       s.on('end', async () => {
+        logger('p2p connection ended: ' + this.host + ':' + this.port);
         await this.onEnd();
       });
     });

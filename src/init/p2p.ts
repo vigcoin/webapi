@@ -11,7 +11,7 @@ config.isAllowLocalIp = true;
 config.seedNode = [
   { port: 19800, host: '69.171.73.252' },
   { port: 19800, host: '39.108.160.252' },
-  // { port: 19800, host: '144.202.10.183' },
+  { port: 19800, host: '144.202.10.183' },
 ];
 
 const networkPeer: INetworkPeer = {

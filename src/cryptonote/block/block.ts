@@ -79,7 +79,7 @@ export class Block {
 
   // Generate Hash for a block
   public static hash(block: IBlock): Buffer {
-    const writer = new BufferStreamWriter(new Buffer(0));
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
     this.writeBlockHeader(writer, block.header);
     const hash = Transaction.hash(block.transaction);
     const hashes = [hash];
@@ -91,7 +91,7 @@ export class Block {
     writer.writeHash(finalHash);
     writer.writeVarint(block.transactionHashes.length + 1);
 
-    const finalWriter = new BufferStreamWriter(new Buffer(0));
+    const finalWriter = new BufferStreamWriter(Buffer.alloc(0));
     finalWriter.writeVarint(writer.getBuffer().length);
     finalWriter.write(writer.getBuffer());
     return Buffer.from(getFastHash(finalWriter.getBuffer()), 'hex');
@@ -147,7 +147,7 @@ export class Block {
 
   public read(offset: number, length: number): IBlockEntry {
     const fd = openSync(this.filename, 'r');
-    const buffer = new Buffer(length);
+    const buffer = Buffer.alloc(length);
     readSync(fd, buffer, 0, length, offset);
     const reader = new BufferStreamReader(buffer);
     const block = Block.readBlock(reader);
@@ -172,7 +172,7 @@ export class Block {
     };
   }
   public write(offset: number, blockEntry: IBlockEntry) {
-    const writer = new BufferStreamWriter(new Buffer(0));
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
     Block.writeBlock(writer, blockEntry.block);
     writer.writeVarint(blockEntry.height);
     writer.writeVarint(blockEntry.size);

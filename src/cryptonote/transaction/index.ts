@@ -112,7 +112,7 @@ export class Transaction {
   }
 
   public static hash(transaction: ITransaction): Hash {
-    const writer = new BufferStreamWriter(new Buffer(0));
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
     Transaction.write(writer, transaction);
     const buffer = writer.getBuffer();
     const hashStr = getFastHash(buffer);

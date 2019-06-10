@@ -39,7 +39,7 @@ export class BlockIndex {
   }
 
   public writeHeight(height: number) {
-    const buffer = new Buffer(4);
+    const buffer = Buffer.alloc(4);
     buffer.writeInt32LE(height, 0);
     writeSync(this.fd, buffer);
     buffer.writeInt32LE(0, 0);
@@ -47,13 +47,13 @@ export class BlockIndex {
   }
 
   public writeItem(offset: number) {
-    const buffer = new Buffer(4);
+    const buffer = Buffer.alloc(4);
     buffer.writeInt32LE(offset, 0);
     writeSync(this.fd, buffer);
   }
 
   public readHeight(): number {
-    const buffer = new Buffer(8);
+    const buffer = Buffer.alloc(8);
     readSync(this.fd, buffer, 0, buffer.length, null);
     const low = buffer.readUInt32LE(0);
     // const height = buffer.readInt32LE(4);
@@ -62,7 +62,7 @@ export class BlockIndex {
 
   public readItems() {
     for (let i = 0; i < this.height; i++) {
-      const buffer = new Buffer(4);
+      const buffer = Buffer.alloc(4);
       readSync(this.fd, buffer, 0, buffer.length, null);
       const offset = buffer.readInt32LE(0);
       this.offsets[i] = offset;

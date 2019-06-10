@@ -1,3 +1,4 @@
+import * as debug from 'debug';
 import { createServer, Server, Socket } from 'net';
 import * as path from 'path';
 import {
@@ -7,6 +8,9 @@ import {
   Version,
 } from '../cryptonote/p2p';
 import { Peer } from './peer';
+
+const logger = debug('vigcoin:p2p:server');
+
 export class P2PServer {
   private config: IServerConfig;
   private folder: string;
@@ -36,6 +40,7 @@ export class P2PServer {
   }
 
   public async start() {
+    logger('p2p server bootstraping...');
     // await this.init();
     await this.startServer();
     await this.connectPeers();

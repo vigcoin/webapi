@@ -3,11 +3,11 @@ import { type } from 'os';
 
 export const HASH_LENGTH = 32;
 export const SIGNATURE_LENGTH = 64;
-export const NULL_HASH: Buffer = new Buffer(HASH_LENGTH);
+export const NULL_HASH: Buffer = Buffer.alloc(HASH_LENGTH);
 
 export class BaseBuffer {
   public static getBuffer(length = HASH_LENGTH) {
-    return new BaseBuffer(new Buffer(HASH_LENGTH));
+    return new BaseBuffer(Buffer.alloc(HASH_LENGTH));
   }
   private data: Buffer;
 
