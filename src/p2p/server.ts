@@ -4,9 +4,11 @@ import * as path from 'path';
 import {
   INetworkPeer,
   INodeData,
+  IPeerIDType,
   IServerConfig,
   Version,
 } from '../cryptonote/p2p';
+import { P2pConnectionContext } from './connection';
 import { Peer } from './peer';
 
 const logger = debug('vigcoin:p2p:server');
@@ -21,8 +23,10 @@ export class P2PServer {
   private server: Server;
   private networkPeer: INetworkPeer;
   private networkId: number[];
-  private peerId: number;
+  private peerId: IPeerIDType;
   private hidePort: boolean = false;
+  private connections: P2pConnectionContext[];
+
   constructor(
     config: IServerConfig,
     networkPeer: INetworkPeer,
@@ -78,7 +82,7 @@ export class P2PServer {
   protected async startServer() {
     return new Promise((resolve, reject) => {
       const server = createServer(s => {
-        this.onClient(s);
+        this.onIncomingConnection(s);
       });
       const { port, host } = this.config;
       server.listen({ port, host }, e => {
@@ -106,10 +110,11 @@ export class P2PServer {
     }
   }
 
-  protected onClient(s: Socket) {
+  protected onIncomingConnection(s: Socket) {
     if (this.clientList.indexOf(s) === -1) {
       this.clientList.push(s);
     }
+    this.connections.push(new P2pConnectionContext(s));
   }
 
   protected handshake(peer: Peer) {

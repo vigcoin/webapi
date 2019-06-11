@@ -20,8 +20,18 @@ export class BufferStreamReader {
     return this.buffer.readUInt8(this.index++);
   }
 
+  public readInt8(): number {
+    return this.buffer.readInt8(this.index++);
+  }
+
   public readUInt32(): number {
     const v = this.buffer.readUInt32LE(this.index);
+    this.index += 4;
+    return v;
+  }
+
+  public readInt32(): number {
+    const v = this.buffer.readInt32LE(this.index);
     this.index += 4;
     return v;
   }

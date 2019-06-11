@@ -6,14 +6,14 @@ export interface IPeer {
 }
 
 export interface IPeerEntry {
-  id: number;
+  id: number; // uint64
   host: IPeer;
-  lastSeen: Date;
+  lastSeen: Date; // uint64
 }
 
 export interface IConnectionEntry {
+  id: number; // uint64
   host: IPeer;
-  id: number;
   isIncome: boolean;
 }
 
@@ -63,4 +63,34 @@ export interface IServerConfig {
   exclusiveNode?: IPeer[];
   seedNode?: IPeer[];
   hideMyPort?: number;
+}
+
+export type IPeerIDType = number; // uint64
+export type uuid = string; // boost::uuids::uuid
+
+export enum EMessageType {
+  COMMAND,
+  REPLY,
+  NOTIFY,
+}
+
+export interface IMessage {
+  type: EMessageType;
+  command: number; // uint32
+  buffer: Buffer;
+  code: number; // int32
+}
+
+export interface ICommand<ID, REQ, RES> {
+  id: ID;
+  request: REQ;
+  response: RES;
+}
+
+export interface IPeerNodeData {
+  networkId: uuid;
+  version: number; // uint8
+  localTime: Date; // uint64
+  myPort: number; // uint32
+  peerId: number; // uint64
 }
