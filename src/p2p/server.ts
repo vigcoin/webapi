@@ -99,7 +99,7 @@ export class P2PServer {
   protected async connectPeers() {
     const seeds = this.config.seedNode;
     for (const seed of seeds) {
-      const peer = new Peer(seed.port, seed.host);
+      const peer = new Peer(seed.port, seed.ip);
       try {
         await peer.start();
         this.peerList.push(peer);

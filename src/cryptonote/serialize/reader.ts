@@ -1,5 +1,6 @@
 import assert = require('assert');
 import { HASH_LENGTH } from '../../crypto/types';
+import { int64, uint64 } from '../types';
 
 export class BufferStreamReader {
   private buffer: Buffer;
@@ -16,12 +17,28 @@ export class BufferStreamReader {
     return this.buffer;
   }
 
+  public getRemainedSize() {
+    return this.buffer.length - this.index;
+  }
+
   public readUInt8(): number {
     return this.buffer.readUInt8(this.index++);
   }
 
   public readInt8(): number {
     return this.buffer.readInt8(this.index++);
+  }
+
+  public readInt16(): number {
+    const v = this.buffer.readInt16LE(this.index);
+    this.index += 2;
+    return v;
+  }
+
+  public readUInt16(): number {
+    const v = this.buffer.readUInt16LE(this.index);
+    this.index += 2;
+    return v;
   }
 
   public readUInt32(): number {
@@ -36,10 +53,24 @@ export class BufferStreamReader {
     return v;
   }
 
-  public readUInt64(): number {
+  public readInt64(): int64 {
+    return this.readDouble();
+  }
+
+  public readUInt64(): uint64 {
+    return this.readDouble();
+  }
+
+  public readDouble(): number {
     const v = this.buffer.readDoubleLE(this.index);
     this.index += 8;
     return v;
+  }
+
+  public readDate(): Date {
+    const v = this.buffer.readDoubleLE(this.index);
+    this.index += 8;
+    return new Date(v);
   }
 
   public getShiftValue(shift: number, piece: number) {

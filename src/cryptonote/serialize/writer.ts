@@ -37,8 +37,22 @@ export class BufferStreamWriter {
   }
 
   public writeUInt64(value: number) {
+    this.writeDouble(value);
+  }
+
+  public writeInt64(value: number) {
+    this.writeDouble(value);
+  }
+
+  public writeDouble(value: number) {
     this.checkBuffer(8);
     this.buffer.writeDoubleLE(value, this.index);
+    this.index += 8;
+  }
+
+  public writeDate(value: Date) {
+    this.checkBuffer(8);
+    this.buffer.writeDoubleLE(value.getTime(), this.index);
     this.index += 8;
   }
 

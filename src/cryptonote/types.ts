@@ -1,20 +1,30 @@
 import { Hash, KeyImage, PublicKey, Signature } from '../crypto/types';
 
+export type uint64 = number;
+export type uint32 = number;
+export type uint16 = number;
+export type uint8 = number;
+
+export type int64 = number;
+export type int32 = number;
+export type int16 = number;
+export type int8 = number;
+
 // Input Transactions
 export interface IInputBase {
-  blockIndex: number;
+  blockIndex: uint32;
 }
 
 export interface IInputKey {
-  amount: number;
-  outputIndexes: number[];
+  amount: uint64;
+  outputIndexes: uint32[];
   keyImage: KeyImage;
 }
 
 export interface IInputSignature {
-  amount: number;
-  count: number;
-  outputIndex: number;
+  amount: uint64;
+  count: uint8;
+  outputIndex: uint32;
 }
 
 // Output Transactions
@@ -25,29 +35,29 @@ export interface IOutputKey {
 
 export interface IOutputSignature {
   keys: PublicKey[];
-  count: number;
+  count: uint8;
 }
 
 export type ITransactionInputTarget = IInputBase | IInputKey | IInputSignature;
 export type ITransactionOutputTarget = IOutputKey | IOutputSignature;
 
 export interface ITransactionOutput {
-  tag: number;
-  amount: number;
+  tag: uint8;
+  amount: uint64;
   target: ITransactionOutputTarget;
 }
 
 export interface ITransactionInput {
-  tag: number;
+  tag: uint8;
   target: ITransactionInputTarget;
 }
 
 export interface ITransactionPrefix {
-  version: number;
-  unlockTime: number;
+  version: uint8;
+  unlockTime: uint64;
   inputs: ITransactionInput[];
   outputs: ITransactionOutput[];
-  extra: Buffer;
+  extra: Buffer; // uint8[];
 }
 
 export interface ITransaction {
@@ -56,9 +66,9 @@ export interface ITransaction {
 }
 
 export interface IVersion {
-  major: number;
-  minor: number;
-  patch: number;
+  major: uint8;
+  minor: uint8;
+  patch: uint8;
 }
 
 export interface IBlockHeader {

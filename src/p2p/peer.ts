@@ -1,22 +1,30 @@
 import { createConnection, Socket } from 'net';
 import { BaseBuffer, Hash } from '../crypto/types';
-import { ICoreSyncData, INodeData } from '../cryptonote/p2p';
+import {
+  ICoreSyncData,
+  INodeData,
+  IP2Number,
+  IP2String,
+} from '../cryptonote/p2p';
 
 import * as debug from 'debug';
+import { uint32 } from '../cryptonote/types';
 
 const logger = debug('vigcoin:p2p:peer');
 
 export class Peer {
   private socket: Socket;
-  private port: number;
+  private port: uint32;
+  private ip: uint32;
   private host: string;
   private id: number;
   private connected: boolean = false;
   private started: Date;
 
-  constructor(port: number, host: string) {
+  constructor(port: uint32, ip: uint32) {
     this.port = port;
-    this.host = host;
+    this.ip = ip;
+    this.host = IP2String(ip);
   }
   public async start() {
     return new Promise(async (resolve, reject) => {
