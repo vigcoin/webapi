@@ -24,10 +24,34 @@ export class BufferStreamWriter {
     return this.buffer;
   }
 
+  public writeInt8(value: number) {
+    this.checkBuffer(1);
+    this.buffer.writeInt8(value, this.index);
+    this.index += 1;
+  }
+
   public writeUInt8(value: number) {
     this.checkBuffer(1);
     this.buffer.writeUInt8(value, this.index);
     this.index += 1;
+  }
+
+  public writeInt16(value: number) {
+    this.checkBuffer(2);
+    this.buffer.writeInt16LE(value, this.index);
+    this.index += 2;
+  }
+
+  public writeUInt16(value: number) {
+    this.checkBuffer(2);
+    this.buffer.writeUInt16LE(value, this.index);
+    this.index += 2;
+  }
+
+  public writeInt32(value: number) {
+    this.checkBuffer(4);
+    this.buffer.writeInt32LE(value, this.index);
+    this.index += 4;
   }
 
   public writeUInt32(value: number) {
@@ -36,11 +60,11 @@ export class BufferStreamWriter {
     this.index += 4;
   }
 
-  public writeUInt64(value: number) {
+  public writeInt64(value: number) {
     this.writeDouble(value);
   }
 
-  public writeInt64(value: number) {
+  public writeUInt64(value: number) {
     this.writeDouble(value);
   }
 

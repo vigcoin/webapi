@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import { BufferStreamReader } from '../../src/cryptonote/serialize/reader';
+import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';
 import {
   BIN_KV_SERIALIZE_FLAG_ARRAY,
   BIN_KV_SERIALIZE_TYPE_BOOL,
@@ -19,6 +20,8 @@ import {
   readJSONObject,
   readJSONValue,
   readJSONVarint,
+  writeJSON,
+  writeJSONVarint,
 } from '../../src/p2p/protocol/json';
 
 describe('test json stream', () => {
@@ -29,11 +32,25 @@ describe('test json stream', () => {
     assert(value === 0);
   });
 
+  test('should write varint uint8 to stream', async () => {
+    const buffer = Buffer.from([]);
+    const writer = new BufferStreamWriter(buffer);
+    writeJSONVarint(writer, 0);
+    assert(writer.getBuffer().equals(Buffer.from([0])));
+  });
+
   test('should read varint uint16 from stream', async () => {
     const buffer = Buffer.from([1, 1]);
     const reader = new BufferStreamReader(buffer);
     const value = readJSONVarint(reader);
     assert(value === 64);
+  });
+
+  test('should write varint uint16 to stream', async () => {
+    const buffer = Buffer.from([]);
+    const writer = new BufferStreamWriter(buffer);
+    writeJSONVarint(writer, 64);
+    assert(writer.getBuffer().equals(Buffer.from([1, 1])));
   });
 
   test('should read varint uint32 from stream', async () => {
@@ -43,11 +60,24 @@ describe('test json stream', () => {
     assert(value === 4210752);
   });
 
+  test('should write varint uint32 to stream', async () => {
+    const buffer = Buffer.from([]);
+    const writer = new BufferStreamWriter(buffer);
+    writeJSONVarint(writer, 4210752);
+    assert(writer.getBuffer().equals(Buffer.from([2, 1, 1, 1])));
+  });
+
   test('should read varint uint64 from stream', async () => {
     const buffer = Buffer.from([3, 1, 1, 1, 2, 3, 4, 5]);
     const reader = new BufferStreamReader(buffer);
     const value = readJSONVarint(reader);
     assert(value === 21053632);
+  });
+
+  test('should write varint uint64 to stream', async () => {
+    const buffer = Buffer.from([]);
+    const writer = new BufferStreamWriter(buffer);
+    writeJSONVarint(writer, 21053632);
   });
 
   test('should read json value int8 from stream', async () => {
@@ -290,5 +320,12 @@ describe('test json stream', () => {
       0x9f,
     ]);
     assert(newPeerId.equals(json.peer_id));
+  });
+
+  test('should write json stream', async () => {
+    const stream = new BufferStreamWriter(Buffer.from([]));
+    const zero = [0x01, 0x011, 0x01, 0x01, 0x01, 0x01, 0x02, 0x01, 0x01, 0x00];
+    writeJSON(stream, JSON.parse('{}'));
+    assert(stream.getBuffer().equals(Buffer.from(zero)));
   });
 });

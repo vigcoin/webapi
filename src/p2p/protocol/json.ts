@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
+import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 
 const PORTABLE_STORAGE_SIGNATUREA = 0x01011101;
 const PORTABLE_STORAGE_SIGNATUREB = 0x01020101; // bender's nightmare
@@ -44,6 +45,18 @@ export function readKVBlockHeader(reader: BufferStreamReader): IKVBlockHeader {
   };
 }
 
+export function writeKVBlockHeader(writer: BufferStreamWriter) {
+  const header: IKVBlockHeader = {
+    signatureA: PORTABLE_STORAGE_SIGNATUREA,
+    signatureB: PORTABLE_STORAGE_SIGNATUREB,
+    version: PORTABLE_STORAGE_FORMAT_VER,
+  };
+
+  writer.writeUInt32(header.signatureA);
+  writer.writeUInt32(header.signatureB);
+  writer.writeUInt8(header.version);
+}
+
 export function readJSONVarint(reader: BufferStreamReader) {
   const byte = reader.readInt8();
   // tslint:disable-next-line:no-bitwise
@@ -76,6 +89,41 @@ export function readJSONVarint(reader: BufferStreamReader) {
   return value;
 }
 
+export function writeJSONVarint(writer: BufferStreamWriter, val: number) {
+  let mask = PORTABLE_RAW_SIZE_MARK_BYTE;
+  // tslint:disable-next-line:no-bitwise
+  if (val > 0xff >>> 2) {
+    mask = PORTABLE_RAW_SIZE_MARK_WORD;
+  }
+  // tslint:disable-next-line:no-bitwise
+  if (val > 0xffff >>> 2) {
+    mask = PORTABLE_RAW_SIZE_MARK_DWORD;
+  }
+  // tslint:disable-next-line:no-bitwise
+  if (val > 0xffffffff >>> 2) {
+    mask = PORTABLE_RAW_SIZE_MARK_INT64;
+  }
+  // tslint:disable-next-line:no-bitwise
+  val <<= 2;
+  // tslint:disable-next-line:no-bitwise
+  val |= mask;
+  switch (mask) {
+    case PORTABLE_RAW_SIZE_MARK_BYTE:
+      writer.writeUInt8(val);
+      break;
+    case PORTABLE_RAW_SIZE_MARK_WORD:
+      writer.writeUInt16(val);
+      break;
+    case PORTABLE_RAW_SIZE_MARK_DWORD:
+      writer.writeUInt32(val);
+      break;
+    // temporary not used!
+    case PORTABLE_RAW_SIZE_MARK_INT64:
+      writer.writeUInt64(val);
+      break;
+  }
+}
+
 export function readJSONName(reader: BufferStreamReader): string {
   const length = reader.readInt8();
   assert(length >= 0);
@@ -83,9 +131,19 @@ export function readJSONName(reader: BufferStreamReader): string {
   return name.toString('utf8');
 }
 
+export function writeJSONName(writer: BufferStreamWriter, name: string) {
+  writer.writeInt8(name.length);
+  writer.write(Buffer.from(name, 'utf8'));
+}
+
 export function readJSONString(reader: BufferStreamReader) {
   const size = readJSONVarint(reader);
   return String(reader.read(size));
+}
+
+export function writeJSONString(writer: BufferStreamWriter, data: string) {
+  writeJSONVarint(writer, data.length);
+  writer.write(Buffer.from(data, 'utf8'));
 }
 
 export function readJSONValue(reader: BufferStreamReader, type: number) {
@@ -118,6 +176,7 @@ export function readJSONValue(reader: BufferStreamReader, type: number) {
       throw new Error('Unknown data type!');
   }
 }
+
 export function readJSONArray(reader: BufferStreamReader, type: number): any[] {
   const arr = [];
   const size = readJSONVarint(reader);
@@ -137,6 +196,10 @@ export function readJSONObject(reader: BufferStreamReader) {
   return readJSONValue(reader, type);
 }
 
+export function writeJSONObject(writer: BufferStreamWriter, object: JSON) {
+  return;
+}
+
 export function readJSON(reader: BufferStreamReader): JSON {
   const header = readKVBlockHeader(reader);
   assert(header.signatureA === PORTABLE_STORAGE_SIGNATUREA);
@@ -149,4 +212,14 @@ export function readJSON(reader: BufferStreamReader): JSON {
     obj[name] = readJSONObject(reader);
   }
   return obj;
+}
+
+export function writeJSON(writer: BufferStreamWriter, json: JSON) {
+  writeKVBlockHeader(writer);
+  const keys = Object.keys(json);
+  writeJSONVarint(writer, keys.length);
+  for (const key of keys) {
+    writeJSONName(writer, key);
+    writeJSONObject(writer, json[key]);
+  }
 }
