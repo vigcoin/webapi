@@ -12,20 +12,20 @@ const PORTABLE_RAW_SIZE_MARK_WORD = 1;
 const PORTABLE_RAW_SIZE_MARK_DWORD = 2;
 const PORTABLE_RAW_SIZE_MARK_INT64 = 3;
 
-const BIN_KV_SERIALIZE_TYPE_INT64 = 1;
-const BIN_KV_SERIALIZE_TYPE_INT32 = 2;
-const BIN_KV_SERIALIZE_TYPE_INT16 = 3;
-const BIN_KV_SERIALIZE_TYPE_INT8 = 4;
-const BIN_KV_SERIALIZE_TYPE_UINT64 = 5;
-const BIN_KV_SERIALIZE_TYPE_UINT32 = 6;
-const BIN_KV_SERIALIZE_TYPE_UINT16 = 7;
-const BIN_KV_SERIALIZE_TYPE_UINT8 = 8;
-const BIN_KV_SERIALIZE_TYPE_DOUBLE = 9;
-const BIN_KV_SERIALIZE_TYPE_STRING = 10;
-const BIN_KV_SERIALIZE_TYPE_BOOL = 11;
-const BIN_KV_SERIALIZE_TYPE_OBJECT = 12;
-const BIN_KV_SERIALIZE_TYPE_ARRAY = 13;
-const BIN_KV_SERIALIZE_FLAG_ARRAY = 0x80;
+export const BIN_KV_SERIALIZE_TYPE_INT64 = 1;
+export const BIN_KV_SERIALIZE_TYPE_INT32 = 2;
+export const BIN_KV_SERIALIZE_TYPE_INT16 = 3;
+export const BIN_KV_SERIALIZE_TYPE_INT8 = 4;
+export const BIN_KV_SERIALIZE_TYPE_UINT64 = 5;
+export const BIN_KV_SERIALIZE_TYPE_UINT32 = 6;
+export const BIN_KV_SERIALIZE_TYPE_UINT16 = 7;
+export const BIN_KV_SERIALIZE_TYPE_UINT8 = 8;
+export const BIN_KV_SERIALIZE_TYPE_DOUBLE = 9;
+export const BIN_KV_SERIALIZE_TYPE_STRING = 10;
+export const BIN_KV_SERIALIZE_TYPE_BOOL = 11;
+export const BIN_KV_SERIALIZE_TYPE_OBJECT = 12;
+export const BIN_KV_SERIALIZE_TYPE_ARRAY = 13;
+export const BIN_KV_SERIALIZE_FLAG_ARRAY = 0x80;
 
 export interface IKVBlockHeader {
   signatureA: number; // uint32
@@ -59,6 +59,7 @@ export function readJSONVarint(reader: BufferStreamReader) {
     case PORTABLE_RAW_SIZE_MARK_DWORD:
       bytesLeft = 3;
       break;
+    // temporary not used!
     case PORTABLE_RAW_SIZE_MARK_INT64:
       bytesLeft = 7;
       break;
@@ -106,26 +107,24 @@ export function readJSONValue(reader: BufferStreamReader, type: number) {
     case BIN_KV_SERIALIZE_TYPE_UINT8:
       return reader.readUInt8();
     case BIN_KV_SERIALIZE_TYPE_DOUBLE:
-      return reader.readUInt8();
+      return reader.readDouble();
     case BIN_KV_SERIALIZE_TYPE_BOOL:
       return reader.readUInt8() !== 0;
     case BIN_KV_SERIALIZE_TYPE_STRING:
       return readJSONString(reader);
     case BIN_KV_SERIALIZE_TYPE_OBJECT:
       return readJSONObject(reader);
-    case BIN_KV_SERIALIZE_TYPE_ARRAY:
-      return readJSONArray(reader, type);
     default:
       throw new Error('Unknown data type!');
-      break;
   }
 }
-export function readJSONArray(reader: BufferStreamReader, type: number) {
+export function readJSONArray(reader: BufferStreamReader, type: number): any[] {
   const arr = [];
   const size = readJSONVarint(reader);
   for (let i = 0; i < size; i++) {
     arr.push(readJSONValue(reader, type));
   }
+  return arr;
 }
 export function readJSONObject(reader: BufferStreamReader) {
   let type = reader.readUInt8();
