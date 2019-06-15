@@ -1,6 +1,8 @@
 import * as assert from 'assert';
 import { BufferStreamReader } from '../../src/cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';
+import { version } from 'punycode';
+import { readJSONObjectValue } from '../../src/p2p/protocol/json';
 import {
   BIN_KV_SERIALIZE_FLAG_ARRAY,
   BIN_KV_SERIALIZE_TYPE_BOOL,
@@ -242,10 +244,10 @@ describe('test json stream', () => {
 
   test('should read json object from stream', async () => {
     // tslint:disable-next-line:no-bitwise
-    const buffer = Buffer.from([BIN_KV_SERIALIZE_TYPE_INT8, 97]);
+    const buffer = Buffer.from([0]);
     const reader = new BufferStreamReader(buffer);
     const value = readJSONValue(reader, BIN_KV_SERIALIZE_TYPE_OBJECT);
-    assert(value === 97);
+    assert(Object.keys(value).length === 0);
   });
 
   test('should read json object array from stream', async () => {
@@ -259,13 +261,13 @@ describe('test json stream', () => {
       98,
     ]);
     const reader = new BufferStreamReader(buffer);
-    const array = readJSONObject(reader);
+    const array = readJSONObjectValue(reader);
     assert(array.length === 2);
     assert(array[0] === 97);
     assert(array[1] === 98);
   });
 
-  test('should read json stream', async () => {
+  test('should read PING::ID json stream', async () => {
     const buffer = [
       0x01,
       0x11,

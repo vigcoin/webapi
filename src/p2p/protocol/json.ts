@@ -185,7 +185,7 @@ export function readJSONArray(reader: BufferStreamReader, type: number): any[] {
   }
   return arr;
 }
-export function readJSONObject(reader: BufferStreamReader) {
+export function readJSONObjectValue(reader: BufferStreamReader) {
   let type = reader.readUInt8();
   // tslint:disable-next-line:no-bitwise
   if (type & BIN_KV_SERIALIZE_FLAG_ARRAY) {
@@ -193,11 +193,31 @@ export function readJSONObject(reader: BufferStreamReader) {
     type &= ~BIN_KV_SERIALIZE_FLAG_ARRAY;
     return readJSONArray(reader, type);
   }
-  return readJSONValue(reader, type);
+  const obj = readJSONValue(reader, type);
+  return obj;
 }
 
-export function writeJSONObject(writer: BufferStreamWriter, object: JSON) {
+export function writeJSONObjectValue(writer: BufferStreamWriter, object: any) {
   return;
+}
+
+export function readJSONObject(reader: BufferStreamReader) {
+  const count = readJSONVarint(reader);
+  const obj: any = {};
+  for (let i = 0; i < count; i++) {
+    const name = readJSONName(reader);
+    obj[name] = readJSONObjectValue(reader);
+  }
+  return obj;
+}
+
+export function writeJSONObject(writer: BufferStreamWriter, json: JSON) {
+  const keys = Object.keys(json);
+  writeJSONVarint(writer, keys.length);
+  for (const key of keys) {
+    writeJSONName(writer, key);
+    writeJSONObjectValue(writer, json[key]);
+  }
 }
 
 export function readJSON(reader: BufferStreamReader): JSON {
@@ -205,21 +225,10 @@ export function readJSON(reader: BufferStreamReader): JSON {
   assert(header.signatureA === PORTABLE_STORAGE_SIGNATUREA);
   assert(header.signatureB === PORTABLE_STORAGE_SIGNATUREB);
   assert(header.version === PORTABLE_STORAGE_FORMAT_VER);
-  const count = readJSONVarint(reader);
-  const obj: any = {};
-  for (let i = 0; i < count; i++) {
-    const name = readJSONName(reader);
-    obj[name] = readJSONObject(reader);
-  }
-  return obj;
+  return readJSONObject(reader);
 }
 
 export function writeJSON(writer: BufferStreamWriter, json: JSON) {
   writeKVBlockHeader(writer);
-  const keys = Object.keys(json);
-  writeJSONVarint(writer, keys.length);
-  for (const key of keys) {
-    writeJSONName(writer, key);
-    writeJSONObject(writer, json[key]);
-  }
+  writeJSONObject(writer, json);
 }
