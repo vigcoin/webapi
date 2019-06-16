@@ -1,4 +1,5 @@
 import * as assert from 'assert';
+import { ICoreSyncData, IPeerNodeData } from '../../cryptonote/p2p';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 
@@ -177,6 +178,42 @@ export function readJSONValue(reader: BufferStreamReader, type: number) {
   }
 }
 
+export function writeJSONValue(
+  writer: BufferStreamWriter,
+  data: any,
+  type: number
+) {
+  switch (type) {
+    case BIN_KV_SERIALIZE_TYPE_INT64:
+      return writer.writeDouble(data);
+    case BIN_KV_SERIALIZE_TYPE_INT32:
+      return writer.writeInt32(data);
+    case BIN_KV_SERIALIZE_TYPE_INT16:
+      return writer.writeInt16(data);
+    case BIN_KV_SERIALIZE_TYPE_INT8:
+      return writer.writeInt8(data);
+    case BIN_KV_SERIALIZE_TYPE_UINT64:
+      return writer.writeDouble(data);
+    case BIN_KV_SERIALIZE_TYPE_UINT32:
+      return writer.writeUInt32(data);
+    case BIN_KV_SERIALIZE_TYPE_UINT16:
+      return writer.writeInt16(data);
+    case BIN_KV_SERIALIZE_TYPE_UINT8:
+      return writer.writeUInt8(data);
+    case BIN_KV_SERIALIZE_TYPE_DOUBLE:
+      return writer.writeDouble(data);
+    case BIN_KV_SERIALIZE_TYPE_BOOL:
+      return writer.writeUInt8(data !== 0 ? 1 : 0);
+    case BIN_KV_SERIALIZE_TYPE_STRING:
+      return writeJSONString(writer, data);
+    case BIN_KV_SERIALIZE_TYPE_ARRAY:
+      writeJSONVarint(writer, data.length);
+      writer.write(Buffer.from(data));
+    default:
+      throw new Error('Unknown data type!');
+  }
+}
+
 export function readJSONArray(reader: BufferStreamReader, type: number): any[] {
   const arr = [];
   const size = readJSONVarint(reader);
@@ -185,6 +222,18 @@ export function readJSONArray(reader: BufferStreamReader, type: number): any[] {
   }
   return arr;
 }
+
+export function writeJSONArray(
+  writer: BufferStreamWriter,
+  items: [],
+  type: number
+) {
+  writeJSONVarint(writer, items.length);
+  for (const item of items) {
+    writeJSONValue(writer, item, type);
+  }
+}
+
 export function readJSONObjectValue(reader: BufferStreamReader) {
   let type = reader.readUInt8();
   // tslint:disable-next-line:no-bitwise
@@ -197,8 +246,19 @@ export function readJSONObjectValue(reader: BufferStreamReader) {
   return obj;
 }
 
-export function writeJSONObjectValue(writer: BufferStreamWriter, object: any) {
-  return;
+export function writeJSONObjectValue(
+  writer: BufferStreamWriter,
+  data: any,
+  type: number
+) {
+  writer.writeUInt8(type);
+  // tslint:disable-next-line:no-bitwise
+  if (type & BIN_KV_SERIALIZE_FLAG_ARRAY) {
+    // tslint:disable-next-line:no-bitwise
+    type &= ~BIN_KV_SERIALIZE_FLAG_ARRAY;
+    return writeJSONArray(writer, data, type);
+  }
+  writeJSONValue(writer, data, type);
 }
 
 export function readJSONObject(reader: BufferStreamReader) {
@@ -211,13 +271,23 @@ export function readJSONObject(reader: BufferStreamReader) {
   return obj;
 }
 
-export function writeJSONObject(writer: BufferStreamWriter, json: JSON) {
-  const keys = Object.keys(json);
-  writeJSONVarint(writer, keys.length);
-  for (const key of keys) {
-    writeJSONName(writer, key);
-    writeJSONObjectValue(writer, json[key]);
-  }
+export function writeJSONObjectKeyCount(
+  writer: BufferStreamWriter,
+  name: string,
+  count: number
+) {
+  writeJSONName(writer, name);
+  writeJSONVarint(writer, count);
+}
+
+export function writeJSONObjectKeyValue(
+  writer: BufferStreamWriter,
+  name: string,
+  value: any,
+  type: number
+) {
+  writeJSONName(writer, name);
+  writeJSONObjectValue(writer, value, type);
 }
 
 export function readJSON(reader: BufferStreamReader): JSON {
@@ -228,7 +298,60 @@ export function readJSON(reader: BufferStreamReader): JSON {
   return readJSONObject(reader);
 }
 
-export function writeJSON(writer: BufferStreamWriter, json: JSON) {
-  writeKVBlockHeader(writer);
-  writeJSONObject(writer, json);
+export function writeJSONIPeerNodeData(
+  writer: BufferStreamWriter,
+  name: string,
+  data: IPeerNodeData
+) {
+  writeJSONObjectKeyCount(writer, name, Object.keys(data).length);
+  writeJSONObjectKeyValue(
+    writer,
+    'network_id',
+    data.networkId,
+    BIN_KV_SERIALIZE_TYPE_ARRAY
+  );
+  writeJSONObjectKeyValue(
+    writer,
+    'version',
+    data.version,
+    BIN_KV_SERIALIZE_TYPE_UINT8
+  );
+  writeJSONObjectKeyValue(
+    writer,
+    'peer_id',
+    data.peerId,
+    BIN_KV_SERIALIZE_TYPE_UINT64
+  );
+  writeJSONObjectKeyValue(
+    writer,
+    'local_time',
+    data.localTime,
+    BIN_KV_SERIALIZE_TYPE_UINT64
+  );
+  writeJSONObjectKeyValue(
+    writer,
+    'my_port',
+    data.myPort,
+    BIN_KV_SERIALIZE_TYPE_UINT32
+  );
+}
+
+export function writeJSONICoreSyncData(
+  writer: BufferStreamWriter,
+  name: string,
+  data: ICoreSyncData
+) {
+  writeJSONObjectKeyCount(writer, name, Object.keys(data).length);
+  writeJSONObjectKeyValue(
+    writer,
+    'current_height',
+    data.currentHeight,
+    BIN_KV_SERIALIZE_TYPE_UINT32
+  );
+  writeJSONObjectKeyValue(
+    writer,
+    'top_id',
+    data.hash,
+    BIN_KV_SERIALIZE_TYPE_ARRAY
+  );
 }

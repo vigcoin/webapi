@@ -1,7 +1,6 @@
 import * as assert from 'assert';
 import { BufferStreamReader } from '../../src/cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';
-import { version } from 'punycode';
 import { readJSONObjectValue } from '../../src/p2p/protocol/json';
 import {
   BIN_KV_SERIALIZE_FLAG_ARRAY,
@@ -22,7 +21,6 @@ import {
   readJSONObject,
   readJSONValue,
   readJSONVarint,
-  writeJSON,
   writeJSONVarint,
 } from '../../src/p2p/protocol/json';
 
@@ -324,10 +322,10 @@ describe('test json stream', () => {
     assert(newPeerId.equals(json.peer_id));
   });
 
-  test('should write json stream', async () => {
-    const stream = new BufferStreamWriter(Buffer.from([]));
-    const zero = [0x01, 0x011, 0x01, 0x01, 0x01, 0x01, 0x02, 0x01, 0x01, 0x00];
-    writeJSON(stream, JSON.parse('{}'));
-    assert(stream.getBuffer().equals(Buffer.from(zero)));
-  });
+  // test('should write json stream', async () => {
+  //   const stream = new BufferStreamWriter(Buffer.from([]));
+  //   const zero = [0x01, 0x011, 0x01, 0x01, 0x01, 0x01, 0x02, 0x01, 0x01, 0x00];
+  //   writeJSON(stream, JSON.parse('{}'));
+  //   assert(stream.getBuffer().equals(Buffer.from(zero)));
+  // });
 });

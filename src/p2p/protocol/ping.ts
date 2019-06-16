@@ -1,21 +1,13 @@
-import * as assert from 'assert';
-import {
-  ICoreSyncData,
-  IPeerEntry,
-  IPeerIDType,
-  IPeerNodeData,
-} from '../../cryptonote/p2p';
-import { BufferStreamReader } from '../../cryptonote/serialize/reader';
+import { IPeerIDType } from '../../cryptonote/p2p';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
+import { P2P_COMMAND_ID_BASE } from './defines';
 import {
-  P2P_COMMAND_ID_BASE,
-  readICoreSyncData,
-  readIPeerEntry,
-  readIPeerNodeData,
-  writeICoreSyncData,
-  writeIPeerEntry,
-  writeIPeerNodeData,
-} from './defines';
+  BIN_KV_SERIALIZE_TYPE_STRING,
+  BIN_KV_SERIALIZE_TYPE_UINT64,
+  writeJSONObjectKeyValue,
+  writeJSONVarint,
+  writeKVBlockHeader,
+} from './json';
 
 // tslint:disable-next-line:no-namespace
 export namespace ping {
@@ -56,20 +48,28 @@ export namespace ping {
   //   }
   // }
 
-  // // tslint:disable-next-line:max-classes-per-file
-  // export class Writer {
-  //   public static request(writer: BufferStreamWriter, data: IRequest) {
-  //     writeIPeerNodeData(writer, data.node);
-  //     writeICoreSyncData(writer, data.payload);
-  //   }
+  // tslint:disable-next-line:max-classes-per-file
+  export class Writer {
+    public static request(writer: BufferStreamWriter, data: IRequest) {
+      writeKVBlockHeader(writer);
+      writeJSONVarint(writer, Object.keys(data).length);
+    }
 
-  //   public static response(writer: BufferStreamWriter, data: IResponse) {
-  //     writeIPeerNodeData(writer, data.node);
-  //     writeICoreSyncData(writer, data.payload);
-
-  //     for (const peerEntry of data.localPeerList) {
-  //       writeIPeerEntry(writer, peerEntry);
-  //     }
-  //   }
-  // }
+    public static response(writer: BufferStreamWriter, data: IResponse) {
+      writeKVBlockHeader(writer);
+      writeJSONVarint(writer, Object.keys(data).length);
+      writeJSONObjectKeyValue(
+        writer,
+        'status',
+        data.status,
+        BIN_KV_SERIALIZE_TYPE_STRING
+      );
+      writeJSONObjectKeyValue(
+        writer,
+        'peer_id',
+        data.peerId,
+        BIN_KV_SERIALIZE_TYPE_UINT64
+      );
+    }
+  }
 }
