@@ -1,6 +1,8 @@
 import { IPeerIDType } from '../../cryptonote/p2p';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 import { P2P_COMMAND_ID_BASE } from './defines';
+import { BufferStreamReader } from '../../cryptonote/serialize/reader';
+import { readJSON } from './json';
 import {
   BIN_KV_SERIALIZE_TYPE_STRING,
   BIN_KV_SERIALIZE_TYPE_UINT64,
@@ -24,29 +26,20 @@ export namespace ping {
     peerId: IPeerIDType;
   }
 
-  // export class Reader {
-  //   public static request(reader: BufferStreamReader): IRequest {
-  //     return {
-  //     };
-  //   }
+  export class Reader {
+    public static request(reader: BufferStreamReader): IRequest {
+      return {};
+    }
 
-  //   public static response(reader: BufferStreamReader): IResponse {
-  //     const status = readIPeerNodeData(reader);
-  //     const payload = readICoreSyncData(reader);
-  //     const localPeerList = [];
-  //     const loop = reader.getRemainedSize() / 24;
-  //     assert(reader.getRemainedSize() % 24 === 0);
-  //     for (let i = 0; i < loop; i++) {
-  //       localPeerList.push(readIPeerEntry(reader));
-  //     }
-  //     return {
-  //       node,
-  //       payload,
-  //       // tslint:disable-next-line:object-literal-sort-keys
-  //       localPeerList
-  //     };
-  //   }
-  // }
+    public static response(reader: BufferStreamReader): IResponse {
+      const obj = readJSON(reader);
+      return {
+        status: obj.status,
+        // tslint:disable-next-line:object-literal-sort-keys
+        peerId: new BufferStreamReader(obj.peer_id).readUInt64(),
+      };
+    }
+  }
 
   // tslint:disable-next-line:max-classes-per-file
   export class Writer {

@@ -1,7 +1,8 @@
 import * as assert from 'assert';
 import { BufferStreamReader } from '../../src/cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';
-import { readJSONObjectValue } from '../../src/p2p/protocol/json';
+import { ping } from '../../src/p2p/protocol/ping';
+
 import {
   BIN_KV_SERIALIZE_FLAG_ARRAY,
   BIN_KV_SERIALIZE_TYPE_BOOL,
@@ -19,6 +20,7 @@ import {
   readJSON,
   readJSONArray,
   readJSONObject,
+  readJSONObjectValue,
   readJSONValue,
   readJSONVarint,
   writeJSONVarint,
@@ -322,10 +324,19 @@ describe('test json stream', () => {
     assert(newPeerId.equals(json.peer_id));
   });
 
-  // test('should write json stream', async () => {
-  //   const stream = new BufferStreamWriter(Buffer.from([]));
-  //   const zero = [0x01, 0x011, 0x01, 0x01, 0x01, 0x01, 0x02, 0x01, 0x01, 0x00];
-  //   writeJSON(stream, JSON.parse('{}'));
-  //   assert(stream.getBuffer().equals(Buffer.from(zero)));
-  // });
+  test('should write/read ping request stream', async () => {
+    const data: ping.IResponse = {
+      status: 'OK',
+      // tslint:disable-next-line:object-literal-sort-keys
+      peerId: 0x18383832929,
+    };
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    ping.Writer.response(writer, data);
+
+    const reader = new BufferStreamReader(writer.getBuffer());
+    const json = ping.Reader.response(reader);
+    console.log(json);
+    assert(json.status === 'OK');
+    assert(json.peerId === 0x18383832929);
+  });
 });
