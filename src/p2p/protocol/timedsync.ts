@@ -1,6 +1,7 @@
 import { ICoreSyncData, IPeerEntry } from '../../cryptonote/p2p';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 import { P2P_COMMAND_ID_BASE } from './defines';
+import { writeJSONIPeerEntryList } from './json';
 import {
   BIN_KV_SERIALIZE_TYPE_UINT64,
   writeJSONICoreSyncData,
@@ -69,6 +70,7 @@ export namespace timedsync {
         BIN_KV_SERIALIZE_TYPE_UINT64
       );
       writeJSONICoreSyncData(writer, 'payload_data', data.payload);
+      writeJSONIPeerEntryList(writer, 'local_peerlist', data.localPeerList);
     }
   }
 }

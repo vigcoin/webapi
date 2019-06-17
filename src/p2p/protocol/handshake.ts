@@ -3,7 +3,12 @@ import { ICoreSyncData, IPeerEntry, IPeerNodeData } from '../../cryptonote/p2p';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 import { P2P_COMMAND_ID_BASE } from './defines';
-import { writeJSONVarint, writeJSONObjectKeyValue } from './json';
+import {
+  writeJSONVarint,
+  writeJSONObjectKeyValue,
+  readJSON,
+  writeJSONIPeerEntryList,
+} from './json';
 import {
   writeJSONICoreSyncData,
   writeJSONIPeerNodeData,
@@ -27,8 +32,10 @@ export namespace handshake {
 
   export class Reader {
     // public static request(reader: BufferStreamReader): IRequest {
+    //   const json = readJSON(reader);
     // }
     // public static response(reader: BufferStreamReader): IResponse {
+    //   const json = readJSON(reader);
     // }
   }
 
@@ -46,6 +53,7 @@ export namespace handshake {
       writeJSONVarint(writer, Object.keys(data).length);
       writeJSONIPeerNodeData(writer, 'node_data', data.node);
       writeJSONICoreSyncData(writer, 'payload_data', data.payload);
+      writeJSONIPeerEntryList(writer, 'local_peerlist', data.localPeerList);
     }
   }
 }

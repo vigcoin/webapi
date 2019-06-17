@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { ICoreSyncData, IPeerNodeData } from '../../cryptonote/p2p';
+import { ICoreSyncData, IPeerEntry, IPeerNodeData } from '../../cryptonote/p2p';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 
@@ -290,7 +290,7 @@ export function writeJSONObjectKeyValue(
   writeJSONObjectValue(writer, value, type);
 }
 
-export function readJSON(reader: BufferStreamReader): JSON {
+export function readJSON(reader: BufferStreamReader): any {
   const header = readKVBlockHeader(reader);
   assert(header.signatureA === PORTABLE_STORAGE_SIGNATUREA);
   assert(header.signatureB === PORTABLE_STORAGE_SIGNATUREB);
@@ -354,4 +354,57 @@ export function writeJSONICoreSyncData(
     data.hash,
     BIN_KV_SERIALIZE_TYPE_ARRAY
   );
+}
+
+export function writeJSONIPeerEntry(
+  writer: BufferStreamWriter,
+  data: IPeerEntry
+) {
+  writer.writeUInt32(data.peer.port);
+  writer.writeUInt32(data.peer.ip);
+  writer.writeUInt64(data.id);
+  writer.writeDate(data.lastSeen);
+}
+
+export function writeJSONIPeerEntryList(
+  writer: BufferStreamWriter,
+  name: string,
+  data: IPeerEntry[]
+) {
+  writeJSONName(writer, name);
+  const inner = new BufferStreamWriter(Buffer.alloc(0));
+  for (const entry of data) {
+    writeJSONIPeerEntry(inner, entry);
+  }
+  writeJSONVarint(writer, inner.getBuffer().length);
+  writer.write(inner.getBuffer());
+}
+
+export function readJSONIPeerEntry(reader: BufferStreamReader): IPeerEntry {
+  const port = reader.readUInt32();
+  const ip = reader.readUInt32();
+  const id = reader.readUInt64();
+  const lastSeen = reader.readDate();
+  const entry: IPeerEntry = {
+    peer: {
+      port,
+      // tslint:disable-next-line:object-literal-sort-keys
+      ip,
+    },
+    // tslint:disable-next-line:object-literal-sort-keys
+    id,
+    lastSeen,
+  };
+  return entry;
+}
+
+export function readJSONIPeerEntryList(
+  reader: BufferStreamReader
+): IPeerEntry[] {
+  const length = reader.readVarint() / 24;
+  const list: IPeerEntry[] = [];
+  for (let i = 0; i < length; i++) {
+    list.push(readJSONIPeerEntry(reader));
+  }
+  return list;
 }
