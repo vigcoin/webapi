@@ -324,7 +324,7 @@ describe('test json stream', () => {
     assert(newPeerId.equals(json.peer_id));
   });
 
-  test('should write/read ping request stream', async () => {
+  test('should write/read ping response stream', async () => {
     const data: ping.IResponse = {
       status: 'OK',
       // tslint:disable-next-line:object-literal-sort-keys
@@ -335,8 +335,17 @@ describe('test json stream', () => {
 
     const reader = new BufferStreamReader(writer.getBuffer());
     const json = ping.Reader.response(reader);
-    console.log(json);
     assert(json.status === 'OK');
     assert(json.peerId === 0x18383832929);
+  });
+
+  test('should write/read ping request stream', async () => {
+    const data: ping.IRequest = {};
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    ping.Writer.request(writer, data);
+
+    const reader = new BufferStreamReader(writer.getBuffer());
+    const json = ping.Reader.request(reader);
+    assert(Object.keys(json).length === 0);
   });
 });

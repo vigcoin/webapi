@@ -1,11 +1,11 @@
 import { IPeerIDType } from '../../cryptonote/p2p';
+import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 import { P2P_COMMAND_ID_BASE } from './defines';
-import { BufferStreamReader } from '../../cryptonote/serialize/reader';
-import { readJSON } from './json';
 import {
   BIN_KV_SERIALIZE_TYPE_STRING,
   BIN_KV_SERIALIZE_TYPE_UINT64,
+  readJSON,
   writeJSONObjectKeyValue,
   writeJSONVarint,
   writeKVBlockHeader,
@@ -28,6 +28,7 @@ export namespace ping {
 
   export class Reader {
     public static request(reader: BufferStreamReader): IRequest {
+      readJSON(reader);
       return {};
     }
 
