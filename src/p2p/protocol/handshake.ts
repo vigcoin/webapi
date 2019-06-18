@@ -1,17 +1,13 @@
-import * as assert from 'assert';
 import { ICoreSyncData, IPeerEntry, IPeerNodeData } from '../../cryptonote/p2p';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 import { P2P_COMMAND_ID_BASE } from './defines';
 import {
-  writeJSONVarint,
-  writeJSONObjectKeyValue,
   readJSON,
-  writeJSONIPeerEntryList,
-} from './json';
-import {
   writeJSONICoreSyncData,
+  writeJSONIPeerEntryList,
   writeJSONIPeerNodeData,
+  writeJSONVarint,
   writeKVBlockHeader,
 } from './json';
 
@@ -31,9 +27,25 @@ export namespace handshake {
   }
 
   export class Reader {
-    // public static request(reader: BufferStreamReader): IRequest {
-    //   const json = readJSON(reader);
-    // }
+    public static request(reader: BufferStreamReader): IRequest {
+      const json = readJSON(reader);
+      const payload: ICoreSyncData = {
+        currentHeight: json.payload_data.current_height,
+        hash: json.payload_data.top_id,
+      };
+      const node: IPeerNodeData = {
+        networkId: json.node_data.network_id,
+        version: json.node_data.version,
+        // tslint:disable-next-line:object-literal-sort-keys
+        localTime: new Date(json.node_data.local_time.readUInt32LE(0)),
+        peerId: json.node_data.peer_id.readDoubleLE(0),
+        myPort: json.node_data.my_port,
+      };
+      return {
+        node,
+        payload,
+      };
+    }
     // public static response(reader: BufferStreamReader): IResponse {
     //   const json = readJSON(reader);
     // }

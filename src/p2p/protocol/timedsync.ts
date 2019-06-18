@@ -1,11 +1,10 @@
 import { ICoreSyncData, IPeerEntry } from '../../cryptonote/p2p';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 import { P2P_COMMAND_ID_BASE } from './defines';
-import { writeJSONIPeerEntryList } from './json';
 import {
   BIN_KV_SERIALIZE_TYPE_UINT64,
   writeJSONICoreSyncData,
-  writeJSONObjectKeyCount,
+  writeJSONIPeerEntryList,
   writeJSONObjectKeyValue,
   writeJSONVarint,
   writeKVBlockHeader,

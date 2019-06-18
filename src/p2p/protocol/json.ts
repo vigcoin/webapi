@@ -59,7 +59,7 @@ export function writeKVBlockHeader(writer: BufferStreamWriter) {
 }
 
 export function readJSONVarint(reader: BufferStreamReader) {
-  const byte = reader.readInt8();
+  const byte = reader.readUInt8();
   // tslint:disable-next-line:no-bitwise
   const mask = byte & PORTABLE_RAW_SIZE_MARK_MASK;
   let bytesLeft = 0;
@@ -126,20 +126,20 @@ export function writeJSONVarint(writer: BufferStreamWriter, val: number) {
 }
 
 export function readJSONName(reader: BufferStreamReader): string {
-  const length = reader.readInt8();
+  const length = reader.readUInt8();
   assert(length >= 0);
   const name = reader.read(length);
   return name.toString('utf8');
 }
 
 export function writeJSONName(writer: BufferStreamWriter, name: string) {
-  writer.writeInt8(name.length);
+  writer.writeUInt8(name.length);
   writer.write(Buffer.from(name, 'utf8'));
 }
 
 export function readJSONString(reader: BufferStreamReader) {
   const size = readJSONVarint(reader);
-  return String(reader.read(size));
+  return reader.read(size);
 }
 
 export function writeJSONString(writer: BufferStreamWriter, data: string) {
@@ -208,7 +208,10 @@ export function writeJSONValue(
       return writeJSONString(writer, data);
     case BIN_KV_SERIALIZE_TYPE_ARRAY:
       writeJSONVarint(writer, data.length);
-      writer.write(Buffer.from(data));
+      if (!(data instanceof Buffer)) {
+        data = Buffer.from(data);
+      }
+      return writer.write(data);
     default:
       throw new Error('Unknown data type!');
   }
@@ -251,7 +254,9 @@ export function writeJSONObjectValue(
   data: any,
   type: number
 ) {
-  writer.writeUInt8(type);
+  if (type !== BIN_KV_SERIALIZE_TYPE_ARRAY) {
+    writer.writeUInt8(type);
+  }
   // tslint:disable-next-line:no-bitwise
   if (type & BIN_KV_SERIALIZE_FLAG_ARRAY) {
     // tslint:disable-next-line:no-bitwise
@@ -277,6 +282,7 @@ export function writeJSONObjectKeyCount(
   count: number
 ) {
   writeJSONName(writer, name);
+  writeJSONVarint(writer, BIN_KV_SERIALIZE_TYPE_OBJECT);
   writeJSONVarint(writer, count);
 }
 
@@ -310,24 +316,28 @@ export function writeJSONIPeerNodeData(
     data.networkId,
     BIN_KV_SERIALIZE_TYPE_ARRAY
   );
+
   writeJSONObjectKeyValue(
     writer,
     'version',
     data.version,
     BIN_KV_SERIALIZE_TYPE_UINT8
   );
+
   writeJSONObjectKeyValue(
     writer,
     'peer_id',
     data.peerId,
     BIN_KV_SERIALIZE_TYPE_UINT64
   );
+
   writeJSONObjectKeyValue(
     writer,
     'local_time',
     data.localTime,
     BIN_KV_SERIALIZE_TYPE_UINT64
   );
+
   writeJSONObjectKeyValue(
     writer,
     'my_port',
@@ -352,7 +362,8 @@ export function writeJSONICoreSyncData(
     writer,
     'top_id',
     data.hash,
-    BIN_KV_SERIALIZE_TYPE_ARRAY
+    // tslint:disable-next-line:no-bitwise
+    BIN_KV_SERIALIZE_TYPE_UINT8 | BIN_KV_SERIALIZE_FLAG_ARRAY
   );
 }
 

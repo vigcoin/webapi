@@ -1,7 +1,9 @@
 import * as assert from 'assert';
 import { BufferStreamReader } from '../../src/cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';
+import { handshake } from '../../src/p2p/protocol/handshake';
 import { ping } from '../../src/p2p/protocol/ping';
+import { timedsync } from '../../src/p2p/protocol/timedsync';
 
 import {
   BIN_KV_SERIALIZE_FLAG_ARRAY,
@@ -207,7 +209,7 @@ describe('test json stream', () => {
     const buffer = Buffer.from([1 << 2, 97]);
     const reader = new BufferStreamReader(buffer);
     const value = readJSONValue(reader, BIN_KV_SERIALIZE_TYPE_STRING);
-    assert(value === 'a');
+    assert(String(value) === 'a');
   });
 
   test('should read json value Error', async () => {
@@ -310,7 +312,7 @@ describe('test json stream', () => {
     ];
     const stream = new BufferStreamReader(Buffer.from(buffer));
     const json: any = readJSON(stream);
-    assert(json.status === 'OK');
+    assert(String(json.status) === 'OK');
     const newPeerId = new Buffer([
       0xbc,
       0xab,
@@ -324,6 +326,16 @@ describe('test json stream', () => {
     assert(newPeerId.equals(json.peer_id));
   });
 
+  test('should write/read ping request stream', async () => {
+    const data: ping.IRequest = {};
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    ping.Writer.request(writer, data);
+
+    const reader = new BufferStreamReader(writer.getBuffer());
+    const json = ping.Reader.request(reader);
+    assert(Object.keys(json).length === 0);
+  });
+
   test('should write/read ping response stream', async () => {
     const data: ping.IResponse = {
       status: 'OK',
@@ -335,17 +347,291 @@ describe('test json stream', () => {
 
     const reader = new BufferStreamReader(writer.getBuffer());
     const json = ping.Reader.response(reader);
-    assert(json.status === 'OK');
+    assert(String(json.status) === 'OK');
     assert(json.peerId === 0x18383832929);
   });
 
-  test('should write/read ping request stream', async () => {
-    const data: ping.IRequest = {};
-    const writer = new BufferStreamWriter(Buffer.alloc(0));
-    ping.Writer.request(writer, data);
+  test('should write handshake request stream', async () => {
+    const data = [
+      0x01,
+      0x11,
+      0x01,
+      0x01,
+      0x01,
+      0x01,
+      0x02,
+      0x01,
+      0x01,
+      0x08,
+      0x09,
+      0x6e,
+      0x6f,
+      0x64,
+      0x65,
+      0x5f,
+      0x64,
+      0x61,
+      0x74,
+      0x61,
+      0x0c,
+      0x14,
+      0x0a,
+      0x6e,
+      0x65,
+      0x74,
+      0x77,
+      0x6f,
+      0x72,
+      0x6b,
+      0x5f,
+      0x69,
+      0x64,
+      0x0a,
+      0x40,
+      0x43,
+      0x52,
+      0x59,
+      0x50,
+      0x54,
+      0x4f,
+      0x4e,
+      0x43,
+      0xf4,
+      0xe5,
+      0x30,
+      0xc2,
+      0xb0,
+      0x19,
+      0x01,
+      0x10,
+      0x07,
+      0x76,
+      0x65,
+      0x72,
+      0x73,
+      0x69,
+      0x6f,
+      0x6e,
+      0x08,
+      0x01,
+      0x07,
+      0x70,
+      0x65,
+      0x65,
+      0x72,
+      0x5f,
+      0x69,
+      0x64,
+      0x05,
+      0xdf,
+      0xc4,
+      0x70,
+      0x18,
+      0xf3,
+      0x09,
+      0x88,
+      0xb6,
+      0x0a,
+      0x6c,
+      0x6f,
+      0x63,
+      0x61,
+      0x6c,
+      0x5f,
+      0x74,
+      0x69,
+      0x6d,
+      0x65,
+      0x05,
+      0x08,
+      0xc0,
+      0x08,
+      0x5d,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x07,
+      0x6d,
+      0x79,
+      0x5f,
+      0x70,
+      0x6f,
+      0x72,
+      0x74,
+      0x06,
+      0x58,
+      0x4d,
+      0x00,
+      0x00,
+      0x0c,
+      0x70,
+      0x61,
+      0x79,
+      0x6c,
+      0x6f,
+      0x61,
+      0x64,
+      0x5f,
+      0x64,
+      0x61,
+      0x74,
+      0x61,
+      0x0c,
+      0x08,
+      0x0e,
+      0x63,
+      0x75,
+      0x72,
+      0x72,
+      0x65,
+      0x6e,
+      0x74,
+      0x5f,
+      0x68,
+      0x65,
+      0x69,
+      0x67,
+      0x68,
+      0x74,
+      0x06,
+      0x01,
+      0x00,
+      0x00,
+      0x00,
+      0x06,
+      0x74,
+      0x6f,
+      0x70,
+      0x5f,
+      0x69,
+      0x64,
+      0x0a,
+      0x80,
+      0xab,
+      0x7f,
+      0x40,
+      0x44,
+      0xc5,
+      0x41,
+      0xc1,
+      0xba,
+      0x28,
+      0xb6,
+      0x50,
+      0x10,
+      0xad,
+      0x61,
+      0x91,
+      0xf8,
+      0xf6,
+      0xc9,
+      0x81,
+      0x55,
+      0x01,
+      0x41,
+      0xfc,
+      0xbc,
+      0xa8,
+      0x14,
+      0xe7,
+      0xe0,
+      0x26,
+      0x62,
+      0x70,
+      0x31,
+    ];
+    const reader = new BufferStreamReader(Buffer.from(data));
+    const json: handshake.IRequest = handshake.Reader.request(reader);
+    assert(json.node.localTime.getTime() === 1560854536);
+    assert(json.node.version === 1);
+    assert(json.node.myPort === 19800);
+    assert.deepEqual(json.node.networkId, [
+      0x43,
+      0x52,
+      0x59,
+      0x50,
+      0x54,
+      0x4f,
+      0x4e,
+      0x43,
+      0xf4,
+      0xe5,
+      0x30,
+      0xc2,
+      0xb0,
+      0x19,
+      0x01,
+      0x10,
+    ]);
 
-    const reader = new BufferStreamReader(writer.getBuffer());
-    const json = ping.Reader.request(reader);
-    assert(Object.keys(json).length === 0);
+    assert(
+      json.node.peerId ===
+        Buffer.from([
+          0xdf,
+          0xc4,
+          0x70,
+          0x18,
+          0xf3,
+          0x09,
+          0x88,
+          0xb6,
+        ]).readDoubleLE(0)
+    );
   });
+
+  // test('should write/read handshake request stream', async () => {
+  //   const data: handshake.IRequest = {
+  //     node: {
+  //       networkId: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+  //       version: 1,
+  //       // tslint:disable-next-line:object-literal-sort-keys
+  //       localTime: new Date(),
+  //       myPort: 8080,
+  //       peerId: 0xa9183832,
+  //     },
+  //     payload: {
+  //       currentHeight: 1,
+  //       hash: new Buffer([
+  //         1,
+  //         2,
+  //         3,
+  //         4,
+  //         5,
+  //         6,
+  //         7,
+  //         8,
+  //         9,
+  //         10,
+  //         11,
+  //         12,
+  //         13,
+  //         14,
+  //         15,
+  //         16,
+  //         18,
+  //         19,
+  //         20,
+  //         21,
+  //         22,
+  //         23,
+  //         24,
+  //         25,
+  //         26,
+  //         27,
+  //         28,
+  //         29,
+  //         30,
+  //         31,
+  //         32,
+  //       ]),
+  //     },
+  //   };
+  //   const writer = new BufferStreamWriter(Buffer.alloc(0));
+  //   handshake.Writer.request(writer, data);
+
+  //   const reader = new BufferStreamReader(writer.getBuffer());
+  //   const json: handshake.IRequest = handshake.Reader.request(reader);
+  //   assert.deepEqual(json, data);
+  // });
 });

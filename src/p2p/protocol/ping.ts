@@ -1,3 +1,4 @@
+import * as assert from 'assert';
 import { IPeerIDType } from '../../cryptonote/p2p';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
@@ -28,7 +29,8 @@ export namespace ping {
 
   export class Reader {
     public static request(reader: BufferStreamReader): IRequest {
-      readJSON(reader);
+      const json = readJSON(reader);
+      assert(Object.keys(json).length === 0);
       return {};
     }
 

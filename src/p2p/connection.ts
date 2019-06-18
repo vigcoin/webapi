@@ -1,9 +1,9 @@
+import { EventEmitter } from 'events';
 import { Socket } from 'net';
 import * as uuid from 'uuid';
 import { Hash } from '../crypto/types';
 import { IMessage, IPeerIDType } from '../cryptonote/p2p';
 import { LevinProtocol } from './levin';
-import { EventEmitter } from 'events';
 
 export enum ConnectionState {
   BEFORE_HANDSHAKE = 0,
