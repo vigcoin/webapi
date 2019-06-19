@@ -392,10 +392,12 @@ export function writeJSONIPeerEntry(
   writer: BufferStreamWriter,
   data: IPeerEntry
 ) {
-  writer.writeUInt32(data.peer.port);
   writer.writeUInt32(data.peer.ip);
+  writer.writeUInt32(data.peer.port);
   writer.writeUInt64(data.id);
-  writer.writeDate(data.lastSeen);
+  // tslint:disable-next-line:no-bitwise
+  writer.writeUInt32(data.lastSeen.getTime() & 0xffffffff);
+  writer.writeUInt32(0);
 }
 
 export function writeJSONIPeerEntryList(
@@ -408,6 +410,7 @@ export function writeJSONIPeerEntryList(
   for (const entry of data) {
     writeJSONIPeerEntry(inner, entry);
   }
+  writer.writeUInt8(BIN_KV_SERIALIZE_TYPE_STRING);
   writeJSONVarint(writer, inner.getBuffer().length);
   writer.write(inner.getBuffer());
 }

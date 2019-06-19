@@ -1492,5 +1492,9 @@ describe('test json stream', () => {
     assert(json.node.myPort === 19800);
     assert(json.payload.currentHeight === 300825);
     assert(json.localPeerList.length === 24);
+
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    handshake.Writer.response(writer, json);
+    assert(writer.getBuffer().equals(Buffer.from(data)));
   });
 });
