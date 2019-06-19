@@ -584,58 +584,68 @@ describe('test json stream', () => {
     assert(buffer.equals(Buffer.from(data)));
   });
 
-  // test('should write/read handshake request stream', async () => {
-  //   const data: handshake.IRequest = {
-  //     node: {
-  //       networkId: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-  //       version: 1,
-  //       // tslint:disable-next-line:object-literal-sort-keys
-  //       localTime: new Date(),
-  //       myPort: 8080,
-  //       peerId: 0xa9183832,
-  //     },
-  //     payload: {
-  //       currentHeight: 1,
-  //       hash: new Buffer([
-  //         1,
-  //         2,
-  //         3,
-  //         4,
-  //         5,
-  //         6,
-  //         7,
-  //         8,
-  //         9,
-  //         10,
-  //         11,
-  //         12,
-  //         13,
-  //         14,
-  //         15,
-  //         16,
-  //         18,
-  //         19,
-  //         20,
-  //         21,
-  //         22,
-  //         23,
-  //         24,
-  //         25,
-  //         26,
-  //         27,
-  //         28,
-  //         29,
-  //         30,
-  //         31,
-  //         32,
-  //       ]),
-  //     },
-  //   };
-  //   const writer = new BufferStreamWriter(Buffer.alloc(0));
-  //   handshake.Writer.request(writer, data);
+  test('should write/read handshake request stream', async () => {
+    const data: handshake.IRequest = {
+      node: {
+        networkId: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        version: 1,
+        // tslint:disable-next-line:object-literal-sort-keys
+        localTime: new Date(),
+        myPort: 8080,
+        peerId: 0xa9183832,
+      },
+      payload: {
+        currentHeight: 1,
+        hash: new Buffer([
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+        ]),
+      },
+    };
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    handshake.Writer.request(writer, data);
 
-  //   const reader = new BufferStreamReader(writer.getBuffer());
-  //   const json: handshake.IRequest = handshake.Reader.request(reader);
-  //   assert.deepEqual(json, data);
-  // });
+    const reader = new BufferStreamReader(writer.getBuffer());
+    const json: handshake.IRequest = handshake.Reader.request(reader);
+    assert(json.node.version === data.node.version);
+    assert(json.node.myPort === data.node.myPort);
+    assert(json.node.peerId === data.node.peerId);
+    assert.deepEqual(json.node.networkId, data.node.networkId);
+    assert(
+      // tslint:disable-next-line:no-bitwise
+      (json.node.localTime.getTime() & 0xffffffff) ===
+        // tslint:disable-next-line:no-bitwise
+        (data.node.localTime.getTime() & 0xffffffff)
+    );
+    // assert.deepEqual(json, data);
+  });
 });
