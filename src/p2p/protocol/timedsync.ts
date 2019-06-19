@@ -1,6 +1,8 @@
-import { ICoreSyncData, IPeerEntry } from '../../cryptonote/p2p';
+import { ICoreSyncData, IPeerEntry, IPeerNodeData } from '../../cryptonote/p2p';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 import { P2P_COMMAND_ID_BASE } from './defines';
+import { BufferStreamReader } from '../../cryptonote/serialize/reader';
+import { readJSON } from './json';
 import {
   BIN_KV_SERIALIZE_TYPE_UINT64,
   writeJSONICoreSyncData,
@@ -25,12 +27,16 @@ export namespace timedsync {
   }
 
   export class Reader {
-    // public static request(reader: BufferStreamReader): IRequest {
-    //   const payload = readICoreSyncData(reader);
-    //   return {
-    //     payload,
-    //   };
-    // }
+    public static request(reader: BufferStreamReader): IRequest {
+      const json = readJSON(reader);
+      const payload: ICoreSyncData = {
+        currentHeight: json.payload_data.current_height,
+        hash: json.payload_data.top_id,
+      };
+      return {
+        payload,
+      };
+    }
     // public static response(reader: BufferStreamReader): IResponse {
     //   const localTime = reader.readDate();
     //   const node = readIPeerNodeData(reader);
