@@ -2,6 +2,7 @@ import { ICoreSyncData, IPeerEntry, IPeerNodeData } from '../../cryptonote/p2p';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 import { P2P_COMMAND_ID_BASE } from './defines';
+import { BIN_KV_SERIALIZE_TYPE_OBJECT, writeJSONObjectKeyValue } from './json';
 import {
   readJSON,
   writeJSONICoreSyncData,

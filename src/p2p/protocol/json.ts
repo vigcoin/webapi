@@ -27,6 +27,7 @@ export const BIN_KV_SERIALIZE_TYPE_STRING = 10;
 export const BIN_KV_SERIALIZE_TYPE_BOOL = 11;
 export const BIN_KV_SERIALIZE_TYPE_OBJECT = 12;
 export const BIN_KV_SERIALIZE_TYPE_ARRAY = 13;
+export const BIN_KV_SERIALIZE_TYPE_DATE = 14; // FOR temporary usage only
 export const BIN_KV_SERIALIZE_FLAG_ARRAY = 0x80;
 
 export interface IKVBlockHeader {
@@ -202,10 +203,16 @@ export function writeJSONValue(
       return writer.writeUInt8(data);
     case BIN_KV_SERIALIZE_TYPE_DOUBLE:
       return writer.writeDouble(data);
+    case BIN_KV_SERIALIZE_TYPE_DATE:
+      writer.writeUInt32(data);
+      return writer.writeUInt32(0);
     case BIN_KV_SERIALIZE_TYPE_BOOL:
       return writer.writeUInt8(data !== 0 ? 1 : 0);
     case BIN_KV_SERIALIZE_TYPE_STRING:
       return writeJSONString(writer, data);
+    case BIN_KV_SERIALIZE_TYPE_OBJECT:
+      return;
+      break;
     case BIN_KV_SERIALIZE_TYPE_ARRAY:
       writeJSONVarint(writer, data.length);
       if (!(data instanceof Buffer)) {
@@ -304,17 +311,29 @@ export function readJSON(reader: BufferStreamReader): any {
   return readJSONObject(reader);
 }
 
+export function writeJSONDateType(
+  writer: BufferStreamWriter,
+  name: string,
+  data: number
+) {
+  writeJSONName(writer, name);
+  writer.writeUInt8(BIN_KV_SERIALIZE_TYPE_UINT64);
+  writer.writeUInt32(data);
+  writer.writeUInt32(0);
+}
 export function writeJSONIPeerNodeData(
   writer: BufferStreamWriter,
   name: string,
   data: IPeerNodeData
 ) {
-  writeJSONObjectKeyCount(writer, name, Object.keys(data).length);
+  writeJSONObjectKeyValue(writer, name, data, BIN_KV_SERIALIZE_TYPE_OBJECT);
+  writeJSONVarint(writer, Object.keys(data).length);
   writeJSONObjectKeyValue(
     writer,
     'network_id',
     data.networkId,
-    BIN_KV_SERIALIZE_TYPE_ARRAY
+    // tslint:disable-next-line:no-bitwise
+    BIN_KV_SERIALIZE_TYPE_STRING
   );
 
   writeJSONObjectKeyValue(
@@ -330,13 +349,7 @@ export function writeJSONIPeerNodeData(
     data.peerId,
     BIN_KV_SERIALIZE_TYPE_UINT64
   );
-
-  writeJSONObjectKeyValue(
-    writer,
-    'local_time',
-    data.localTime,
-    BIN_KV_SERIALIZE_TYPE_UINT64
-  );
+  writeJSONDateType(writer, 'local_time', data.localTime.getTime());
 
   writeJSONObjectKeyValue(
     writer,
@@ -351,7 +364,8 @@ export function writeJSONICoreSyncData(
   name: string,
   data: ICoreSyncData
 ) {
-  writeJSONObjectKeyCount(writer, name, Object.keys(data).length);
+  writeJSONObjectKeyValue(writer, name, data, BIN_KV_SERIALIZE_TYPE_OBJECT);
+  writeJSONVarint(writer, Object.keys(data).length);
   writeJSONObjectKeyValue(
     writer,
     'current_height',
@@ -363,7 +377,7 @@ export function writeJSONICoreSyncData(
     'top_id',
     data.hash,
     // tslint:disable-next-line:no-bitwise
-    BIN_KV_SERIALIZE_TYPE_UINT8 | BIN_KV_SERIALIZE_FLAG_ARRAY
+    BIN_KV_SERIALIZE_TYPE_STRING
   );
 }
 

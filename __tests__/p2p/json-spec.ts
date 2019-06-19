@@ -578,6 +578,10 @@ describe('test json stream', () => {
           0xb6,
         ]).readDoubleLE(0)
     );
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    handshake.Writer.request(writer, json);
+    const buffer = writer.getBuffer();
+    assert(buffer.equals(Buffer.from(data)));
   });
 
   // test('should write/read handshake request stream', async () => {
