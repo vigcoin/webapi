@@ -326,6 +326,13 @@ describe('test json stream', () => {
     assert(newPeerId.equals(json.peer_id));
   });
 
+  test('should read ping request stream', async () => {
+    const data = [0x01, 0x11, 0x01, 0x01, 0x01, 0x01, 0x02, 0x01, 0x01, 0x00];
+    const reader = new BufferStreamReader(Buffer.from(data));
+    const json = ping.Reader.request(reader);
+    assert(Object.keys(json).length === 0);
+  });
+
   test('should write/read ping request stream', async () => {
     const data: ping.IRequest = {};
     const writer = new BufferStreamWriter(Buffer.alloc(0));
