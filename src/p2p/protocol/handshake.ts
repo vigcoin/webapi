@@ -4,6 +4,7 @@ import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 import { P2P_COMMAND_ID_BASE } from './defines';
 import {
   readJSON,
+  readJSONIPeerEntryList,
   writeJSONICoreSyncData,
   writeJSONIPeerEntryList,
   writeJSONIPeerNodeData,
@@ -46,9 +47,30 @@ export namespace handshake {
         payload,
       };
     }
-    // public static response(reader: BufferStreamReader): IResponse {
-    //   const json = readJSON(reader);
-    // }
+    public static response(reader: BufferStreamReader): IResponse {
+      const json = readJSON(reader);
+      const payload: ICoreSyncData = {
+        currentHeight: json.payload_data.current_height,
+        hash: json.payload_data.top_id,
+      };
+      const node: IPeerNodeData = {
+        networkId: json.node_data.network_id,
+        version: json.node_data.version,
+        // tslint:disable-next-line:object-literal-sort-keys
+        localTime: new Date(json.node_data.local_time.readUInt32LE(0)),
+        peerId: json.node_data.peer_id.readDoubleLE(0),
+        myPort: json.node_data.my_port,
+      };
+      const localPeerList = readJSONIPeerEntryList(
+        new BufferStreamReader(json.local_peerlist)
+      );
+      return {
+        node,
+        payload,
+        // tslint:disable-next-line:object-literal-sort-keys
+        localPeerList,
+      };
+    }
   }
 
   // tslint:disable-next-line:max-classes-per-file

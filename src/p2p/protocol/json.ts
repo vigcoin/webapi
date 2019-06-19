@@ -1,7 +1,13 @@
 import * as assert from 'assert';
-import { ICoreSyncData, IPeerEntry, IPeerNodeData } from '../../cryptonote/p2p';
+import {
+  ICoreSyncData,
+  IPeerEntry,
+  IPeerNodeData,
+  IP2String,
+} from '../../cryptonote/p2p';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
+import { read } from 'fs';
 
 const PORTABLE_STORAGE_SIGNATUREA = 0x01011101;
 const PORTABLE_STORAGE_SIGNATUREB = 0x01020101; // bender's nightmare
@@ -318,6 +324,7 @@ export function writeJSONDateType(
 ) {
   writeJSONName(writer, name);
   writer.writeUInt8(BIN_KV_SERIALIZE_TYPE_UINT64);
+  // tslint:disable-next-line:no-bitwise
   writer.writeUInt32(data & 0xffffffff);
   writer.writeUInt32(0);
 }
@@ -406,10 +413,11 @@ export function writeJSONIPeerEntryList(
 }
 
 export function readJSONIPeerEntry(reader: BufferStreamReader): IPeerEntry {
-  const port = reader.readUInt32();
   const ip = reader.readUInt32();
+  const port = reader.readUInt32();
   const id = reader.readUInt64();
-  const lastSeen = reader.readDate();
+  const time = reader.read(8);
+  const lastSeen = new Date(time.readUInt32LE(0));
   const entry: IPeerEntry = {
     peer: {
       port,
@@ -426,7 +434,7 @@ export function readJSONIPeerEntry(reader: BufferStreamReader): IPeerEntry {
 export function readJSONIPeerEntryList(
   reader: BufferStreamReader
 ): IPeerEntry[] {
-  const length = reader.readVarint() / 24;
+  const length = reader.getBuffer().length / 24;
   const list: IPeerEntry[] = [];
   for (let i = 0; i < length; i++) {
     list.push(readJSONIPeerEntry(reader));
