@@ -333,6 +333,52 @@ describe('test json stream', () => {
     assert(Object.keys(json).length === 0);
   });
 
+  test('should read ping response stream', async () => {
+    const data = [
+      0x01,
+      0x11,
+      0x01,
+      0x01,
+      0x01,
+      0x01,
+      0x02,
+      0x01,
+      0x01,
+      0x08,
+      0x06,
+      0x73,
+      0x74,
+      0x61,
+      0x74,
+      0x75,
+      0x73,
+      0x0a,
+      0x08,
+      0x4f,
+      0x4b,
+      0x07,
+      0x70,
+      0x65,
+      0x65,
+      0x72,
+      0x5f,
+      0x69,
+      0x64,
+      0x05,
+      0xdf,
+      0xc4,
+      0x70,
+      0x18,
+      0xf3,
+      0x09,
+      0x88,
+      0xb6,
+    ];
+    const reader = new BufferStreamReader(Buffer.from(data));
+    const json = ping.Reader.response(reader);
+    assert(String(json.status) === 'OK');
+  });
+
   test('should write/read ping request stream', async () => {
     const data: ping.IRequest = {};
     const writer = new BufferStreamWriter(Buffer.alloc(0));
