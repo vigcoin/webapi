@@ -10,6 +10,8 @@ export type int32 = number;
 export type int16 = number;
 export type int8 = number;
 
+export type UINT64 = Buffer;
+
 // Input Transactions
 export interface IInputBase {
   blockIndex: uint32;

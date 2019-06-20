@@ -1,9 +1,11 @@
 import * as assert from 'assert';
 import { EventEmitter } from 'events';
 import { Socket } from 'net';
+import { Handler } from '../cryptonote/protocol/handler';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { ConnectionState } from './connection';
 import { handshake, ping, timedsync } from './protocol';
+import { uint64, uint32, int32, UINT64 } from '../cryptonote/types';
 
 export enum LevinError {
   SUCCESS = 1,
@@ -35,18 +37,61 @@ export interface IBucketHead {
 }
 
 // CONSTANTS
-const LEVIN_SIGNATURE = Buffer.from('0101010101012101', 'hex'); // Bender's nightmare
+const LEVIN_SIGNATURE = Buffer.from([
+  0x01,
+  0x21,
+  0x01,
+  0x01,
+  0x01,
+  0x01,
+  0x01,
+  0x01,
+]); // Bender's nightmare
 const LEVIN_PACKET_REQUEST = 0x00000001;
 const LEVIN_PACKET_RESPONSE = 0x00000002;
 const LEVIN_DEFAULT_MAX_PACKET_SIZE = 100000000; // 100MB by default
 const LEVIN_PROTOCOL_VER_1 = 1;
 
-export class LevinProtocol extends EventEmitter {
-  private socket: Socket;
+export interface ILevinHeader {
+  signature: UINT64;
+  size: uint64;
+  reply: boolean;
+  command: uint32;
+  code: int32;
+  flags: uint32;
+  version: uint32;
+}
 
+export class LevinProtocol extends EventEmitter {
+  public static readHeader(reader: BufferStreamReader): ILevinHeader {
+    const signature = reader.read(8);
+    assert(signature.equals(LEVIN_SIGNATURE));
+    const sizeBuffer = reader.read(8);
+    const size = sizeBuffer.readUInt32LE(0);
+    assert(size <= LEVIN_DEFAULT_MAX_PACKET_SIZE);
+    const reply = reader.readUInt8() !== 0;
+    const command = reader.readUInt32();
+    const code = reader.readInt32();
+    const flags = reader.readUInt32();
+    const version = reader.readUInt32();
+    return {
+      signature,
+      size,
+      // tslint:disable-next-line:object-literal-sort-keys
+      reply,
+      command,
+      code,
+      flags,
+      version,
+    };
+  }
+
+  private socket: Socket;
+  private handler: Handler;
   constructor(socket: Socket) {
     super();
     this.socket = socket;
+    this.handler = new Handler();
     this.socket.on('data', buffer => {
       this.onIncomingData(new BufferStreamReader(buffer));
     });
@@ -56,22 +101,15 @@ export class LevinProtocol extends EventEmitter {
   }
 
   public onIncomingData(reader: BufferStreamReader) {
-    const signature = reader.read(8);
-    assert(signature.equals(LEVIN_SIGNATURE));
-    const cb = reader.read(8);
-    const size = cb.readUInt32LE(0);
-    assert(size <= LEVIN_DEFAULT_MAX_PACKET_SIZE);
-    const haveToReturnData = reader.readUInt8() !== 0;
-    const command = reader.readUInt32();
-    const returnCode = reader.readInt32();
-    const flags = reader.readUInt32();
-    const protocolVersion = reader.readUInt32();
-    const buffer = reader.read(size);
+    const header = LevinProtocol.readHeader(reader);
+
+    const buffer = reader.read(header.size);
     const cmd: ILevinCommand = {
-      command,
-      isNotify: !haveToReturnData,
+      command: header.command,
+      isNotify: !header.reply,
       // tslint:disable-next-line:no-bitwise
-      isResponse: (flags & LEVIN_PACKET_RESPONSE) === LEVIN_PACKET_RESPONSE,
+      isResponse:
+        (header.flags & LEVIN_PACKET_RESPONSE) === LEVIN_PACKET_RESPONSE,
       // tslint:disable-next-line:object-literal-sort-keys
       buffer,
     };
