@@ -86,6 +86,20 @@ export class LevinProtocol extends EventEmitter {
     };
   }
 
+  public static readCommand(reader: BufferStreamReader): ILevinCommand {
+    const header = LevinProtocol.readHeader(reader);
+    const buffer = reader.read(header.size);
+    return {
+      command: header.command,
+      isNotify: !header.reply,
+      isResponse:
+        // tslint:disable-next-line:no-bitwise
+        (header.flags & LEVIN_PACKET_RESPONSE) === LEVIN_PACKET_RESPONSE,
+      // tslint:disable-next-line:object-literal-sort-keys
+      buffer,
+    };
+  }
+
   private socket: Socket;
   private handler: Handler;
   constructor(socket: Socket) {
@@ -101,18 +115,7 @@ export class LevinProtocol extends EventEmitter {
   }
 
   public onIncomingData(reader: BufferStreamReader) {
-    const header = LevinProtocol.readHeader(reader);
-
-    const buffer = reader.read(header.size);
-    const cmd: ILevinCommand = {
-      command: header.command,
-      isNotify: !header.reply,
-      // tslint:disable-next-line:no-bitwise
-      isResponse:
-        (header.flags & LEVIN_PACKET_RESPONSE) === LEVIN_PACKET_RESPONSE,
-      // tslint:disable-next-line:object-literal-sort-keys
-      buffer,
-    };
+    const cmd = LevinProtocol.readCommand(reader);
     this.onCommand(cmd);
   }
 
@@ -135,7 +138,6 @@ export class LevinProtocol extends EventEmitter {
         break;
     }
   }
-
   public onTimedSyncResponse(cmd: ILevinCommand): boolean {
     return false;
   }
