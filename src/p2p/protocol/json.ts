@@ -33,7 +33,6 @@ export const BIN_KV_SERIALIZE_TYPE_STRING = 10;
 export const BIN_KV_SERIALIZE_TYPE_BOOL = 11;
 export const BIN_KV_SERIALIZE_TYPE_OBJECT = 12;
 export const BIN_KV_SERIALIZE_TYPE_ARRAY = 13;
-export const BIN_KV_SERIALIZE_TYPE_DATE = 14; // FOR temporary usage only
 export const BIN_KV_SERIALIZE_FLAG_ARRAY = 0x80;
 
 export interface IKVBlockHeader {
@@ -107,10 +106,10 @@ export function writeJSONVarint(writer: BufferStreamWriter, val: number) {
   if (val > 0xffff >>> 2) {
     mask = PORTABLE_RAW_SIZE_MARK_DWORD;
   }
-  // tslint:disable-next-line:no-bitwise
-  if (val > 0xffffffff >>> 2) {
-    mask = PORTABLE_RAW_SIZE_MARK_INT64;
-  }
+  // // tslint:disable-next-line:no-bitwise
+  // if (val > 0xffffffff >>> 2) {
+  //   mask = PORTABLE_RAW_SIZE_MARK_INT64;
+  // }
   // tslint:disable-next-line:no-bitwise
   val <<= 2;
   // tslint:disable-next-line:no-bitwise
@@ -125,10 +124,10 @@ export function writeJSONVarint(writer: BufferStreamWriter, val: number) {
     case PORTABLE_RAW_SIZE_MARK_DWORD:
       writer.writeUInt32(val);
       break;
-    // temporary not used!
-    case PORTABLE_RAW_SIZE_MARK_INT64:
-      writer.writeUInt64(val);
-      break;
+    // // temporary not used!
+    // case PORTABLE_RAW_SIZE_MARK_INT64:
+    //   writer.writeUInt64(val);
+    //   break;
   }
 }
 
@@ -204,27 +203,17 @@ export function writeJSONValue(
     case BIN_KV_SERIALIZE_TYPE_UINT32:
       return writer.writeUInt32(data);
     case BIN_KV_SERIALIZE_TYPE_UINT16:
-      return writer.writeInt16(data);
+      return writer.writeUInt16(data);
     case BIN_KV_SERIALIZE_TYPE_UINT8:
       return writer.writeUInt8(data);
     case BIN_KV_SERIALIZE_TYPE_DOUBLE:
       return writer.writeDouble(data);
-    case BIN_KV_SERIALIZE_TYPE_DATE:
-      writer.writeUInt32(data);
-      return writer.writeUInt32(0);
     case BIN_KV_SERIALIZE_TYPE_BOOL:
       return writer.writeUInt8(data !== 0 ? 1 : 0);
     case BIN_KV_SERIALIZE_TYPE_STRING:
       return writeJSONString(writer, data);
     case BIN_KV_SERIALIZE_TYPE_OBJECT:
       return;
-      break;
-    case BIN_KV_SERIALIZE_TYPE_ARRAY:
-      writeJSONVarint(writer, data.length);
-      if (!(data instanceof Buffer)) {
-        data = Buffer.from(data);
-      }
-      return writer.write(data);
     default:
       throw new Error('Unknown data type!');
   }
@@ -237,17 +226,6 @@ export function readJSONArray(reader: BufferStreamReader, type: number): any[] {
     arr.push(readJSONValue(reader, type));
   }
   return arr;
-}
-
-export function writeJSONArray(
-  writer: BufferStreamWriter,
-  items: [],
-  type: number
-) {
-  writeJSONVarint(writer, items.length);
-  for (const item of items) {
-    writeJSONValue(writer, item, type);
-  }
 }
 
 export function readJSONObjectValue(reader: BufferStreamReader) {
@@ -267,15 +245,7 @@ export function writeJSONObjectValue(
   data: any,
   type: number
 ) {
-  if (type !== BIN_KV_SERIALIZE_TYPE_ARRAY) {
-    writer.writeUInt8(type);
-  }
-  // tslint:disable-next-line:no-bitwise
-  if (type & BIN_KV_SERIALIZE_FLAG_ARRAY) {
-    // tslint:disable-next-line:no-bitwise
-    type &= ~BIN_KV_SERIALIZE_FLAG_ARRAY;
-    return writeJSONArray(writer, data, type);
-  }
+  writer.writeUInt8(type);
   writeJSONValue(writer, data, type);
 }
 
@@ -287,16 +257,6 @@ export function readJSONObject(reader: BufferStreamReader) {
     obj[name] = readJSONObjectValue(reader);
   }
   return obj;
-}
-
-export function writeJSONObjectKeyCount(
-  writer: BufferStreamWriter,
-  name: string,
-  count: number
-) {
-  writeJSONName(writer, name);
-  writeJSONVarint(writer, BIN_KV_SERIALIZE_TYPE_OBJECT);
-  writeJSONVarint(writer, count);
 }
 
 export function writeJSONObjectKeyValue(

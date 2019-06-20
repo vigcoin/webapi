@@ -2,9 +2,6 @@ import * as assert from 'assert';
 import { BufferStreamReader } from '../../src/cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';
 import { handshake } from '../../src/p2p/protocol/handshake';
-import { ping } from '../../src/p2p/protocol/ping';
-import { timedsync } from '../../src/p2p/protocol/timedsync';
-
 import {
   BIN_KV_SERIALIZE_FLAG_ARRAY,
   BIN_KV_SERIALIZE_TYPE_BOOL,
@@ -25,8 +22,11 @@ import {
   readJSONObjectValue,
   readJSONValue,
   readJSONVarint,
+  writeJSONValue,
   writeJSONVarint,
 } from '../../src/p2p/protocol/json';
+import { ping } from '../../src/p2p/protocol/ping';
+import { timedsync } from '../../src/p2p/protocol/timedsync';
 
 describe('test json stream', () => {
   test('should read varint uint8 from stream', async () => {
@@ -1498,7 +1498,7 @@ describe('test json stream', () => {
     assert(writer.getBuffer().equals(Buffer.from(data)));
   });
 
-  test('should read timedsync request stream', async () => {
+  test('should read/write timedsync request stream', async () => {
     const data = [
       0x01,
       0x11,
@@ -1633,5 +1633,267 @@ describe('test json stream', () => {
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     timedsync.Writer.request(writer, json);
     assert(writer.getBuffer().equals(Buffer.from(data)));
+  });
+
+  test('should read/write timedsync response stream', async () => {
+    const data = [
+      0x01,
+      0x11,
+      0x01,
+      0x01,
+      0x01,
+      0x01,
+      0x02,
+      0x01,
+      0x01,
+      0x0c,
+      0x0a,
+      0x6c,
+      0x6f,
+      0x63,
+      0x61,
+      0x6c,
+      0x5f,
+      0x74,
+      0x69,
+      0x6d,
+      0x65,
+      0x05,
+      0xda,
+      0x17,
+      0x0b,
+      0x5d,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x0c,
+      0x70,
+      0x61,
+      0x79,
+      0x6c,
+      0x6f,
+      0x61,
+      0x64,
+      0x5f,
+      0x64,
+      0x61,
+      0x74,
+      0x61,
+      0x0c,
+      0x08,
+      0x0e,
+      0x63,
+      0x75,
+      0x72,
+      0x72,
+      0x65,
+      0x6e,
+      0x74,
+      0x5f,
+      0x68,
+      0x65,
+      0x69,
+      0x67,
+      0x68,
+      0x74,
+      0x06,
+      0x0e,
+      0x00,
+      0x00,
+      0x00,
+      0x06,
+      0x74,
+      0x6f,
+      0x70,
+      0x5f,
+      0x69,
+      0x64,
+      0x0a,
+      0x80,
+      0x4d,
+      0xbf,
+      0xeb,
+      0x3a,
+      0xc4,
+      0x04,
+      0x88,
+      0x1e,
+      0xa7,
+      0x6a,
+      0x5d,
+      0x62,
+      0x7d,
+      0xc6,
+      0x7a,
+      0x0b,
+      0xf6,
+      0x97,
+      0x39,
+      0x9f,
+      0xf2,
+      0x36,
+      0xec,
+      0x8f,
+      0x2c,
+      0xf5,
+      0x6e,
+      0xc8,
+      0xcd,
+      0x81,
+      0xeb,
+      0x5f,
+      0x0e,
+      0x6c,
+      0x6f,
+      0x63,
+      0x61,
+      0x6c,
+      0x5f,
+      0x70,
+      0x65,
+      0x65,
+      0x72,
+      0x6c,
+      0x69,
+      0x73,
+      0x74,
+      0x0a,
+      0x21,
+      0x01,
+      0x27,
+      0x6c,
+      0xa0,
+      0xfc,
+      0x58,
+      0x4d,
+      0x00,
+      0x00,
+      0x55,
+      0x30,
+      0x15,
+      0x69,
+      0x7e,
+      0x82,
+      0x2c,
+      0xb4,
+      0x0f,
+      0x25,
+      0x0a,
+      0x5d,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0x7b,
+      0x34,
+      0x13,
+      0x59,
+      0x58,
+      0x4d,
+      0x00,
+      0x00,
+      0xd0,
+      0x94,
+      0xed,
+      0x5d,
+      0x99,
+      0xf2,
+      0x6f,
+      0xd8,
+      0x08,
+      0x25,
+      0x0a,
+      0x5d,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+      0xb6,
+      0x3d,
+      0x85,
+      0x30,
+      0x58,
+      0x4d,
+      0x00,
+      0x00,
+      0xbc,
+      0xab,
+      0x85,
+      0x2d,
+      0xff,
+      0x41,
+      0xcb,
+      0x9f,
+      0x08,
+      0x25,
+      0x0a,
+      0x5d,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+    ];
+    const reader = new BufferStreamReader(Buffer.from(data));
+    const json = timedsync.Reader.response(reader);
+    assert(json.localTime.getTime() === 1561008090);
+    assert(json.payload.currentHeight === 14);
+    assert(json.localPeerList.length === 3);
+
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    timedsync.Writer.response(writer, json);
+    assert(writer.getBuffer().equals(Buffer.from(data)));
+  });
+
+  test('should throw if no type found', () => {
+    let thrown = false;
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    try {
+      writeJSONValue(writer, 0, 10000);
+    } catch (e) {
+      thrown = true;
+    }
+    assert(thrown);
+  });
+
+  test('should write bool', () => {
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    writeJSONValue(writer, 0, BIN_KV_SERIALIZE_TYPE_BOOL);
+    writeJSONValue(writer, 1, BIN_KV_SERIALIZE_TYPE_BOOL);
+    writeJSONValue(writer, 10, BIN_KV_SERIALIZE_TYPE_DOUBLE);
+    writeJSONValue(writer, 5, BIN_KV_SERIALIZE_TYPE_UINT16);
+    writeJSONValue(writer, 5, BIN_KV_SERIALIZE_TYPE_INT8);
+    writeJSONValue(writer, 0, BIN_KV_SERIALIZE_TYPE_INT8);
+    writeJSONValue(writer, 5, BIN_KV_SERIALIZE_TYPE_INT16);
+    writeJSONValue(writer, 0, BIN_KV_SERIALIZE_TYPE_INT16);
+    writeJSONValue(writer, 5, BIN_KV_SERIALIZE_TYPE_INT32);
+    writeJSONValue(writer, 0, BIN_KV_SERIALIZE_TYPE_INT32);
+    writeJSONValue(writer, 5, BIN_KV_SERIALIZE_TYPE_INT64);
+    writeJSONValue(writer, 0, BIN_KV_SERIALIZE_TYPE_INT64);
+
+    const reader = new BufferStreamReader(writer.getBuffer());
+    let value = readJSONValue(reader, BIN_KV_SERIALIZE_TYPE_BOOL);
+    assert(!value);
+    value = readJSONValue(reader, BIN_KV_SERIALIZE_TYPE_BOOL);
+    assert(value);
+    value = readJSONValue(reader, BIN_KV_SERIALIZE_TYPE_DOUBLE);
+    assert(value === 10);
+    value = readJSONValue(reader, BIN_KV_SERIALIZE_TYPE_UINT16);
+    assert(value === 5);
+    value = readJSONValue(reader, BIN_KV_SERIALIZE_TYPE_INT8);
+    assert(value === 5);
+    value = readJSONValue(reader, BIN_KV_SERIALIZE_TYPE_INT8);
+    assert(value === 0);
+    value = readJSONValue(reader, BIN_KV_SERIALIZE_TYPE_INT16);
+    assert(value === 5);
+    value = readJSONValue(reader, BIN_KV_SERIALIZE_TYPE_INT16);
+    assert(value === 0);
+    value = readJSONValue(reader, BIN_KV_SERIALIZE_TYPE_INT32);
+    assert(value === 5);
+    value = readJSONValue(reader, BIN_KV_SERIALIZE_TYPE_INT32);
+    assert(value === 0);
+    // Never used!
+    value = readJSONValue(reader, BIN_KV_SERIALIZE_TYPE_INT64);
+    value = readJSONValue(reader, BIN_KV_SERIALIZE_TYPE_INT64);
   });
 });

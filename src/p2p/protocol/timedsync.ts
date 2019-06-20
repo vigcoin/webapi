@@ -1,13 +1,13 @@
 import { ICoreSyncData, IPeerEntry, IPeerNodeData } from '../../cryptonote/p2p';
+import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 import { P2P_COMMAND_ID_BASE } from './defines';
-import { BufferStreamReader } from '../../cryptonote/serialize/reader';
-import { readJSON } from './json';
 import {
-  BIN_KV_SERIALIZE_TYPE_UINT64,
+  readJSON,
+  readJSONIPeerEntryList,
+  writeJSONDateType,
   writeJSONICoreSyncData,
   writeJSONIPeerEntryList,
-  writeJSONObjectKeyValue,
   writeJSONVarint,
   writeKVBlockHeader,
 } from './json';
@@ -37,24 +37,24 @@ export namespace timedsync {
         payload,
       };
     }
-    // public static response(reader: BufferStreamReader): IResponse {
-    //   const localTime = reader.readDate();
-    //   const node = readIPeerNodeData(reader);
-    //   const payload = readICoreSyncData(reader);
-    //   const localPeerList = [];
-    //   const loop = reader.getRemainedSize() / 24;
-    //   assert(reader.getRemainedSize() % 24 === 0);
-    //   for (let i = 0; i < loop; i++) {
-    //     localPeerList.push(readIPeerEntry(reader));
-    //   }
-    //   return {
-    //     localTime,
-    //     node,
-    //     payload,
-    //     // tslint:disable-next-line:object-literal-sort-keys
-    //     localPeerList,
-    //   };
-    // }
+    public static response(reader: BufferStreamReader): IResponse {
+      const json = readJSON(reader);
+
+      const localTime = new Date(json.local_time.readUInt32LE(0));
+      const payload: ICoreSyncData = {
+        currentHeight: json.payload_data.current_height,
+        hash: json.payload_data.top_id,
+      };
+      const localPeerList = readJSONIPeerEntryList(
+        new BufferStreamReader(json.local_peerlist)
+      );
+      return {
+        localTime,
+        payload,
+        // tslint:disable-next-line:object-literal-sort-keys
+        localPeerList,
+      };
+    }
   }
 
   // tslint:disable-next-line:max-classes-per-file
@@ -68,12 +68,7 @@ export namespace timedsync {
     public static response(writer: BufferStreamWriter, data: IResponse) {
       writeKVBlockHeader(writer);
       writeJSONVarint(writer, Object.keys(data).length);
-      writeJSONObjectKeyValue(
-        writer,
-        'local_time',
-        data.localTime,
-        BIN_KV_SERIALIZE_TYPE_UINT64
-      );
+      writeJSONDateType(writer, 'local_time', data.localTime.getTime());
       writeJSONICoreSyncData(writer, 'payload_data', data.payload);
       writeJSONIPeerEntryList(writer, 'local_peerlist', data.localPeerList);
     }
