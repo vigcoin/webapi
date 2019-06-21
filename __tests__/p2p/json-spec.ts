@@ -1,7 +1,9 @@
 import * as assert from 'assert';
 import { BufferStreamReader } from '../../src/cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';
-import { handshake } from '../../src/p2p/protocol/handshake';
+import { handshake } from '../../src/p2p/protocol/commands/handshake';
+import { ping } from '../../src/p2p/protocol/commands/ping';
+import { timedsync } from '../../src/p2p/protocol/commands/timedsync';
 import {
   BIN_KV_SERIALIZE_FLAG_ARRAY,
   BIN_KV_SERIALIZE_TYPE_BOOL,
@@ -25,8 +27,6 @@ import {
   writeJSONValue,
   writeJSONVarint,
 } from '../../src/p2p/protocol/json';
-import { ping } from '../../src/p2p/protocol/ping';
-import { timedsync } from '../../src/p2p/protocol/timedsync';
 
 describe('test json stream', () => {
   test('should read varint uint8 from stream', async () => {

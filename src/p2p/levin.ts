@@ -3,9 +3,9 @@ import { EventEmitter } from 'events';
 import { Socket } from 'net';
 import { Handler } from '../cryptonote/protocol/handler';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
-import { ConnectionState } from './connection';
+import { int32, uint32, uint64, UINT64 } from '../cryptonote/types';
+import { ConnectionState, P2pConnectionContext } from './connection';
 import { handshake, ping, timedsync } from './protocol';
-import { uint64, uint32, int32, UINT64 } from '../cryptonote/types';
 
 export enum LevinError {
   SUCCESS = 1,
@@ -26,14 +26,14 @@ export interface ILevinCommand {
   buffer: Buffer;
 }
 
-export interface IBucketHead {
-  signature: number; // uint64
-  cb: number; // uint64, size
-  haveToReturnData: boolean; // bool
-  command: number; // uint32
-  returnCode: number; // int32
-  flags: number; // uint32
-  protocolVersion: number; // uint32
+export interface ILevinHeader {
+  signature: UINT64;
+  size: uint64;
+  reply: boolean;
+  command: uint32;
+  code: int32;
+  flags: uint32;
+  version: uint32;
 }
 
 // CONSTANTS
@@ -51,16 +51,6 @@ const LEVIN_PACKET_REQUEST = 0x00000001;
 const LEVIN_PACKET_RESPONSE = 0x00000002;
 const LEVIN_DEFAULT_MAX_PACKET_SIZE = 100000000; // 100MB by default
 const LEVIN_PROTOCOL_VER_1 = 1;
-
-export interface ILevinHeader {
-  signature: UINT64;
-  size: uint64;
-  reply: boolean;
-  command: uint32;
-  code: int32;
-  flags: uint32;
-  version: uint32;
-}
 
 export class LevinProtocol extends EventEmitter {
   public static readHeader(reader: BufferStreamReader): ILevinHeader {
@@ -101,11 +91,11 @@ export class LevinProtocol extends EventEmitter {
   }
 
   private socket: Socket;
-  private handler: Handler;
-  constructor(socket: Socket) {
+  private context: P2pConnectionContext;
+  constructor(socket: Socket, context: P2pConnectionContext) {
     super();
     this.socket = socket;
-    this.handler = new Handler();
+    this.context = context;
     this.socket.on('data', buffer => {
       this.onIncomingData(new BufferStreamReader(buffer));
     });
@@ -134,8 +124,10 @@ export class LevinProtocol extends EventEmitter {
         this.onTimedSync(cmd);
         break;
       case ping.ID.ID:
-        this.onTimedSync(cmd);
+        this.onPing(cmd);
         break;
+      default:
+        throw new Error('Error Command!');
     }
   }
   public onTimedSyncResponse(cmd: ILevinCommand): boolean {
@@ -143,14 +135,19 @@ export class LevinProtocol extends EventEmitter {
   }
 
   public onHandshake(cmd: ILevinCommand) {
+    this.emit('processed', 'handshake');
+
     return false;
   }
 
   public onTimedSync(cmd: ILevinCommand) {
+    this.emit('processed', 'timedsync');
+
     return false;
   }
 
   public onPing(cmd: ILevinCommand) {
+    this.emit('processed', 'ping');
     return false;
   }
 }

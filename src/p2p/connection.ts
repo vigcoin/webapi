@@ -2,7 +2,8 @@ import { EventEmitter } from 'events';
 import { Socket } from 'net';
 import * as uuid from 'uuid';
 import { Hash } from '../crypto/types';
-import { IMessage, IPeerIDType } from '../cryptonote/p2p';
+import { IMessage, IP2Number, IPeerIDType } from '../cryptonote/p2p';
+import { uint32, uint8 } from '../cryptonote/types';
 import { LevinProtocol } from './levin';
 
 export enum ConnectionState {
@@ -16,17 +17,17 @@ export enum ConnectionState {
 }
 
 export class ConnectionContext extends EventEmitter {
-  protected version: number; // unit8
+  protected version: uint8; // unit8
   protected id: string; // boost::uuids::uuid
-  protected ip: string; // uint32
-  protected port: number = 0; // uint32
+  protected ip: uint32; // uint32
+  protected port: uint32 = 0; // uint32
   protected isIncoming: boolean = false;
   protected startTime: Date;
   protected state: ConnectionState = ConnectionState.BEFORE_HANDSHAKE;
   protected neededObjects: Hash[];
   protected requestedObjects: Hash[];
-  protected remoteBlockchainHeight: number = 0; // uint32;
-  protected lastResponseHeight: number = 0; // unit32;
+  protected remoteBlockchainHeight: uint32 = 0; // uint32;
+  protected lastResponseHeight: uint32 = 0; // unit32;
 
   public getState() {
     return this.state;
@@ -43,16 +44,25 @@ export class P2pConnectionContext extends ConnectionContext {
 
   constructor(socket: Socket) {
     super();
+    this.peerId = this.getRandomPeerId();
     this.socket = socket;
     this.id = uuid.v4();
     this.isIncoming = true;
     this.startTime = new Date();
-    this.ip = socket.remoteAddress;
+    this.ip = IP2Number(socket.remoteAddress);
     this.port = socket.remotePort;
-    this.levin = new LevinProtocol(socket);
+    this.levin = new LevinProtocol(socket, this);
 
     this.levin.on('state', (state: ConnectionState) => {
       this.state = state;
     });
+  }
+
+  public getRandomPeerId() {
+    const random = [];
+    for (let i = 0; i < 8; i++) {
+      random.push(Math.floor(Math.random() * 256));
+    }
+    return Buffer.from(random).readDoubleLE(0);
   }
 }
