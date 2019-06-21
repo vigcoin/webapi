@@ -22,7 +22,7 @@ export class BaseBuffer {
   }
 }
 
-export type Hash = Buffer;
+export type Hash = Buffer; // uint8[32]
 export type Key = Hash;
 export type PublicKey = Hash;
 export type PrivateKey = Hash;

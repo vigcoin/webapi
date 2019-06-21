@@ -1,13 +1,7 @@
 import * as assert from 'assert';
-import {
-  ICoreSyncData,
-  IPeerEntry,
-  IPeerNodeData,
-  IP2String,
-} from '../../cryptonote/p2p';
+import { ICoreSyncData, IPeerEntry, IPeerNodeData } from '../../cryptonote/p2p';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
-import { read } from 'fs';
 
 const PORTABLE_STORAGE_SIGNATUREA = 0x01011101;
 const PORTABLE_STORAGE_SIGNATUREB = 0x01020101; // bender's nightmare

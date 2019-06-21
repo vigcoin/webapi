@@ -1,10 +1,10 @@
 import * as assert from 'assert';
 import { EventEmitter } from 'events';
 import { Socket } from 'net';
-import { Handler } from '../cryptonote/protocol/handler';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
+import { BufferStreamWriter } from '../cryptonote/serialize/writer';
 import { int32, uint32, uint64, UINT64 } from '../cryptonote/types';
-import { ConnectionState, P2pConnectionContext } from './connection';
+import { P2pConnectionContext } from './connection';
 import { handshake, ping, timedsync } from './protocol';
 
 export enum LevinError {
@@ -76,6 +76,23 @@ export class LevinProtocol extends EventEmitter {
     };
   }
 
+  public static writeHeader(
+    writer: BufferStreamWriter,
+    cmd: number,
+    buffer: Buffer,
+    code: number
+  ) {
+    writer.write(LEVIN_SIGNATURE);
+    writer.writeUInt32(buffer.length);
+    writer.writeUInt32(0);
+    writer.writeUInt8(0);
+    writer.writeUInt32(cmd);
+    writer.writeInt32(code);
+    writer.writeUInt32(LEVIN_PACKET_RESPONSE);
+    writer.writeUInt32(LEVIN_PROTOCOL_VER_1);
+    writer.write(buffer);
+  }
+
   public static readCommand(reader: BufferStreamReader): ILevinCommand {
     const header = LevinProtocol.readHeader(reader);
     const buffer = reader.read(header.size);
@@ -88,6 +105,16 @@ export class LevinProtocol extends EventEmitter {
       // tslint:disable-next-line:object-literal-sort-keys
       buffer,
     };
+  }
+
+  public static writeCommand(
+    cmd: number,
+    buffer: Buffer,
+    code: number
+  ): Buffer {
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    LevinProtocol.writeHeader(writer, cmd, buffer, code);
+    return writer.getBuffer();
   }
 
   private socket: Socket;
@@ -110,12 +137,12 @@ export class LevinProtocol extends EventEmitter {
   }
 
   public onCommand(cmd: ILevinCommand) {
-    if (cmd.isResponse && cmd.command === timedsync.ID.ID) {
-      if (!this.onTimedSyncResponse(cmd)) {
-        this.emit('state', ConnectionState.SHUTDOWN);
-        return;
-      }
-    }
+    // if (cmd.isResponse && cmd.command === timedsync.ID.ID) {
+    //   if (!this.onTimedSyncResponse(cmd)) {
+    //     this.emit('state', ConnectionState.SHUTDOWN);
+    //     return;
+    //   }
+    // }
     switch (cmd.command) {
       case handshake.ID.ID:
         this.onHandshake(cmd);
@@ -141,6 +168,28 @@ export class LevinProtocol extends EventEmitter {
   }
 
   public onTimedSync(cmd: ILevinCommand) {
+    const reader = new BufferStreamReader(cmd.buffer);
+    const request: timedsync.IRequest = timedsync.Reader.request(reader);
+
+    if (this.isReply(cmd)) {
+      const response: timedsync.IResponse = {
+        localTime: new Date(),
+        payload: {
+          currentHeight: Math.floor(Math.random() * 10000),
+          hash: this.getRandomBuffer(32),
+        },
+        // tslint:disable-next-line:object-literal-sort-keys
+        localPeerList: [],
+      };
+      const writer = new BufferStreamWriter(Buffer.alloc(0));
+      timedsync.Writer.response(writer, response);
+      const data = LevinProtocol.writeCommand(
+        cmd.command,
+        writer.getBuffer(),
+        0
+      );
+      this.socket.write(data);
+    }
     this.emit('processed', 'timedsync');
 
     return false;
@@ -149,5 +198,17 @@ export class LevinProtocol extends EventEmitter {
   public onPing(cmd: ILevinCommand) {
     this.emit('processed', 'ping');
     return false;
+  }
+
+  private isReply(cmd: ILevinCommand) {
+    return !(cmd.isNotify || cmd.isResponse);
+  }
+
+  private getRandomBuffer(length: number) {
+    const random = [];
+    for (let i = 0; i < length; i++) {
+      random.push(Math.floor(Math.random() * 256));
+    }
+    return Buffer.from(random);
   }
 }
