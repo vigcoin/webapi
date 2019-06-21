@@ -249,29 +249,28 @@ describe('test levin protocol', () => {
   ];
 
   it('should handle levin timedsync protocol', done => {
+    let processed = false;
     const server = createServer(socket => {
       const context = new P2pConnectionContext(socket);
       const levin = new LevinProtocol(socket, context);
       levin.on('processed', message => {
         assert(message === 'timedsync');
+        processed = true;
       });
     });
     const port = Math.floor(Math.random() * 1000) + 1024;
     server.listen(port);
     const client = createConnection({ port }, () => {
-      // 'connect' listener
       client.write(Buffer.from(timesyncRequest));
-    });
-    client.on('data', data => {
-      assert(data.length > 0);
-      const cmd = LevinProtocol.readCommand(new BufferStreamReader(data));
-      const response: timedsync.IResponse = timedsync.Reader.response(
-        new BufferStreamReader(cmd.buffer)
-      );
-      assert(cmd.command === timedsync.ID.ID);
-      client.destroy();
-      server.close();
-      done();
+      const context = new P2pConnectionContext(client);
+      const levin = new LevinProtocol(client, context);
+      levin.on('timedsync', (res: timedsync.IResponse) => {
+        assert(!!res.localTime);
+        assert(processed);
+        client.destroy();
+        server.close();
+        done();
+      });
     });
   });
 });

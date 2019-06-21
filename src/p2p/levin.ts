@@ -137,17 +137,15 @@ export class LevinProtocol extends EventEmitter {
   }
 
   public onCommand(cmd: ILevinCommand) {
-    // if (cmd.isResponse && cmd.command === timedsync.ID.ID) {
-    //   if (!this.onTimedSyncResponse(cmd)) {
-    //     this.emit('state', ConnectionState.SHUTDOWN);
-    //     return;
-    //   }
-    // }
     switch (cmd.command) {
       case handshake.ID.ID:
         this.onHandshake(cmd);
         break;
       case timedsync.ID.ID:
+        if (cmd.isResponse) {
+          this.onTimedSyncResponse(cmd);
+          return;
+        }
         this.onTimedSync(cmd);
         break;
       case ping.ID.ID:
@@ -158,6 +156,10 @@ export class LevinProtocol extends EventEmitter {
     }
   }
   public onTimedSyncResponse(cmd: ILevinCommand): boolean {
+    const response: timedsync.IResponse = timedsync.Reader.response(
+      new BufferStreamReader(cmd.buffer)
+    );
+    this.emit('timedsync', response);
     return false;
   }
 
