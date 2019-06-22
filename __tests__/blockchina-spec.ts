@@ -6,15 +6,13 @@ import { BlockIndex } from '../src/cryptonote/block/block-index';
 import { BlockChain } from '../src/cryptonote/block/blockchain';
 import { IBlock, IInputBase, IOutputKey } from '../src/cryptonote/types';
 
-let block: IBlock;
-
 describe('read from file', () => {
   const indexFile = path.resolve(__dirname, './vigcoin/blockindexes.dat');
   const blockFile = path.resolve(__dirname, './vigcoin/blocks.dat');
   const chainFile = path.resolve(__dirname, './vigcoin/blockchainindices.dat');
   const cacheFile = path.resolve(__dirname, './vigcoin/blockscache.dat');
 
-  let files: Configuration.IBlockFile = {
+  const files: Configuration.IBlockFile = {
     data: blockFile,
     index: indexFile,
     // tslint:disable-next-line:object-literal-sort-keys
@@ -22,7 +20,7 @@ describe('read from file', () => {
     cache: cacheFile,
   };
 
-  let blockChain: BlockChain = new BlockChain(files);
+  const blockChain: BlockChain = new BlockChain(files);
 
   test('should init block chain', () => {
     blockChain.init();
@@ -35,5 +33,37 @@ describe('read from file', () => {
     height = 10;
     be = blockChain.get(height);
     assert(be.height === height);
+  });
+
+  test('should have height', () => {
+    assert(blockChain.height === 49);
+  });
+});
+
+describe('read from empty file', () => {
+  const indexFile = path.resolve(__dirname, './vigcoinempty/blockindexes.dat');
+  const blockFile = path.resolve(__dirname, './vigcoinempty/blocks.dat');
+  const chainFile = path.resolve(
+    __dirname,
+    './vigcoinempty/blockchainindices.dat'
+  );
+  const cacheFile = path.resolve(__dirname, './vigcoinempty/blockscache.dat');
+
+  const files: Configuration.IBlockFile = {
+    data: blockFile,
+    index: indexFile,
+    // tslint:disable-next-line:object-literal-sort-keys
+    chain: chainFile,
+    cache: cacheFile,
+  };
+
+  const blockChain: BlockChain = new BlockChain(files);
+
+  test('should init block chain', () => {
+    blockChain.init();
+  });
+
+  test('should have height', () => {
+    assert(blockChain.height === 0);
   });
 });

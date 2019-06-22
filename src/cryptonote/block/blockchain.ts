@@ -37,5 +37,9 @@ export class BlockChain {
     return this.block.read(this.offsets[height], this.offsets[height + 1]);
   }
 
+  get height() {
+    return this.blockIndex.height;
+  }
+
   public synchronize() {}
 }

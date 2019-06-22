@@ -12,13 +12,13 @@ export class BlockIndex {
   private filename: string;
   private offsets: number[];
   private fd: number;
-  private height: number;
+  private _height: number;
 
   constructor(filename: string) {
     this.filename = filename;
     this.offsets = [];
     this.fd = null;
-    this.height = 0;
+    this._height = 0;
   }
 
   public init() {
@@ -26,14 +26,14 @@ export class BlockIndex {
       this.fd = openSync(this.filename, 'w');
     } else {
       this.fd = openSync(this.filename, 'r+');
-      this.height = this.readHeight();
+      this._height = this.readHeight();
       this.readItems();
     }
   }
 
   public deinit() {
     closeSync(this.fd);
-    this.height = 0;
+    this._height = 0;
     this.offsets = [];
     this.fd = null;
   }
@@ -75,5 +75,8 @@ export class BlockIndex {
 
   public empty(): boolean {
     return this.offsets.length === 0;
+  }
+  get height(): number {
+    return this._height;
   }
 }
