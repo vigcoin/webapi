@@ -1,9 +1,9 @@
 import { app } from '../src/main';
 
-import * as http from 'supertest';
 import * as assert from 'assert';
+import { unlinkSync, writeFileSync } from 'fs';
 import * as path from 'path';
-import { writeFileSync, unlinkSync } from 'fs';
+import * as http from 'supertest';
 
 import { Wallet } from '@vigcoin/neon';
 

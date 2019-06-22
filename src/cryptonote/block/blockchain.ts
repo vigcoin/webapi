@@ -4,8 +4,16 @@ import { IBlockEntry } from '../types';
 import { Block } from './block';
 import { BlockIndex } from './block-index';
 
-// tslint:disable-next-line:max-classes-per-file
 export class BlockChain {
+  public static genesis(block: Configuration.IBlock): Configuration.IGenesis {
+    const genesisBlock = Block.genesis(block);
+    const genesisBlockHash = Block.hash(genesisBlock);
+    return {
+      block: genesisBlock,
+      hash: genesisBlockHash,
+    };
+  }
+
   private files: Configuration.IBlockFile;
   private blockIndex: BlockIndex;
   private block: Block;
@@ -40,6 +48,4 @@ export class BlockChain {
   get height() {
     return this.blockIndex.height;
   }
-
-  public synchronize() {}
 }

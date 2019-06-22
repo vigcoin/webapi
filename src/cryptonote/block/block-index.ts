@@ -1,17 +1,10 @@
-import {
-  close,
-  closeSync,
-  existsSync,
-  openSync,
-  readSync,
-  writeSync,
-} from 'fs';
-import { BufferStreamWriter } from '../serialize/writer';
+import { closeSync, existsSync, openSync, readSync, writeSync } from 'fs';
 
 export class BlockIndex {
   private filename: string;
   private offsets: number[];
   private fd: number;
+  // tslint:disable-next-line:variable-name
   private _height: number;
 
   constructor(filename: string) {

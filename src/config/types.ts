@@ -1,3 +1,6 @@
+import { Hash } from '../crypto/types';
+import { IBlock as IBlockTypes } from '../cryptonote/types';
+
 // tslint:disable-next-line: no-namespace
 export namespace Configuration {
   export interface IVersion {
@@ -29,5 +32,10 @@ export namespace Configuration {
     block: IBlock;
     blockFiles: IBlockFile;
     hardfork: IHardfork[];
+  }
+
+  export interface IGenesis {
+    block: IBlockTypes;
+    hash: Hash;
   }
 }

@@ -1,8 +1,7 @@
+import assert = require('assert');
 import { HASH_LENGTH } from '../src/crypto/types';
 import { BufferStreamReader } from '../src/cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../src/cryptonote/serialize/writer';
-import assert = require('assert');
-import { read } from 'fs';
 
 describe('test serializer', () => {
   test('Should write/read types and Buffer', async () => {

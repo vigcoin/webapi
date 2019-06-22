@@ -1,6 +1,6 @@
-import { Configuration } from '../src/config/types';
-import { Block } from '../src/cryptonote/block/block';
-import { IBlock } from '../src/cryptonote/types';
+import { Configuration } from '../../src/config/types';
+import { Block } from '../../src/cryptonote/block/block';
+import { IBlock } from '../../src/cryptonote/types';
 
 test('Should init genesis', () => {
   const blockConf: Configuration.IBlock = {

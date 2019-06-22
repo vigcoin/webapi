@@ -1,6 +1,11 @@
+import { Currency } from '../currency';
 import { Command } from './command';
 
 export class Handler {
+  private currency: Currency;
+  constructor(currency: Currency) {
+    this.currency = currency;
+  }
   public onCommand(cmd: Command) {
     switch (cmd) {
       case Command.NOTIFY_NEW_BLOCK:

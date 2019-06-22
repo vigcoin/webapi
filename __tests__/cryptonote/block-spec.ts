@@ -1,9 +1,9 @@
 import assert = require('assert');
 import * as path from 'path';
-import { Configuration } from '../src/config/types';
-import { Block } from '../src/cryptonote/block/block';
-import { BlockIndex } from '../src/cryptonote/block/block-index';
-import { IBlock, IInputBase, IOutputKey } from '../src/cryptonote/types';
+import { Configuration } from '../../src/config/types';
+import { Block } from '../../src/cryptonote/block/block';
+import { BlockIndex } from '../../src/cryptonote/block/block-index';
+import { IBlock, IInputBase, IOutputKey } from '../../src/cryptonote/types';
 
 let block: IBlock;
 
@@ -43,41 +43,43 @@ describe('test raw block', () => {
     expect(input.blockIndex === 0).toBeTruthy();
     expect(
       block.transaction.prefix.extra.equals(
-        new Buffer([
-          0xe5,
-          0x69,
-          0x09,
-          0xd6,
-          0x54,
-          0x7e,
-          0x1d,
-          0xba,
-          0x50,
-          0x01,
-          0x6e,
-          0xce,
-          0x49,
-          0x09,
-          0xbe,
-          0x98,
-          0x2d,
-          0xe3,
-          0x8a,
-          0x87,
-          0x2b,
-          0x4b,
-          0x32,
-          0x32,
-          0x4a,
-          0x16,
-          0x10,
-          0x7e,
-          0x9f,
-          0x56,
-          0xa4,
-          0xa9,
-          0x01,
-        ])
+        new Buffer(
+          [
+            0xe5,
+            0x69,
+            0x09,
+            0xd6,
+            0x54,
+            0x7e,
+            0x1d,
+            0xba,
+            0x50,
+            0x01,
+            0x6e,
+            0xce,
+            0x49,
+            0x09,
+            0xbe,
+            0x98,
+            0x2d,
+            0xe3,
+            0x8a,
+            0x87,
+            0x2b,
+            0x4b,
+            0x32,
+            0x32,
+            0x4a,
+            0x16,
+            0x10,
+            0x7e,
+            0x9f,
+            0x56,
+            0xa4,
+            0xa9,
+            0x01,
+          ].reverse()
+        )
       )
     ).toBeTruthy();
   });
@@ -93,8 +95,8 @@ describe('test raw block', () => {
 });
 
 describe('read from file', () => {
-  const indexFile = path.resolve(__dirname, './vigcoin/blockindexes.dat');
-  const blockFile = path.resolve(__dirname, './vigcoin/blocks.dat');
+  const indexFile = path.resolve(__dirname, '../vigcoin/blockindexes.dat');
+  const blockFile = path.resolve(__dirname, '../vigcoin/blocks.dat');
   let blockIndex: BlockIndex;
   // tslint:disable-next-line:no-shadowed-variable
   let block: Block;

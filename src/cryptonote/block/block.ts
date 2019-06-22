@@ -1,13 +1,6 @@
 import { getFastHash } from '@vigcoin/neon';
 import * as assert from 'assert';
-import {
-  closeSync,
-  openSync,
-  read,
-  readFileSync,
-  readSync,
-  writeSync,
-} from 'fs';
+import { closeSync, openSync, readSync, writeSync } from 'fs';
 import { Configuration } from '../../config/types';
 import { BaseBuffer, Hash } from '../../crypto/types';
 import { BufferStreamReader } from '../serialize/reader';
@@ -182,7 +175,6 @@ export class Block {
     for (const tx of blockEntry.transactions) {
       Transaction.writeEntry(writer, tx);
     }
-
     const fd = openSync(this.filename, 'r+');
     writeSync(fd, writer.getBuffer());
     closeSync(fd);

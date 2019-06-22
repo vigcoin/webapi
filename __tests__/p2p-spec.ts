@@ -1,4 +1,6 @@
 import { server } from '../src/init/p2p';
+import { IP2Number } from '../src/p2p';
+import * as assert from 'assert';
 
 describe('test connection', () => {
   beforeEach(() => {
@@ -18,5 +20,15 @@ describe('test connection', () => {
 
   test('Should stop peers', async () => {
     await server.stop();
+  });
+
+  test('should validate ip', () => {
+    let catched = false;
+    try {
+      IP2Number('asdffsfs');
+    } catch (e) {
+      catched = true;
+    }
+    assert(catched);
   });
 });

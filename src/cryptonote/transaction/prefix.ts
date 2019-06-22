@@ -157,21 +157,21 @@ export class TransactionPrefix {
     const size = reader.readVarint();
     const buffer = reader.read(size);
     const length = buffer.length;
-    for (let i = 0; i < length / 2; i++) {
-      const temp = buffer[i];
-      buffer[i] = buffer[length - 1 - i];
-      buffer[length - 1 - i] = temp;
-    }
+    // for (let i = 0; i < length / 2; i++) {
+    //   const temp = buffer[i];
+    //   buffer[i] = buffer[length - 1 - i];
+    //   buffer[length - 1 - i] = temp;
+    // }
     return buffer;
   }
 
   public static writeExtra(writer: BufferStreamWriter, extra: Buffer) {
     writer.writeVarint(extra.length);
-    for (let i = 0; i < extra.length / 2; i++) {
-      const temp = extra[i];
-      extra[i] = extra[extra.length - 1 - i];
-      extra[extra.length - 1 - i] = temp;
-    }
+    // for (let i = 0; i < extra.length / 2; i++) {
+    //   const temp = extra[i];
+    //   extra[i] = extra[extra.length - 1 - i];
+    //   extra[extra.length - 1 - i] = temp;
+    // }
     writer.write(extra);
   }
 

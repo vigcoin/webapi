@@ -1,12 +1,12 @@
 import assert = require('assert');
 import { unlinkSync } from 'fs';
 import * as path from 'path';
-import { BlockIndex } from '../src/cryptonote/block/block-index';
+import { BlockIndex } from '../../src/cryptonote/block/block-index';
 
 let blockIndex: BlockIndex;
 
 describe('test block indexes', () => {
-  const indexFile = path.resolve(__dirname, './vigcoin/blockindexes.dat');
+  const indexFile = path.resolve(__dirname, '../vigcoin/blockindexes.dat');
 
   test('Should create block index', () => {
     blockIndex = new BlockIndex(indexFile);
@@ -20,7 +20,7 @@ describe('test block indexes', () => {
 });
 
 describe('test raw block', () => {
-  const indexFile = path.resolve(__dirname, './vigcoin/blockindexes1.dat');
+  const indexFile = path.resolve(__dirname, '../vigcoin/blockindexes1.dat');
   const items = [100, 1122, 2, 1010, 0x7fffffff];
 
   test('Should create block index', () => {

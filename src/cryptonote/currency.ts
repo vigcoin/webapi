@@ -1,27 +1,30 @@
+import * as assert from 'assert';
 import { Configuration } from '../config/types';
-import { Block } from './block/block';
-import { IBlock } from './types';
+import { BlockChain } from './block/blockchain';
 
 export class Currency {
-  private genesisBlock: IBlock;
-  private genesisBlockHash: Buffer;
+  // tslint:disable-next-line:variable-name
+  private _genesis: Configuration.IGenesis;
   private config: Configuration.ICurrency;
+  private blockchain: BlockChain;
 
   constructor(config: Configuration.ICurrency) {
     this.config = config;
+    this.blockchain = new BlockChain(config.blockFiles);
+    this.init();
   }
 
-  public init() {
-    this.genesisBlock = Block.genesis(this.config.block);
-    this.genesisBlockHash = Block.hash(this.genesisBlock);
+  private init() {
+    this._genesis = BlockChain.genesis(this.config.block);
+    this.blockchain.init();
+    if (this.blockchain.height > 0) {
+      const be = this.blockchain.get(0);
+      assert.deepEqual(this._genesis.block, be.block);
+    }
   }
 
-  public getGenesisBlock(): IBlock {
-    return this.genesisBlock;
-  }
-
-  public getGenesisHash(): Buffer {
-    return this.genesisBlockHash;
+  get genesis(): Configuration.IGenesis {
+    return this._genesis;
   }
 
   // public generateGenesisBlock() {}

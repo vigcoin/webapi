@@ -97,17 +97,6 @@ export interface IPeerNodeData {
   peerId: uint64; // uint64
 }
 
-function IsValidIPStr(ip) {
-  if (
-    /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
-      ip
-    )
-  ) {
-    return true;
-  }
-  return false;
-}
-
 export function IP2Number(ip: string): number {
   if (ip.substr(0, 7) === '::ffff:') {
     ip = ip.substr(7);
@@ -117,7 +106,7 @@ export function IP2Number(ip: string): number {
       ip
     )
   ) {
-    assert(false);
+    throw new Error('Invalid IP Address');
   }
   const buffer = new Buffer(4);
   buffer.writeUInt8(parseInt(RegExp.$1, 10), 0);
