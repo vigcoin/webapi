@@ -278,8 +278,7 @@ export function writeJSONDateType(
 ) {
   writeJSONName(writer, name);
   writer.writeUInt8(BIN_KV_SERIALIZE_TYPE_UINT64);
-  // tslint:disable-next-line:no-bitwise
-  writer.writeUInt32(data & 0xffffffff);
+  writer.writeUInt32(data);
   writer.writeUInt32(0);
 }
 export function writeJSONIPeerNodeData(

@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import { Configuration } from '../../config/types';
-import { IBlockEntry } from '../types';
+import { Hash } from '../../crypto/types';
+import { IBlock, IBlockEntry } from '../types';
 import { Block } from './block';
 import { BlockIndex } from './block-index';
 
@@ -12,6 +13,10 @@ export class BlockChain {
       block: genesisBlock,
       hash: genesisBlockHash,
     };
+  }
+
+  public static hash(block: IBlock): Buffer {
+    return Block.hash(block);
   }
 
   private files: Configuration.IBlockFile;

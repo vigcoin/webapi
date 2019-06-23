@@ -27,6 +27,12 @@ describe('read from file', () => {
     let height = 0;
     let be = blockChain.get(height);
     assert(be.height === height);
+    const hash = BlockChain.hash(be.block);
+    const temp = Buffer.from(
+      'ab7f4044c541c1ba28b65010ad6191f8f6c981550141fcbca814e7e026627031',
+      'hex'
+    );
+    assert(hash.equals(temp));
     height = 10;
     be = blockChain.get(height);
     assert(be.height === height);

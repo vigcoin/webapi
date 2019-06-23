@@ -56,6 +56,11 @@ export class BufferStreamWriter {
 
   public writeUInt32(value: number) {
     this.checkBuffer(4);
+    // tslint:disable-next-line:no-bitwise
+    value &= 0xffffffff;
+    // tslint:disable-next-line:no-bitwise
+    value >>>= 0;
+    // tslint:disable-next-line:no-bitwise
     this.buffer.writeUInt32LE(value, this.index);
     this.index += 4;
   }

@@ -1,11 +1,23 @@
-import { Currency } from '../currency';
+import { BlockChain } from '../block/blockchain';
+import { ICoreSyncData } from '../p2p';
 import { Command } from './command';
 
 export class Handler {
-  private currency: Currency;
-  constructor(currency: Currency) {
-    this.currency = currency;
+  private blockchain: BlockChain;
+  constructor(blockchain: BlockChain) {
+    this.blockchain = blockchain;
   }
+
+  public getPayLoad(): ICoreSyncData {
+    const height = this.blockchain.height;
+    const be = this.blockchain.get(height);
+    const hash = BlockChain.hash(be.block);
+    return {
+      currentHeight: height,
+      hash,
+    };
+  }
+
   public onCommand(cmd: Command) {
     switch (cmd) {
       case Command.NOTIFY_NEW_BLOCK:
