@@ -1,5 +1,5 @@
-import { Command } from '../../../src/cryptonote/protocol/command';
 import * as assert from 'assert';
+import { Command } from '../../../src/p2p/protocol/command';
 
 describe('test cryptonote protocol command', () => {
   it('should have proper value', () => {

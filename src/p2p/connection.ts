@@ -36,7 +36,8 @@ export class ConnectionContext extends EventEmitter {
 
 // tslint:disable-next-line:max-classes-per-file
 export class P2pConnectionContext extends ConnectionContext {
-  private peerId: IPeerIDType;
+  // tslint:disable-next-line:variable-name
+  private _peerId: IPeerIDType;
   private writeQueue: IMessage[];
   private stopped: boolean = false;
   private socket: Socket;
@@ -44,7 +45,7 @@ export class P2pConnectionContext extends ConnectionContext {
 
   constructor(socket: Socket) {
     super();
-    this.peerId = this.getRandomPeerId();
+    this._peerId = this.getRandomPeerId();
     this.socket = socket;
     this.id = uuid.v4();
     this.isIncoming = true;
@@ -58,11 +59,14 @@ export class P2pConnectionContext extends ConnectionContext {
     });
   }
 
+  get peerId(): IPeerIDType {
+    return this._peerId;
+  }
   public getRandomPeerId() {
     const random = [];
     for (let i = 0; i < 8; i++) {
       random.push(Math.floor(Math.random() * 256));
     }
-    return Buffer.from(random).readDoubleLE(0);
+    return Buffer.from(random);
   }
 }

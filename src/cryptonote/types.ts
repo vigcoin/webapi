@@ -11,6 +11,7 @@ export type int16 = number;
 export type int8 = number;
 
 export type UINT64 = Buffer;
+export type INT64 = Buffer;
 
 // Input Transactions
 export interface IInputBase {

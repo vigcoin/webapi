@@ -26,7 +26,9 @@ export class TransactionPrefix {
       // IInputKey
       case 0x02:
         {
-          const amount = reader.readUInt64();
+          const amount = reader.readUInt32();
+          // read extra bytes for amount is uint64
+          reader.readUInt32();
           const size = reader.readVarint();
           const outputs: number[] = [];
           for (let i = 0; i < size; i++) {
@@ -77,7 +79,9 @@ export class TransactionPrefix {
       case 0x02:
         target = input.target as IInputKey;
 
-        writer.writeUInt64(target.amount);
+        writer.writeUInt32(target.amount);
+        // writer extra bytes for amount is uint64
+        writer.writeUInt32(0);
         writer.writeVarint(target.outputIndexes.length);
         const size = target.outputIndexes.length;
         for (let i = 0; i < size; i++) {

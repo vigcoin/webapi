@@ -1,5 +1,6 @@
 import assert = require('assert');
 import { Hash, HASH_LENGTH } from '../../crypto/types';
+import { INT64, UINT64 } from '../types';
 
 export class BufferStreamWriter {
   private buffer: Buffer;
@@ -65,12 +66,12 @@ export class BufferStreamWriter {
     this.index += 4;
   }
 
-  public writeInt64(value: number) {
-    this.writeDouble(value);
+  public writeInt64(value: INT64) {
+    this.write(value);
   }
 
-  public writeUInt64(value: number) {
-    this.writeDouble(value);
+  public writeUInt64(value: UINT64) {
+    this.write(value);
   }
 
   public writeDouble(value: number) {

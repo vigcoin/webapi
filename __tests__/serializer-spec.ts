@@ -10,7 +10,7 @@ describe('test serializer', () => {
     const uint8 = 1 << 7;
     const uint16 = 0xffff;
     const uint32 = 0xffffffff;
-    const t = new Date().getDate();
+    const t = Buffer.from([0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08]);
     const d = new Date();
     const b = new Buffer([1, 2, 3]);
     const h = new Buffer(HASH_LENGTH);
@@ -35,8 +35,8 @@ describe('test serializer', () => {
     assert(-1 === reader.readInt16());
     assert(uint32 === reader.readUInt32());
     assert(-1 === reader.readInt32());
-    assert(t === reader.readUInt64());
-    assert(t === reader.readInt64());
+    assert(t.equals(reader.readUInt64()));
+    assert(t.equals(reader.readInt64()));
     assert(d.getTime() === reader.readDate().getTime());
     const b1 = reader.read(b.length);
     const h1 = reader.readHash();

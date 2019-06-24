@@ -40,7 +40,7 @@ export class P2PServer {
     this.folder = folder;
     this.filename = filename;
     this.absoluteFileName = path.resolve(folder, filename);
-    this.peerId = Math.floor(Math.random() * 10000000000000000);
+    // this.peerId = Math.floor(Math.random() * 10000000000000000);
   }
 
   public async start() {
@@ -48,7 +48,7 @@ export class P2PServer {
     // await this.init();
     await this.startServer();
     await this.connectPeers();
-    await this.onIdle();
+    // await this.onIdle();
   }
 
   public async stop() {
@@ -71,13 +71,13 @@ export class P2PServer {
     return this.peerList;
   }
 
-  protected async onIdle() {
-    const timer = setTimeout(async () => {
-      for (const peer of this.peerList) {
-        await this.handshake(peer);
-      }
-    }, 1000);
-  }
+  // protected async onIdle() {
+  //   const timer = setTimeout(async () => {
+  //     for (const peer of this.peerList) {
+  //       await this.handshake(peer);
+  //     }
+  //   }, 1000);
+  // }
 
   protected async startServer() {
     return new Promise((resolve, reject) => {
@@ -117,17 +117,17 @@ export class P2PServer {
     this.connections.push(new P2pConnectionContext(s));
   }
 
-  protected handshake(peer: Peer) {
-    const iNodeData: INodeData = this.prepareNodeData();
-  }
+  // protected handshake(peer: Peer) {
+  //   const iNodeData: INodeData = this.prepareNodeData();
+  // }
 
-  protected prepareNodeData(): INodeData {
-    return {
-      localTime: new Date(),
-      myPort: this.hidePort ? 0 : this.config.port,
-      networkId: this.networkId,
-      peerId: this.peerId,
-      version: Version.CURRENT,
-    };
-  }
+  // protected prepareNodeData(): INodeData {
+  //   return {
+  //     localTime: new Date(),
+  //     myPort: this.hidePort ? 0 : this.config.port,
+  //     networkId: this.networkId,
+  //     peerId: this.peerId,
+  //     version: Version.CURRENT,
+  //   };
+  // }
 }

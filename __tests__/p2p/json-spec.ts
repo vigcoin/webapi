@@ -390,10 +390,20 @@ describe('test json stream', () => {
   });
 
   test('should write/read ping response stream', async () => {
+    const buffer = Buffer.from([
+      0x18,
+      0x38,
+      0x38,
+      0x32,
+      0x92,
+      0x09,
+      0xdd,
+      0xfe,
+    ]);
     const data: ping.IResponse = {
       status: 'OK',
       // tslint:disable-next-line:object-literal-sort-keys
-      peerId: 0x18383832929,
+      peerId: buffer,
     };
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     ping.Writer.response(writer, data);
@@ -401,7 +411,7 @@ describe('test json stream', () => {
     const reader = new BufferStreamReader(writer.getBuffer());
     const json = ping.Reader.response(reader);
     assert(String(json.status) === 'OK');
-    assert(json.peerId === 0x18383832929);
+    assert(json.peerId.equals(buffer));
   });
 
   test('should write handshake request stream', async () => {
@@ -619,17 +629,9 @@ describe('test json stream', () => {
     ]);
 
     assert(
-      json.node.peerId ===
-        Buffer.from([
-          0xdf,
-          0xc4,
-          0x70,
-          0x18,
-          0xf3,
-          0x09,
-          0x88,
-          0xb6,
-        ]).readDoubleLE(0)
+      json.node.peerId.equals(
+        Buffer.from([0xdf, 0xc4, 0x70, 0x18, 0xf3, 0x09, 0x88, 0xb6])
+      )
     );
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     handshake.Writer.request(writer, json);
@@ -645,7 +647,7 @@ describe('test json stream', () => {
         // tslint:disable-next-line:object-literal-sort-keys
         localTime: new Date(),
         myPort: 8080,
-        peerId: 0xa9183832,
+        peerId: Buffer.from([0xa9, 0x18, 0x38, 0x32, 0, 0, 0, 0]),
       },
       payload: {
         currentHeight: 1,
@@ -691,7 +693,7 @@ describe('test json stream', () => {
     const json: handshake.IRequest = handshake.Reader.request(reader);
     assert(json.node.version === data.node.version);
     assert(json.node.myPort === data.node.myPort);
-    assert(json.node.peerId === data.node.peerId);
+    assert(json.node.peerId.equals(data.node.peerId));
     assert.deepEqual(json.node.networkId, data.node.networkId);
     assert(
       // tslint:disable-next-line:no-bitwise
@@ -1868,8 +1870,16 @@ describe('test json stream', () => {
     writeJSONValue(writer, 0, BIN_KV_SERIALIZE_TYPE_INT16);
     writeJSONValue(writer, 5, BIN_KV_SERIALIZE_TYPE_INT32);
     writeJSONValue(writer, 0, BIN_KV_SERIALIZE_TYPE_INT32);
-    writeJSONValue(writer, 5, BIN_KV_SERIALIZE_TYPE_INT64);
-    writeJSONValue(writer, 0, BIN_KV_SERIALIZE_TYPE_INT64);
+    writeJSONValue(
+      writer,
+      Buffer.from([5, 0, 0, 0, 0, 0, 0, 0]),
+      BIN_KV_SERIALIZE_TYPE_INT64
+    );
+    writeJSONValue(
+      writer,
+      Buffer.from([0, 0, 0, 0, 0, 0, 0, 0]),
+      BIN_KV_SERIALIZE_TYPE_INT64
+    );
 
     const reader = new BufferStreamReader(writer.getBuffer());
     let value = readJSONValue(reader, BIN_KV_SERIALIZE_TYPE_BOOL);
@@ -1894,6 +1904,8 @@ describe('test json stream', () => {
     assert(value === 0);
     // Never used!
     value = readJSONValue(reader, BIN_KV_SERIALIZE_TYPE_INT64);
+    value.equals(Buffer.from([5, 0, 0, 0, 0, 0, 0, 0]));
     value = readJSONValue(reader, BIN_KV_SERIALIZE_TYPE_INT64);
+    value.equals(Buffer.from([0, 0, 0, 0, 0, 0, 0, 0]));
   });
 });

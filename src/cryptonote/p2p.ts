@@ -1,8 +1,8 @@
 import * as assert from 'assert';
 import { Hash } from '../crypto/types';
-import { int32, uint32, uint64, uint8 } from './types';
+import { int32, uint32, uint64, UINT64, uint8 } from './types';
 
-export type IPeerIDType = uint64; // uint64
+export type IPeerIDType = UINT64; // uint64
 export type uuid = uint8[]; // boost::uuids::uuid uint8[16]
 
 export interface IPeer {
@@ -94,7 +94,7 @@ export interface IPeerNodeData {
   version: uint8; // uint8
   localTime: Date; // uint64
   myPort: uint32; // uint32
-  peerId: uint64; // uint64
+  peerId: IPeerIDType; // uint64
 }
 
 export function IP2Number(ip: string): number {

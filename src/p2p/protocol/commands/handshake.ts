@@ -43,7 +43,7 @@ export namespace handshake {
         version: json.node_data.version,
         // tslint:disable-next-line:object-literal-sort-keys
         localTime: new Date(json.node_data.local_time.readUInt32LE(0)),
-        peerId: json.node_data.peer_id.readDoubleLE(0),
+        peerId: json.node_data.peer_id,
         myPort: json.node_data.my_port,
       };
       return {
@@ -62,7 +62,7 @@ export namespace handshake {
         version: json.node_data.version,
         // tslint:disable-next-line:object-literal-sort-keys
         localTime: new Date(json.node_data.local_time.readUInt32LE(0)),
-        peerId: json.node_data.peer_id.readDoubleLE(0),
+        peerId: json.node_data.peer_id,
         myPort: json.node_data.my_port,
       };
       const localPeerList = readJSONIPeerEntryList(

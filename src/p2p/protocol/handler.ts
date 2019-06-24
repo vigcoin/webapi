@@ -1,5 +1,5 @@
-import { BlockChain } from '../block/blockchain';
-import { ICoreSyncData } from '../p2p';
+import { BlockChain } from '../../cryptonote/block/blockchain';
+import { ICoreSyncData } from '../../cryptonote/p2p';
 import { Command } from './command';
 
 export class Handler {

@@ -2,6 +2,7 @@ import * as assert from 'assert';
 import { ICoreSyncData, IPeerEntry, IPeerNodeData } from '../../cryptonote/p2p';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
+import { uint8 } from '../../cryptonote/types';
 
 const PORTABLE_STORAGE_SIGNATUREA = 0x01011101;
 const PORTABLE_STORAGE_SIGNATUREB = 0x01020101; // bender's nightmare
@@ -185,7 +186,7 @@ export function writeJSONValue(
 ) {
   switch (type) {
     case BIN_KV_SERIALIZE_TYPE_INT64:
-      return writer.writeDouble(data);
+      return writer.write(data);
     case BIN_KV_SERIALIZE_TYPE_INT32:
       return writer.writeInt32(data);
     case BIN_KV_SERIALIZE_TYPE_INT16:
@@ -193,7 +194,7 @@ export function writeJSONValue(
     case BIN_KV_SERIALIZE_TYPE_INT8:
       return writer.writeInt8(data);
     case BIN_KV_SERIALIZE_TYPE_UINT64:
-      return writer.writeDouble(data);
+      return writer.write(data);
     case BIN_KV_SERIALIZE_TYPE_UINT32:
       return writer.writeUInt32(data);
     case BIN_KV_SERIALIZE_TYPE_UINT16:
@@ -257,7 +258,7 @@ export function writeJSONObjectKeyValue(
   writer: BufferStreamWriter,
   name: string,
   value: any,
-  type: number
+  type: uint8
 ) {
   writeJSONName(writer, name);
   writeJSONObjectValue(writer, value, type);
@@ -347,7 +348,7 @@ export function writeJSONIPeerEntry(
 ) {
   writer.writeUInt32(data.peer.ip);
   writer.writeUInt32(data.peer.port);
-  writer.writeUInt64(data.id);
+  writer.write(data.id);
   // tslint:disable-next-line:no-bitwise
   writer.writeUInt32(data.lastSeen.getTime() & 0xffffffff);
   writer.writeUInt32(0);
@@ -371,7 +372,7 @@ export function writeJSONIPeerEntryList(
 export function readJSONIPeerEntry(reader: BufferStreamReader): IPeerEntry {
   const ip = reader.readUInt32();
   const port = reader.readUInt32();
-  const id = reader.readUInt64();
+  const id = reader.read(8);
   const time = reader.read(8);
   const lastSeen = new Date(time.readUInt32LE(0));
   const entry: IPeerEntry = {

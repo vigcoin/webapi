@@ -165,13 +165,12 @@ export class LevinProtocol extends EventEmitter {
 
   public onHandshake(cmd: ILevinCommand) {
     this.emit('processed', 'handshake');
-
     return false;
   }
 
   public onTimedSync(cmd: ILevinCommand) {
     const reader = new BufferStreamReader(cmd.buffer);
-    const request: timedsync.IRequest = timedsync.Reader.request(reader);
+    timedsync.Reader.request(reader);
 
     if (this.isReply(cmd)) {
       const response: timedsync.IResponse = {
@@ -198,6 +197,31 @@ export class LevinProtocol extends EventEmitter {
   }
 
   public onPing(cmd: ILevinCommand) {
+    const reader = new BufferStreamReader(cmd.buffer);
+    if (cmd.isResponse) {
+      const response: ping.IResponse = ping.Reader.response(reader);
+      assert(String(response.status) === 'OK');
+      this.emit('ping-response', response);
+      return;
+    } else {
+      ping.Reader.request(reader);
+    }
+
+    if (this.isReply(cmd)) {
+      const response: ping.IResponse = {
+        status: 'OK',
+        // tslint:disable-next-line:object-literal-sort-keys
+        peerId: this.context.peerId,
+      };
+      const writer = new BufferStreamWriter(Buffer.alloc(0));
+      ping.Writer.response(writer, response);
+      const data = LevinProtocol.writeCommand(
+        cmd.command,
+        writer.getBuffer(),
+        1
+      );
+      this.socket.write(data);
+    }
     this.emit('processed', 'ping');
     return false;
   }

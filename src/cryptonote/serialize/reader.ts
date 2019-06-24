@@ -1,6 +1,6 @@
 import assert = require('assert');
 import { HASH_LENGTH } from '../../crypto/types';
-import { int64, uint64 } from '../types';
+import { int64, uint64, UINT64, INT64 } from '../types';
 
 export class BufferStreamReader {
   private buffer: Buffer;
@@ -53,12 +53,12 @@ export class BufferStreamReader {
     return v;
   }
 
-  public readInt64(): int64 {
-    return this.readDouble();
+  public readInt64(): INT64 {
+    return this.read(8);
   }
 
-  public readUInt64(): uint64 {
-    return this.readDouble();
+  public readUInt64(): UINT64 {
+    return this.read(8);
   }
 
   public readDouble(): number {

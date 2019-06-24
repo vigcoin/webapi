@@ -39,7 +39,7 @@ export namespace ping {
       return {
         status: obj.status,
         // tslint:disable-next-line:object-literal-sort-keys
-        peerId: new BufferStreamReader(obj.peer_id).readUInt64(),
+        peerId: obj.peer_id,
       };
     }
   }
