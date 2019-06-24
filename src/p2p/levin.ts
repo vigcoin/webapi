@@ -80,17 +80,55 @@ export class LevinProtocol extends EventEmitter {
     writer: BufferStreamWriter,
     cmd: number,
     buffer: Buffer,
-    code: number
+    code: number = 0,
+    reply: boolean = false,
+    flags: number = LEVIN_PACKET_RESPONSE
   ) {
     writer.write(LEVIN_SIGNATURE);
     writer.writeUInt32(buffer.length);
     writer.writeUInt32(0);
-    writer.writeUInt8(0);
+    writer.writeUInt8(reply ? 1 : 0);
     writer.writeUInt32(cmd);
     writer.writeInt32(code);
-    writer.writeUInt32(LEVIN_PACKET_RESPONSE);
+    writer.writeUInt32(flags);
     writer.writeUInt32(LEVIN_PROTOCOL_VER_1);
     writer.write(buffer);
+  }
+
+  public static request(
+    cmd: number,
+    buffer: Buffer,
+    code: number,
+    reply: boolean
+  ) {
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    LevinProtocol.writeHeader(
+      writer,
+      cmd,
+      buffer,
+      code,
+      reply,
+      LEVIN_PACKET_REQUEST
+    );
+    return writer.getBuffer();
+  }
+
+  public static response(
+    cmd: number,
+    buffer: Buffer,
+    code: number,
+    reply: boolean = false
+  ): Buffer {
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    LevinProtocol.writeHeader(
+      writer,
+      cmd,
+      buffer,
+      code,
+      reply,
+      LEVIN_PACKET_RESPONSE
+    );
+    return writer.getBuffer();
   }
 
   public static readCommand(reader: BufferStreamReader): ILevinCommand {
@@ -105,16 +143,6 @@ export class LevinProtocol extends EventEmitter {
       // tslint:disable-next-line:object-literal-sort-keys
       buffer,
     };
-  }
-
-  public static writeCommand(
-    cmd: number,
-    buffer: Buffer,
-    code: number
-  ): Buffer {
-    const writer = new BufferStreamWriter(Buffer.alloc(0));
-    LevinProtocol.writeHeader(writer, cmd, buffer, code);
-    return writer.getBuffer();
   }
 
   private socket: Socket;
@@ -184,15 +212,10 @@ export class LevinProtocol extends EventEmitter {
       };
       const writer = new BufferStreamWriter(Buffer.alloc(0));
       timedsync.Writer.response(writer, response);
-      const data = LevinProtocol.writeCommand(
-        cmd.command,
-        writer.getBuffer(),
-        0
-      );
+      const data = LevinProtocol.response(cmd.command, writer.getBuffer(), 0);
       this.socket.write(data);
     }
     this.emit('processed', 'timedsync');
-
     return false;
   }
 
@@ -215,11 +238,7 @@ export class LevinProtocol extends EventEmitter {
       };
       const writer = new BufferStreamWriter(Buffer.alloc(0));
       ping.Writer.response(writer, response);
-      const data = LevinProtocol.writeCommand(
-        cmd.command,
-        writer.getBuffer(),
-        1
-      );
+      const data = LevinProtocol.response(cmd.command, writer.getBuffer(), 1);
       this.socket.write(data);
     }
     this.emit('processed', 'ping');
