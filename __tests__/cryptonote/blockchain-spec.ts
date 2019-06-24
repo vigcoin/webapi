@@ -41,6 +41,10 @@ describe('read from file', () => {
   test('should have height', () => {
     assert(blockChain.height === 49);
   });
+
+  test('should get current criculated coins', () => {
+    assert(blockChain.circulatedCoins === 2001434200334084);
+  });
 });
 
 describe('read from empty file', () => {
@@ -69,6 +73,11 @@ describe('read from empty file', () => {
   test('should have height', () => {
     assert(blockChain.height === 0);
   });
+
+  test('should have no circulated coins', () => {
+    assert(blockChain.circulatedCoins === 0);
+  });
+
   test('Should init genesis', () => {
     const hex =
       '013c01ff000101029b2e4c0281c0b02e7c53291a94d1d0cbff8883f8024f5142ee494ffbbd0880712101a9a4569f7e10164a32324b2b878ae32d98be0949ce6e0150ba1d7e54d60969e5';

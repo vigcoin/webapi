@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { Configuration } from '../../config/types';
 import { Hash } from '../../crypto/types';
-import { IBlock, IBlockEntry } from '../types';
+import { IBlock, IBlockEntry, uint64 } from '../types';
 import { Block } from './block';
 import { BlockIndex } from './block-index';
 
@@ -47,10 +47,19 @@ export class BlockChain {
   public get(height: number): IBlockEntry {
     assert(this.initialized);
     assert(height >= 0);
+    assert(height <= this.height);
     return this.block.read(this.offsets[height], this.offsets[height + 1]);
   }
 
-  get height() {
+  get height(): uint64 {
     return this.blockIndex.height;
+  }
+
+  get circulatedCoins(): uint64 {
+    if (this.height < 1) {
+      return 0;
+    }
+    const be = this.get(this.height - 1);
+    return be.generatedCoins;
   }
 }
