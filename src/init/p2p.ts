@@ -1,6 +1,6 @@
 import { cryptonote, p2p } from '../config';
-import { IP2Number } from '../cryptonote/p2p';
 import { INetworkPeer, IServerConfig, P2PServer } from '../p2p/index';
+import { IP } from '../util/ip';
 
 const config: IServerConfig = {
   host: '127.0.0.1',
@@ -10,9 +10,9 @@ const config: IServerConfig = {
 config.isAllowLocalIp = true;
 
 config.seedNode = [
-  { port: 19800, ip: IP2Number('69.171.73.252') },
-  { port: 19800, ip: IP2Number('39.108.160.252') },
-  // { port: 19800, ip: IP2Number("144.202.10.183") }
+  { port: 19800, ip: IP.toNumber('69.171.73.252') },
+  { port: 19800, ip: IP.toNumber('39.108.160.252') },
+  // { port: 19800, ip: IP.toNumber("144.202.10.183") }
 ];
 
 const networkPeer: INetworkPeer = {

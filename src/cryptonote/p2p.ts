@@ -96,33 +96,3 @@ export interface IPeerNodeData {
   myPort: uint32; // uint32
   peerId: IPeerIDType; // uint64
 }
-
-export function IP2Number(ip: string): number {
-  if (ip.substr(0, 7) === '::ffff:') {
-    ip = ip.substr(7);
-  }
-  if (
-    !/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
-      ip
-    )
-  ) {
-    throw new Error('Invalid IP Address');
-  }
-  const buffer = new Buffer(4);
-  buffer.writeUInt8(parseInt(RegExp.$1, 10), 0);
-  buffer.writeUInt8(parseInt(RegExp.$2, 10), 1);
-  buffer.writeUInt8(parseInt(RegExp.$3, 10), 2);
-  buffer.writeUInt8(parseInt(RegExp.$4, 10), 3);
-  return buffer.readUInt32LE(0);
-}
-
-export function IP2String(ip: uint32): string {
-  const buffer = new Buffer(4);
-  buffer.writeUInt32LE(ip, 0);
-  const slices = [];
-  for (let i = 0; i < buffer.length; i++) {
-    const v = buffer.readUInt8(i);
-    slices.push(v + '');
-  }
-  return slices.join('.');
-}

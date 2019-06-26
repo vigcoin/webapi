@@ -2,8 +2,9 @@ import { EventEmitter } from 'events';
 import { Socket } from 'net';
 import * as uuid from 'uuid';
 import { Hash } from '../crypto/types';
-import { IMessage, IP2Number, IPeerIDType } from '../cryptonote/p2p';
+import { IMessage, IPeerIDType } from '../cryptonote/p2p';
 import { uint32, uint8 } from '../cryptonote/types';
+import { IP } from '../util/ip';
 import { LevinProtocol } from './levin';
 
 export enum ConnectionState {
@@ -50,7 +51,7 @@ export class P2pConnectionContext extends ConnectionContext {
     this.id = uuid.v4();
     this.isIncoming = true;
     this.startTime = new Date();
-    this.ip = IP2Number(socket.remoteAddress);
+    this.ip = IP.toNumber(socket.remoteAddress);
     this.port = socket.remotePort;
     this.levin = new LevinProtocol(socket, this);
 
