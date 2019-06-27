@@ -18,7 +18,7 @@ describe('test ip', () => {
     assert(IP.isPrivate(IP.toNumber('192.168.0.1')) === true);
     assert(IP.isPrivate(IP.toNumber('10.168.0.1')) === true);
     assert(IP.isPrivate(IP.toNumber('172.16.0.1')) === true);
-    assert(IP.isPrivate(IP.toNumber('8.8.8.8')) === true);
+    assert(IP.isPrivate(IP.toNumber('8.8.8.8')) === false);
   });
 
   test('Should throw with wrong ip', async () => {
