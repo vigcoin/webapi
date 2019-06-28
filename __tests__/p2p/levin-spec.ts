@@ -3,9 +3,8 @@ import { createConnection, createServer } from 'net';
 import { BufferStreamReader } from '../../src/cryptonote/serialize/reader';
 import { P2pConnectionContext } from '../../src/p2p/connection';
 import { LevinProtocol } from '../../src/p2p/levin';
-import { timedsync, ping } from '../../src/p2p/protocol';
+import { ping, timedsync } from '../../src/p2p/protocol';
 import { kvHeader, pingRequest, timesyncRequest } from './data';
-import { response } from 'express';
 
 describe('test levin protocol', () => {
   it('should read header', () => {
