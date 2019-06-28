@@ -1,12 +1,23 @@
 import { readFileSync } from 'fs';
 import { IPeerEntry } from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
+import { BufferStreamWriter } from '../cryptonote/serialize/writer';
 import { uint32, uint64 } from '../cryptonote/types';
+import { PeerManager } from './peer-manager';
+import { P2PServer } from './server';
 
 export class P2PStore {
   private file: string;
   constructor(file: string) {
     this.file = file;
+  }
+
+  public write(server: P2PServer, peerManager: PeerManager) {
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    writer.writeVarint(server.version);
+    writer.writeVarint(peerManager.version);
+    this.writePeerEntryList(writer, peerManager.white);
+    this.writePeerEntryList(writer, peerManager.gray);
   }
 
   public read() {
@@ -28,6 +39,20 @@ export class P2PStore {
       },
       peerId,
     };
+  }
+
+  private writePeerEntryList(writer: BufferStreamWriter, list: IPeerEntry[]) {
+    writer.writeVarint(list.length);
+    for (const item of list) {
+      this.writePeerEntry(writer, item);
+    }
+  }
+
+  private writePeerEntry(writer: BufferStreamWriter, pe: IPeerEntry) {
+    writer.writeVarint(pe.peer.ip);
+    writer.writeVarint(pe.peer.port);
+    writer.writeVarint(pe.id.readDoubleLE(0));
+    writer.writeVarint(Math.floor(pe.lastSeen.getTime() / 1000));
   }
 
   private readPeerEntryList(reader: BufferStreamReader): IPeerEntry[] {
@@ -54,7 +79,7 @@ export class P2PStore {
         port,
       },
       // tslint:disable-next-line:object-literal-sort-keys
-      lastSeen: new Date(lastSeen),
+      lastSeen: new Date(lastSeen * 1000),
     };
   }
 }

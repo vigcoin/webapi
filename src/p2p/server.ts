@@ -10,6 +10,7 @@ import {
 } from '../cryptonote/p2p';
 import { P2pConnectionContext } from './connection';
 import { Peer } from './peer';
+import { uint8 } from '../cryptonote/types';
 
 const logger = debug('vigcoin:p2p:server');
 
@@ -27,6 +28,9 @@ export class P2PServer {
   private hidePort: boolean = false;
   private connections: P2pConnectionContext[];
 
+  // tslint:disable-next-line:variable-name
+  private _version: uint8 = 1;
+
   constructor(
     config: IServerConfig,
     networkPeer: INetworkPeer,
@@ -41,6 +45,10 @@ export class P2PServer {
     this.filename = filename;
     this.absoluteFileName = path.resolve(folder, filename);
     // this.peerId = Math.floor(Math.random() * 10000000000000000);
+  }
+
+  get version(): uint8 {
+    return this._version;
   }
 
   public async start() {

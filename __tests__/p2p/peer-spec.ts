@@ -89,7 +89,7 @@ describe('test peer', () => {
   it('should test PeerManager', () => {
     const white = new PeerList(2);
     const gray = new PeerList(2);
-    const pm = new PeerManager('dd', white, gray);
+    const pm = new PeerManager(white, gray);
     pm.appendWhite(pe[0]);
     pm.appendGray(pe[1]);
     pm.appendWhite(pe[1]);
@@ -105,6 +105,5 @@ describe('test peer', () => {
     gray.remove(pe[3]);
     gray.remove(pe[5]);
     white.remove(pe[5]);
-    pm.get(1);
   });
 });

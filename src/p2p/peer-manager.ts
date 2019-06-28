@@ -1,15 +1,19 @@
 import { IPeerEntry } from '../cryptonote/p2p';
-import { uint32 } from '../cryptonote/types';
+import { uint32, uint8 } from '../cryptonote/types';
 import { IP } from '../util/ip';
 
 export class PeerList {
   private list: IPeerEntry[] = [];
   private maxSize: uint32 = 255;
+
   constructor(maxSize: uint32) {
     this.maxSize = maxSize;
   }
   get size(): number {
     return this.list.length;
+  }
+  get peers(): IPeerEntry[] {
+    return this.list;
   }
 
   public find(pe: IPeerEntry) {
@@ -53,22 +57,30 @@ export class PeerList {
 }
 // tslint:disable-next-line:max-classes-per-file
 export class PeerManager {
-  private dir: string;
-
   // peers
-  private peers: IPeerEntry[] = [];
   private whitePeers: PeerList;
   private grayPeers: PeerList;
 
-  constructor(dir: string, white: PeerList, gray: PeerList) {
-    this.dir = dir;
+  // tslint:disable-next-line:variable-name
+  private _version: uint8 = 1;
+
+  constructor(white: PeerList, gray: PeerList) {
     this.whitePeers = white;
     this.grayPeers = gray;
   }
 
-  public get(i: number): IPeerEntry {
-    return this.peers[i];
+  get version(): uint8 {
+    return this._version;
   }
+
+  get white(): IPeerEntry[] {
+    return this.whitePeers.peers;
+  }
+
+  get gray(): IPeerEntry[] {
+    return this.grayPeers.peers;
+  }
+
   public appendWhite(pe: IPeerEntry) {
     if (!IP.isAllowed(pe.peer.ip)) {
       return;
