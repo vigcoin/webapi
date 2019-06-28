@@ -55,4 +55,21 @@ export class IP {
     }
     return slices.join('.');
   }
+
+  public static isAllowed(ip: uint32): boolean {
+    if (IP.isLoopback(ip)) {
+      return false;
+    }
+
+    if (!IP.allowLocalIP && IP.isPrivate(ip)) {
+      return false;
+    }
+    return true;
+  }
+
+  public static enableLocalIP(enable: boolean = false) {
+    IP.allowLocalIP = enable;
+  }
+
+  private static allowLocalIP: boolean = false;
 }
