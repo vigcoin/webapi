@@ -16,6 +16,10 @@ export class PeerList {
     return this.list;
   }
 
+  set peers(list: IPeerEntry[]) {
+    this.list = list;
+  }
+
   public find(pe: IPeerEntry) {
     return this.list.findIndex(item => {
       if (pe.peer.ip !== item.peer.ip) {

@@ -1,5 +1,6 @@
 import assert = require('assert');
 import { HASH_LENGTH } from '../src/crypto/types';
+import { PurgeZeroByte } from '../src/cryptonote/serialize/common';
 import { BufferStreamReader } from '../src/cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../src/cryptonote/serialize/writer';
 
@@ -44,6 +45,80 @@ describe('test serializer', () => {
     assert(reader.getRemainedSize() === 0);
     assert(b1.equals(b));
     assert(h1.equals(h));
+  });
+
+  test('Should purge zero buffer', async () => {
+    const buffer = PurgeZeroByte(Buffer.from([0, 0, 0]));
+    assert(buffer.length === 1);
+    const buffer1 = PurgeZeroByte(Buffer.from([1, 0, 0]));
+    assert(buffer1.length === 1);
+    const buffer2 = PurgeZeroByte(Buffer.from([0, 1, 0]));
+    assert(buffer2.length === 2);
+    const buffer3 = PurgeZeroByte(Buffer.from([0, 0, 1]));
+    assert(buffer3.length === 3);
+  });
+
+  test('Should shift buffer', async () => {
+    const writer = new BufferStreamWriter(new Buffer(8));
+    const buffer = writer.shiftBuffer(Buffer.from([0xaa, 0xbb]));
+    buffer.equals(Buffer.from([0x55, 0x01]));
+    const buffer1 = writer.shiftBuffer(Buffer.from([0x55, 0x01]));
+    buffer1.equals(Buffer.from([2]));
+  });
+
+  test('Should read / write varint buffer', async () => {
+    const data = [213, 164, 154, 246, 225, 215, 225, 153, 56];
+
+    const reader = new BufferStreamReader(Buffer.from(data));
+    const buffer = reader.readVarintBuffer();
+    assert(
+      buffer.equals(
+        Buffer.from([0x55, 0x92, 0xc6, 0x1e, 0xbe, 0x86, 0x33, 0x38])
+      )
+    );
+    const writer = new BufferStreamWriter(Buffer.from([]));
+    writer.writeVarintBuffer(
+      Buffer.from([0x55, 0x92, 0xc6, 0x1e, 0xbe, 0x86, 0x33, 0x38])
+    );
+    const varint = writer.getBuffer();
+    assert(varint.equals(Buffer.from(data)));
+  });
+
+  test('Should read / write varint buffer', async () => {
+    const data = [0];
+
+    const reader = new BufferStreamReader(Buffer.from(data));
+    const buffer = reader.readVarintBuffer();
+    assert(buffer.equals(Buffer.from([0])));
+    const writer = new BufferStreamWriter(Buffer.from([]));
+    writer.writeVarintBuffer(Buffer.from([0]));
+    const varint = writer.getBuffer();
+    assert(varint.equals(Buffer.from(data)));
+  });
+
+  test('Should read / write varint uint64', async () => {
+    const writer = new BufferStreamWriter(Buffer.from([]));
+    writer.writeVarintBuffer(Buffer.from([1, 2]));
+    const varint = writer.getBuffer();
+
+    const reader = new BufferStreamReader(varint);
+    const buffer = reader.readVarintUInt64();
+    assert(buffer.equals(Buffer.from([1, 2, 0, 0, 0, 0, 0, 0])));
+  });
+
+  test('Should read / write varint uint64', async () => {
+    const writer = new BufferStreamWriter(Buffer.from([]));
+    writer.writeVarintBuffer(Buffer.from([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]));
+    const varint = writer.getBuffer();
+
+    const reader = new BufferStreamReader(varint);
+    let catched = false;
+    try {
+      const buffer = reader.readVarintUInt64();
+    } catch (e) {
+      catched = true;
+    }
+    assert(catched);
   });
 
   test('Should write/read varint 1', async () => {

@@ -44,11 +44,17 @@ export class P2PServer {
     this.folder = folder;
     this.filename = filename;
     this.absoluteFileName = path.resolve(folder, filename);
-    // this.peerId = Math.floor(Math.random() * 10000000000000000);
   }
 
   get version(): uint8 {
     return this._version;
+  }
+
+  get id() {
+    return this.peerId;
+  }
+  set id(id: IPeerIDType) {
+    this.peerId = id;
   }
 
   public async start() {

@@ -1,8 +1,8 @@
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import { IPeerEntry } from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../cryptonote/serialize/writer';
-import { uint32, uint64 } from '../cryptonote/types';
+import { uint32, uint64, UINT64 } from '../cryptonote/types';
 import { PeerManager } from './peer-manager';
 import { P2PServer } from './server';
 
@@ -18,6 +18,8 @@ export class P2PStore {
     writer.writeVarint(peerManager.version);
     this.writePeerEntryList(writer, peerManager.white);
     this.writePeerEntryList(writer, peerManager.gray);
+    writer.writeVarintBuffer(server.id);
+    writeFileSync(this.file, writer.getBuffer());
   }
 
   public read() {
@@ -27,7 +29,7 @@ export class P2PStore {
     const version2 = reader.readVarint();
     const white = this.readPeerEntryList(reader);
     const gray = this.readPeerEntryList(reader);
-    const peerId = reader.readVarint();
+    const peerId = reader.readVarintBuffer();
     return {
       version: version1,
       // tslint:disable-next-line:object-literal-sort-keys
@@ -51,7 +53,8 @@ export class P2PStore {
   private writePeerEntry(writer: BufferStreamWriter, pe: IPeerEntry) {
     writer.writeVarint(pe.peer.ip);
     writer.writeVarint(pe.peer.port);
-    writer.writeVarint(pe.id.readDoubleLE(0));
+    // tslint:disable-next-line:no-bitwise
+    writer.writeVarintBuffer(pe.id);
     writer.writeVarint(Math.floor(pe.lastSeen.getTime() / 1000));
   }
 
@@ -68,12 +71,10 @@ export class P2PStore {
   private readPeerEntry(reader: BufferStreamReader): IPeerEntry {
     const ip: uint32 = reader.readVarint();
     const port: uint32 = reader.readVarint();
-    const id: uint64 = reader.readVarint();
-    const buffer = Buffer.alloc(8);
-    buffer.writeDoubleLE(id, 0);
+    const id: UINT64 = reader.readVarintUInt64();
     const lastSeen: uint64 = reader.readVarint();
     return {
-      id: buffer,
+      id,
       peer: {
         ip,
         port,

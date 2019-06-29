@@ -1,6 +1,7 @@
 import assert = require('assert');
 import { HASH_LENGTH } from '../../crypto/types';
-import { int64, uint64, UINT64, INT64 } from '../types';
+import { INT64, UINT64 } from '../types';
+import { PurgeZeroByte } from './common';
 
 export class BufferStreamReader {
   private buffer: Buffer;
@@ -81,6 +82,60 @@ export class BufferStreamReader {
     }
     // tslint:disable-next-line:no-bitwise
     return (piece & 0x7f) * Math.pow(2, shift);
+  }
+
+  public readVarintUInt64(): Buffer {
+    let buffer = this.readVarintBuffer();
+    const diff = 8 - buffer.length;
+    // console.log(buffer);
+    if (diff < 0) {
+      throw new Error('None UInt64 Data!');
+    }
+    if (diff > 0) {
+      buffer = Buffer.concat([buffer, Buffer.alloc(diff)]);
+    }
+    return buffer;
+  }
+
+  public readVarintBuffer() {
+    let bytes = 0;
+    let i = this.index;
+    let piece = 0;
+    let bufferIndex = 0;
+    let pad = 0;
+    let mask = 0;
+    let maskValue = 0;
+
+    let buffer = Buffer.alloc(0);
+
+    while (true) {
+      piece = this.buffer[i++];
+      buffer = Buffer.concat([buffer, Buffer.alloc(1)]);
+      // tslint:disable-next-line:no-bitwise
+      const real = (piece & 0x7f) >>> pad;
+      buffer[bufferIndex] = real;
+      if (pad) {
+        // tslint:disable-next-line:no-bitwise
+        mask = (1 << pad) - 1;
+        // tslint:disable-next-line:no-bitwise
+        maskValue = (piece & mask) << (8 - pad);
+        // tslint:disable-next-line:no-bitwise
+        buffer[bufferIndex - 1] |= maskValue;
+      }
+      bytes++;
+      if (piece < 0x80) {
+        break;
+      }
+      pad++;
+      if (pad % 8 === 0) {
+        pad = 0;
+      } else {
+        bufferIndex++;
+      }
+    }
+    this.index += bytes;
+    buffer = PurgeZeroByte(buffer);
+    return buffer;
   }
 
   public readVarint() {
