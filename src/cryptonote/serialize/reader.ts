@@ -68,9 +68,10 @@ export class BufferStreamReader {
   }
 
   public readDate(): Date {
-    const v = this.buffer.readDoubleLE(this.index);
+    const v = this.buffer.readUInt32LE(this.index);
+    this.buffer.readUInt32LE(this.index + 4);
     this.index += 8;
-    return new Date(v);
+    return new Date(v * 1000);
   }
 
   public getShiftValue(shift: number, piece: number) {

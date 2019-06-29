@@ -275,12 +275,11 @@ export function readJSON(reader: BufferStreamReader): any {
 export function writeJSONDateType(
   writer: BufferStreamWriter,
   name: string,
-  data: number
+  date: Date
 ) {
   writeJSONName(writer, name);
   writer.writeUInt8(BIN_KV_SERIALIZE_TYPE_UINT64);
-  writer.writeUInt32(data);
-  writer.writeUInt32(0);
+  writer.writeDate(date);
 }
 export function writeJSONIPeerNodeData(
   writer: BufferStreamWriter,
@@ -310,7 +309,7 @@ export function writeJSONIPeerNodeData(
     data.peerId,
     BIN_KV_SERIALIZE_TYPE_UINT64
   );
-  writeJSONDateType(writer, 'local_time', data.localTime.getTime());
+  writeJSONDateType(writer, 'local_time', data.localTime);
 
   writeJSONObjectKeyValue(
     writer,
@@ -349,9 +348,7 @@ export function writeJSONIPeerEntry(
   writer.writeUInt32(data.peer.ip);
   writer.writeUInt32(data.peer.port);
   writer.write(data.id);
-  // tslint:disable-next-line:no-bitwise
-  writer.writeUInt32(data.lastSeen.getTime() & 0xffffffff);
-  writer.writeUInt32(0);
+  writer.writeDate(data.lastSeen);
 }
 
 export function writeJSONIPeerEntryList(
@@ -373,8 +370,7 @@ export function readJSONIPeerEntry(reader: BufferStreamReader): IPeerEntry {
   const ip = reader.readUInt32();
   const port = reader.readUInt32();
   const id = reader.read(8);
-  const time = reader.read(8);
-  const lastSeen = new Date(time.readUInt32LE(0));
+  const lastSeen = reader.readDate();
   const entry: IPeerEntry = {
     peer: {
       port,

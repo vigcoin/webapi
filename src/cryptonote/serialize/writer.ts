@@ -82,7 +82,8 @@ export class BufferStreamWriter {
 
   public writeDate(value: Date) {
     this.checkBuffer(8);
-    this.buffer.writeDoubleLE(value.getTime(), this.index);
+    this.buffer.writeUInt32LE(Math.floor(value.getTime() / 1000), this.index);
+    this.buffer.writeUInt32LE(0, this.index + 4);
     this.index += 8;
   }
 

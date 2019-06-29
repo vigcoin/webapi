@@ -44,7 +44,7 @@ export namespace timedsync {
     public static response(reader: BufferStreamReader): IResponse {
       const json = readJSON(reader);
 
-      const localTime = new Date(json.local_time.readUInt32LE(0));
+      const localTime = new Date(json.local_time.readUInt32LE(0) * 1000);
       const payload: ICoreSyncData = {
         currentHeight: json.payload_data.current_height,
         hash: json.payload_data.top_id,
@@ -72,7 +72,7 @@ export namespace timedsync {
     public static response(writer: BufferStreamWriter, data: IResponse) {
       writeKVBlockHeader(writer);
       writeJSONVarint(writer, Object.keys(data).length);
-      writeJSONDateType(writer, 'local_time', data.localTime.getTime());
+      writeJSONDateType(writer, 'local_time', data.localTime);
       writeJSONICoreSyncData(writer, 'payload_data', data.payload);
       writeJSONIPeerEntryList(writer, 'local_peerlist', data.localPeerList);
     }

@@ -42,7 +42,7 @@ export namespace handshake {
         networkId: json.node_data.network_id,
         version: json.node_data.version,
         // tslint:disable-next-line:object-literal-sort-keys
-        localTime: new Date(json.node_data.local_time.readUInt32LE(0)),
+        localTime: new Date(json.node_data.local_time.readUInt32LE(0) * 1000),
         peerId: json.node_data.peer_id,
         myPort: json.node_data.my_port,
       };
@@ -61,7 +61,7 @@ export namespace handshake {
         networkId: json.node_data.network_id,
         version: json.node_data.version,
         // tslint:disable-next-line:object-literal-sort-keys
-        localTime: new Date(json.node_data.local_time.readUInt32LE(0)),
+        localTime: new Date(json.node_data.local_time.readUInt32LE(0) * 1000),
         peerId: json.node_data.peer_id,
         myPort: json.node_data.my_port,
       };

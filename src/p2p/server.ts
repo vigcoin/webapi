@@ -8,9 +8,9 @@ import {
   IServerConfig,
   Version,
 } from '../cryptonote/p2p';
+import { uint8 } from '../cryptonote/types';
 import { P2pConnectionContext } from './connection';
 import { Peer } from './peer';
-import { uint8 } from '../cryptonote/types';
 
 const logger = debug('vigcoin:p2p:server');
 

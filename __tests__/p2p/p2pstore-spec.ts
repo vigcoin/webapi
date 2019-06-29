@@ -18,18 +18,14 @@ describe('test peer server', () => {
       IP.toString(item.peer.ip);
       assert(item.peer.port === 19800);
       white.push(IP.toString(item.peer.ip));
-      console.log(item.lastSeen);
     }
-    console.log('white', white);
     const gray = [];
 
     for (const item of data.peerManager.gray) {
       IP.toString(item.peer.ip);
       assert(item.peer.port === 19800);
       gray.push(IP.toString(item.peer.ip));
-      console.log(item.lastSeen);
     }
-    console.log('gray', gray);
   });
 
   it('should test server serializer', () => {
@@ -42,17 +38,12 @@ describe('test peer server', () => {
       IP.toString(item.peer.ip);
       assert(item.peer.port === 19800);
       white.push(IP.toString(item.peer.ip));
-      console.log(item.lastSeen);
     }
-    console.log('white', white);
     const gray = [];
-
     for (const item of data.peerManager.gray) {
       IP.toString(item.peer.ip);
       assert(item.peer.port === 19800);
       gray.push(IP.toString(item.peer.ip));
-      console.log(item.lastSeen);
     }
-    console.log('gray', gray);
   });
 });

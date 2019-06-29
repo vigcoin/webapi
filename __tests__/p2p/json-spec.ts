@@ -606,7 +606,7 @@ describe('test json stream', () => {
     ];
     const reader = new BufferStreamReader(Buffer.from(data));
     const json: handshake.IRequest = handshake.Reader.request(reader);
-    assert(json.node.localTime.getTime() === 1560854536);
+    assert(Math.floor(json.node.localTime.getTime() / 1000) === 1560854536);
     assert(json.node.version === 1);
     assert(json.node.myPort === 19800);
     assert.deepEqual(json.node.networkId, [
@@ -696,10 +696,8 @@ describe('test json stream', () => {
     assert(json.node.peerId.equals(data.node.peerId));
     assert.deepEqual(json.node.networkId, data.node.networkId);
     assert(
-      // tslint:disable-next-line:no-bitwise
-      (json.node.localTime.getTime() & 0xffffffff) ===
-        // tslint:disable-next-line:no-bitwise
-        (data.node.localTime.getTime() & 0xffffffff)
+      Math.floor(json.node.localTime.getTime() / 1000) ===
+        Math.floor(data.node.localTime.getTime() / 1000)
     );
   });
 
@@ -1838,7 +1836,7 @@ describe('test json stream', () => {
     ];
     const reader = new BufferStreamReader(Buffer.from(data));
     const json = timedsync.Reader.response(reader);
-    assert(json.localTime.getTime() === 1561008090);
+    assert(Math.floor(json.localTime.getTime() / 1000) === 1561008090);
     assert(json.payload.currentHeight === 14);
     assert(json.localPeerList.length === 3);
 

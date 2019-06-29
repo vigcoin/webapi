@@ -37,7 +37,8 @@ describe('test serializer', () => {
     assert(-1 === reader.readInt32());
     assert(t.equals(reader.readUInt64()));
     assert(t.equals(reader.readInt64()));
-    assert(d.getTime() === reader.readDate().getTime());
+    const nd = reader.readDate();
+    assert(Math.floor(d.getTime() / 1000) === Math.floor(nd.getTime() / 1000));
     const b1 = reader.read(b.length);
     const h1 = reader.readHash();
     assert(reader.getRemainedSize() === 0);
