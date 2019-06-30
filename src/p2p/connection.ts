@@ -24,14 +24,19 @@ export class ConnectionContext extends EventEmitter {
   protected port: uint32 = 0; // uint32
   protected isIncoming: boolean = false;
   protected startTime: Date;
-  protected state: ConnectionState = ConnectionState.BEFORE_HANDSHAKE;
+  // tslint:disable-next-line:variable-name
+  protected _state: ConnectionState = ConnectionState.BEFORE_HANDSHAKE;
   protected neededObjects: Hash[];
   protected requestedObjects: Hash[];
   protected remoteBlockchainHeight: uint32 = 0; // uint32;
   protected lastResponseHeight: uint32 = 0; // unit32;
 
-  public getState() {
-    return this.state;
+  get state() {
+    return this._state;
+  }
+
+  set state(state: ConnectionState) {
+    this._state = state;
   }
 }
 

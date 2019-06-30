@@ -4,7 +4,12 @@ import { BufferStreamReader } from '../../src/cryptonote/serialize/reader';
 import { P2pConnectionContext } from '../../src/p2p/connection';
 import { LevinProtocol } from '../../src/p2p/levin';
 import { ping, timedsync } from '../../src/p2p/protocol';
-import { kvHeader, pingRequest, timesyncRequest } from './data';
+import {
+  kvHeader,
+  pingRequest,
+  timesyncRequest,
+  handshakeRequest,
+} from './data';
 
 describe('test levin protocol', () => {
   it('should read header', () => {
@@ -44,7 +49,7 @@ describe('test levin protocol', () => {
       client.write(Buffer.from(pingRequest));
       const context = new P2pConnectionContext(client);
       const levin = new LevinProtocol(client, context);
-      levin.on('ping-response', (res: ping.IResponse) => {
+      levin.on('ping', (res: ping.IResponse) => {
         assert(String(res.status) === 'OK');
         assert(processed);
         client.destroy();
@@ -79,4 +84,30 @@ describe('test levin protocol', () => {
       });
     });
   });
+
+  // it('should handle levin handshake protocol', done => {
+  //   let processed = false;
+  //   const server = createServer(socket => {
+  //     const context = new P2pConnectionContext(socket);
+  //     const levin = new LevinProtocol(socket, context);
+  //     levin.on('processed', message => {
+  //       assert(message === 'handshake');
+  //       processed = true;
+  //     });
+  //   });
+  //   const port = Math.floor(Math.random() * 1000) + 1024;
+  //   server.listen(port);
+  //   const client = createConnection({ port }, () => {
+  //     client.write(Buffer.from(handshakeRequest));
+  //     const context = new P2pConnectionContext(client);
+  //     const levin = new LevinProtocol(client, context);
+  //     levin.on('handshake', (res: timedsync.IResponse) => {
+  //       assert(!!res.localTime);
+  //       assert(processed);
+  //       client.destroy();
+  //       server.close();
+  //       done();
+  //     });
+  //   });
+  // });
 });

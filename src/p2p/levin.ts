@@ -53,6 +53,7 @@ const LEVIN_DEFAULT_MAX_PACKET_SIZE = 100000000; // 100MB by default
 const LEVIN_PROTOCOL_VER_1 = 1;
 
 export class LevinProtocol extends EventEmitter {
+  public static networkId: number[];
   public static readHeader(reader: BufferStreamReader): ILevinHeader {
     const signature = reader.read(8);
     assert(signature.equals(LEVIN_SIGNATURE));
@@ -192,6 +193,14 @@ export class LevinProtocol extends EventEmitter {
   }
 
   public onHandshake(cmd: ILevinCommand) {
+    const reader = new BufferStreamReader(cmd.buffer);
+    const request: handshake.IRequest = handshake.Reader.request(reader);
+    assert(
+      Buffer.from(request.node.networkId).equals(
+        Buffer.from(LevinProtocol.networkId)
+      )
+    );
+
     this.emit('processed', 'handshake');
     return false;
   }
@@ -224,7 +233,7 @@ export class LevinProtocol extends EventEmitter {
     if (cmd.isResponse) {
       const response: ping.IResponse = ping.Reader.response(reader);
       assert(String(response.status) === 'OK');
-      this.emit('ping-response', response);
+      this.emit('ping', response);
       return;
     } else {
       ping.Reader.request(reader);

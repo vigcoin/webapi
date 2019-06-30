@@ -62,4 +62,14 @@ export class BlockChain {
     const be = this.get(this.height - 1);
     return be.generatedCoins;
   }
+
+  public have(hash: Buffer): IBlockEntry {
+    for (let i = this.height - 1; i > 0; i--) {
+      const be = this.get(i);
+      console.log(be);
+      if (be.block.header.preHash.equals(hash)) {
+        return this.get(i - 1);
+      }
+    }
+  }
 }

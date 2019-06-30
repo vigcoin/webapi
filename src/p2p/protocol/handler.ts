@@ -1,5 +1,6 @@
 import { BlockChain } from '../../cryptonote/block/blockchain';
 import { ICoreSyncData } from '../../cryptonote/p2p';
+import { ConnectionState, P2pConnectionContext } from '../connection';
 import { Command } from './command';
 
 export class Handler {
@@ -16,6 +17,21 @@ export class Handler {
       currentHeight: height,
       hash,
     };
+  }
+
+  public processPayLoad(
+    data: ICoreSyncData,
+    context: P2pConnectionContext,
+    initial: boolean
+  ): boolean {
+    if (context.state === ConnectionState.BEFORE_HANDSHAKE && !initial) {
+      return true;
+    }
+
+    if (context.state !== ConnectionState.SYNCHRONIZING) {
+      // if(this.blockchain.have(data.hash)) {
+      // }
+    }
   }
 
   public onCommand(cmd: Command) {

@@ -45,6 +45,24 @@ describe('read from file', () => {
   test('should get current criculated coins', () => {
     assert(blockChain.circulatedCoins === 2001434200334084);
   });
+
+  test('Should find block by hash', () => {
+    const be = blockChain.have(
+      Buffer.from(
+        'ab7f4044c541c1ba28b65010ad6191f8f6c981550141fcbca814e7e026627031',
+        'hex'
+      )
+    );
+    assert(be.height === 0);
+
+    const be1 = blockChain.have(
+      Buffer.from(
+        '8bcd3a7dac032f0bbca1fb192763f2559c05c1c7cb0b11e0761c9e991dcaec13',
+        'hex'
+      )
+    );
+    assert(be1.height === 1);
+  });
 });
 
 describe('read from empty file', () => {
