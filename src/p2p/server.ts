@@ -50,6 +50,10 @@ export class P2PServer {
     return this._version;
   }
 
+  set version(version: uint8) {
+    this._version = version;
+  }
+
   get id() {
     return this.peerId;
   }

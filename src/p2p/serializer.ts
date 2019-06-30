@@ -22,25 +22,14 @@ export class P2PStore {
     writeFileSync(this.file, writer.getBuffer());
   }
 
-  public read() {
+  public read(server: P2PServer, peerManager: PeerManager) {
     const buffer: Buffer = readFileSync(this.file);
     const reader = new BufferStreamReader(buffer);
-    const version1 = reader.readVarint();
-    const version2 = reader.readVarint();
-    const white = this.readPeerEntryList(reader);
-    const gray = this.readPeerEntryList(reader);
-    const peerId = reader.readVarintBuffer();
-    return {
-      version: version1,
-      // tslint:disable-next-line:object-literal-sort-keys
-      peerManager: {
-        version: version2,
-        white,
-        // tslint:disable-next-line:object-literal-sort-keys
-        gray,
-      },
-      peerId,
-    };
+    server.version = reader.readVarint();
+    peerManager.version = reader.readVarint();
+    peerManager.white = this.readPeerEntryList(reader);
+    peerManager.gray = this.readPeerEntryList(reader);
+    server.id = reader.readVarintBuffer();
   }
 
   private writePeerEntryList(writer: BufferStreamWriter, list: IPeerEntry[]) {

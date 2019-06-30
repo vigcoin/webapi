@@ -77,12 +77,24 @@ export class PeerManager {
     return this._version;
   }
 
+  set version(version: uint8) {
+    this._version = version;
+  }
+
   get white(): IPeerEntry[] {
     return this.whitePeers.peers;
   }
 
+  set white(list: IPeerEntry[]) {
+    this.whitePeers.peers = list;
+  }
+
   get gray(): IPeerEntry[] {
     return this.grayPeers.peers;
+  }
+
+  set gray(list: IPeerEntry[]) {
+    this.grayPeers.peers = list;
   }
 
   public appendWhite(pe: IPeerEntry) {
