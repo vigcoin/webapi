@@ -200,8 +200,10 @@ export class LevinProtocol extends EventEmitter {
         Buffer.from(LevinProtocol.networkId)
       )
     );
+    assert(this.context.isIncoming);
+    assert(!this.context.peerId.length);
 
-    this.emit('processed', 'handshake');
+    if (this) this.emit('processed', 'handshake');
     return false;
   }
 

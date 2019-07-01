@@ -3,21 +3,12 @@ import * as path from 'path';
 import { Configuration } from '../../src/config/types';
 import { BlockChain } from '../../src/cryptonote/block/blockchain';
 
+import { getBlockChain, getBlockFile } from '../../src/init/blockchain';
+
 describe('read from file', () => {
-  const indexFile = path.resolve(__dirname, '../vigcoin/blockindexes.dat');
-  const blockFile = path.resolve(__dirname, '../vigcoin/blocks.dat');
-  const chainFile = path.resolve(__dirname, '../vigcoin/blockchainindices.dat');
-  const cacheFile = path.resolve(__dirname, '../vigcoin/blockscache.dat');
-
-  const files: Configuration.IBlockFile = {
-    data: blockFile,
-    index: indexFile,
-    // tslint:disable-next-line:object-literal-sort-keys
-    chain: chainFile,
-    cache: cacheFile,
-  };
-
-  const blockChain: BlockChain = new BlockChain(files);
+  const blockChain: BlockChain = getBlockChain(
+    getBlockFile(path.resolve(__dirname, '../vigcoin'))
+  );
 
   test('should init block chain', () => {
     blockChain.init();
@@ -66,24 +57,9 @@ describe('read from file', () => {
 });
 
 describe('read from empty file', () => {
-  const indexFile = path.resolve(__dirname, '../vigcoinempty/blockindexes.dat');
-  const blockFile = path.resolve(__dirname, '../vigcoinempty/blocks.dat');
-  const chainFile = path.resolve(
-    __dirname,
-    '../vigcoinempty/blockchainindices.dat'
+  const blockChain: BlockChain = getBlockChain(
+    getBlockFile(path.resolve(__dirname, '../vigcoinempty'))
   );
-  const cacheFile = path.resolve(__dirname, '../vigcoinempty/blockscache.dat');
-
-  const files: Configuration.IBlockFile = {
-    data: blockFile,
-    index: indexFile,
-    // tslint:disable-next-line:object-literal-sort-keys
-    chain: chainFile,
-    cache: cacheFile,
-  };
-
-  const blockChain: BlockChain = new BlockChain(files);
-
   test('should init block chain', () => {
     blockChain.init();
   });

@@ -87,7 +87,6 @@ export class BufferStreamReader {
   public readVarintUInt64(): Buffer {
     let buffer = this.readVarintBuffer();
     const diff = 8 - buffer.length;
-    // console.log(buffer);
     if (diff < 0) {
       throw new Error('None UInt64 Data!');
     }

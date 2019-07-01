@@ -1,12 +1,21 @@
+import { EventEmitter } from 'events';
 import { BlockChain } from '../../cryptonote/block/blockchain';
 import { ICoreSyncData } from '../../cryptonote/p2p';
-import { ConnectionState, P2pConnectionContext } from '../connection';
+import { uint32 } from '../../cryptonote/types';
+import { P2pConnectionContext } from '../connection';
 import { Command } from './command';
 
-export class Handler {
+export class Handler extends EventEmitter {
+  public peers: uint32 = 0;
+
   private blockchain: BlockChain;
+  // tslint:disable-next-line:variable-name
+  private observedHeight: uint32 = 0;
+
   constructor(blockchain: BlockChain) {
+    super();
     this.blockchain = blockchain;
+    this.observedHeight = 0;
   }
 
   public getPayLoad(): ICoreSyncData {
@@ -19,18 +28,19 @@ export class Handler {
     };
   }
 
-  public processPayLoad(
-    data: ICoreSyncData,
-    context: P2pConnectionContext,
-    initial: boolean
-  ): boolean {
-    if (context.state === ConnectionState.BEFORE_HANDSHAKE && !initial) {
-      return true;
-    }
+  public haveBlock(hash: Buffer) {
+    return this.blockchain.have(hash);
+  }
 
-    if (context.state !== ConnectionState.SYNCHRONIZING) {
-      // if(this.blockchain.have(data.hash)) {
-      // }
+  get height() {
+    return this.blockchain.height;
+  }
+
+  public updateObserverHeight(current, context: P2pConnectionContext) {
+    const height = this.observedHeight;
+    if (current > context.remoteBlockchainHeight && current > height) {
+      this.observedHeight = current;
+      this.emit('block-height-updated', this.observedHeight);
     }
   }
 

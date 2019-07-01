@@ -1,6 +1,8 @@
-import { cryptonote, p2p } from '../config';
+import { p2p } from '../config';
 import { INetworkPeer, IServerConfig, P2PServer } from '../p2p/index';
+import { Handler } from '../p2p/protocol/handler';
 import { IP } from '../util/ip';
+import { getBlockChain } from './blockchain';
 
 const config: IServerConfig = {
   host: '127.0.0.1',
@@ -28,10 +30,15 @@ const networkPeer: INetworkPeer = {
   },
 };
 
+const bc = getBlockChain();
+bc.init();
+
+const handler = new Handler(bc);
 export const server: P2PServer = new P2PServer(
   config,
-  networkPeer,
-  cryptonote.NETWORK_ID,
-  '',
-  'p2pstate.bin'
+  // networkPeer,
+  // cryptonote.NETWORK_ID,
+  // '',
+  // 'p2pstate.bin'
+  handler
 );

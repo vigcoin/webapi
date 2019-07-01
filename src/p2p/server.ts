@@ -11,39 +11,43 @@ import {
 import { uint8 } from '../cryptonote/types';
 import { P2pConnectionContext } from './connection';
 import { Peer } from './peer';
+import { Handler } from './protocol/handler';
 
 const logger = debug('vigcoin:p2p:server');
 
 export class P2PServer {
   private config: IServerConfig;
-  private folder: string;
-  private filename: string;
-  private absoluteFileName: string;
+  // private folder: string;
+  // private filename: string;
+  // private absoluteFileName: string;
   private peerList: Peer[] = [];
   private clientList: Socket[] = [];
   private server: Server;
-  private networkPeer: INetworkPeer;
-  private networkId: number[];
+  // private networkPeer: INetworkPeer;
+  // private networkId: number[];
   private peerId: IPeerIDType;
-  private hidePort: boolean = false;
+  // private hidePort: boolean = false;
   private connections: P2pConnectionContext[];
+  private handler: Handler;
 
   // tslint:disable-next-line:variable-name
   private _version: uint8 = 1;
 
   constructor(
     config: IServerConfig,
-    networkPeer: INetworkPeer,
-    networkId: number[],
-    folder: string,
-    filename: string
+    // networkPeer: INetworkPeer,
+    // networkId: number[],
+    // folder: string,
+    // filename: string,
+    handler: Handler
   ) {
     this.config = config;
-    this.networkPeer = networkPeer;
-    this.networkId = networkId;
-    this.folder = folder;
-    this.filename = filename;
-    this.absoluteFileName = path.resolve(folder, filename);
+    // this.networkPeer = networkPeer;
+    // this.networkId = networkId;
+    // this.folder = folder;
+    // this.filename = filename;
+    // this.absoluteFileName = path.resolve(folder, filename);
+    this.handler = handler;
   }
 
   get version(): uint8 {
@@ -132,7 +136,7 @@ export class P2PServer {
     if (this.clientList.indexOf(s) === -1) {
       this.clientList.push(s);
     }
-    this.connections.push(new P2pConnectionContext(s));
+    this.connections.push(new P2pConnectionContext(s, this.handler));
   }
 
   // protected handshake(peer: Peer) {
