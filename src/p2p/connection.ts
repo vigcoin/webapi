@@ -6,7 +6,6 @@ import { Hash } from '../crypto/types';
 import { ICoreSyncData, IMessage, IPeerIDType } from '../cryptonote/p2p';
 import { uint32, uint8 } from '../cryptonote/types';
 import { IP } from '../util/ip';
-import { LevinProtocol } from './levin';
 import { Handler } from './protocol/handler';
 
 export enum ConnectionState {
@@ -21,10 +20,10 @@ export enum ConnectionState {
 
 export class ConnectionContext extends EventEmitter {
   public remoteBlockchainHeight: uint32 = 0; // uint32;
+  public ip: uint32 = 0; // uint32
 
   protected version: uint8; // unit8
   protected id: string; // boost::uuids::uuid
-  protected ip: uint32; // uint32
   protected port: uint32 = 0; // uint32
   // tslint:disable-next-line:variable-name
   protected _isIncoming: boolean = false;
@@ -59,10 +58,8 @@ export class P2pConnectionContext extends ConnectionContext {
   private writeQueue: IMessage[];
   private stopped: boolean = false;
   private socket: Socket;
-  private levin: LevinProtocol;
-  private handler: Handler;
 
-  constructor(socket: Socket, handler: Handler) {
+  constructor(socket: Socket) {
     super();
     this._peerId = Buffer.from([]);
     this.socket = socket;
@@ -71,12 +68,6 @@ export class P2pConnectionContext extends ConnectionContext {
     this.startTime = new Date();
     this.ip = IP.toNumber(socket.remoteAddress);
     this.port = socket.remotePort;
-    this.handler = handler;
-    this.levin = new LevinProtocol(socket, this);
-
-    this.levin.on('state', (state: ConnectionState) => {
-      this.state = state;
-    });
   }
 
   get peerId(): IPeerIDType {
@@ -87,7 +78,11 @@ export class P2pConnectionContext extends ConnectionContext {
     this._peerId = peer;
   }
 
-  public processPayLoad(data: ICoreSyncData, first: boolean): boolean {
+  public processPayLoad(
+    handler: Handler,
+    data: ICoreSyncData,
+    first: boolean
+  ): boolean {
     // Ignore none first handshake when state is not set.
     if (this.state === ConnectionState.BEFORE_HANDSHAKE && !first) {
       return true;
@@ -96,7 +91,7 @@ export class P2pConnectionContext extends ConnectionContext {
     // Ignore handshake after synchronizing
     if (this.state !== ConnectionState.SYNCHRONIZING) {
       // Searching block by hash
-      if (this.handler.haveBlock(data.hash)) {
+      if (handler.haveBlock(data.hash)) {
         // tslint:disable-next-line:prefer-conditional-expression
         if (first) {
           //
@@ -106,17 +101,17 @@ export class P2pConnectionContext extends ConnectionContext {
         }
       } else {
         // Start synchronizing if not found
-        const diff = data.currentHeight - this.handler.height;
+        const diff = data.currentHeight - handler.height;
         assert(diff > 0);
         this.state = ConnectionState.SYNC_REQURIED;
       }
     }
 
-    this.handler.updateObserverHeight(data.currentHeight, this);
+    handler.updateObserverHeight(data.currentHeight, this);
 
     this.remoteBlockchainHeight = data.currentHeight;
     if (first) {
-      this.handler.peers++;
+      handler.peers++;
     }
   }
 }

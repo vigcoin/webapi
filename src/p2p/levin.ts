@@ -4,8 +4,10 @@ import { Socket } from 'net';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../cryptonote/serialize/writer';
 import { int32, uint32, uint64, UINT64 } from '../cryptonote/types';
+import { IP } from '../util/ip';
 import { P2pConnectionContext } from './connection';
 import { handshake, ping, timedsync } from './protocol';
+import { Handler } from './protocol/handler';
 
 export enum LevinError {
   SUCCESS = 1,
@@ -147,38 +149,71 @@ export class LevinProtocol extends EventEmitter {
   }
 
   private socket: Socket;
-  private context: P2pConnectionContext;
-  constructor(socket: Socket, context: P2pConnectionContext) {
+  // private context: P2pConnectionContext;
+  constructor(socket: Socket) {
     super();
     this.socket = socket;
-    this.context = context;
-    this.socket.on('data', buffer => {
-      this.onIncomingData(new BufferStreamReader(buffer));
-    });
-    this.socket.on('end', () => {
-      this.socket.destroy();
-    });
+    // this.context = context;
   }
 
-  public onIncomingData(reader: BufferStreamReader) {
+  public tryPing(
+    data: handshake.IRequest,
+    context: P2pConnectionContext
+  ): boolean {
+    if (data.node.myPort === 0) {
+      return false;
+    }
+    if (!IP.isAllowed(context.ip)) {
+      return false;
+    }
+
+    const request: ping.IRequest = {};
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    ping.Writer.request(writer, request);
+
+    const cmd: ILevinCommand = {
+      command: ping.ID.ID,
+      isNotify: false,
+      isResponse: false,
+      // tslint:disable-next-line:object-literal-sort-keys
+      buffer: writer.getBuffer(),
+    };
+  }
+
+  public invoke(cmd: ILevinCommand): boolean {
+    const request = LevinProtocol.request(cmd.command, cmd.buffer, 0, true);
+    this.socket.write(request);
+
+    return true;
+  }
+
+  public onIncomingData(
+    reader: BufferStreamReader,
+    context: P2pConnectionContext,
+    handler: Handler
+  ) {
     const cmd = LevinProtocol.readCommand(reader);
-    this.onCommand(cmd);
+    this.onCommand(cmd, context, handler);
   }
 
-  public onCommand(cmd: ILevinCommand) {
+  public onCommand(
+    cmd: ILevinCommand,
+    context: P2pConnectionContext,
+    handler: Handler
+  ) {
     switch (cmd.command) {
       case handshake.ID.ID:
-        this.onHandshake(cmd);
+        this.onHandshake(cmd, context, handler);
         break;
       case timedsync.ID.ID:
         if (cmd.isResponse) {
           this.onTimedSyncResponse(cmd);
           return;
         }
-        this.onTimedSync(cmd);
+        this.onTimedSync(cmd, context);
         break;
       case ping.ID.ID:
-        this.onPing(cmd);
+        this.onPing(cmd, context);
         break;
       default:
         throw new Error('Error Command!');
@@ -192,7 +227,11 @@ export class LevinProtocol extends EventEmitter {
     return false;
   }
 
-  public onHandshake(cmd: ILevinCommand) {
+  public onHandshake(
+    cmd: ILevinCommand,
+    context: P2pConnectionContext,
+    handler: Handler
+  ) {
     const reader = new BufferStreamReader(cmd.buffer);
     const request: handshake.IRequest = handshake.Reader.request(reader);
     assert(
@@ -200,18 +239,18 @@ export class LevinProtocol extends EventEmitter {
         Buffer.from(LevinProtocol.networkId)
       )
     );
-    assert(this.context.isIncoming);
-    assert(!this.context.peerId.length);
+    assert(context.isIncoming);
+    assert(!context.peerId.length);
 
-    assert(this.context.processPayLoad(request.payload, true));
+    assert(context.processPayLoad(handler, request.payload, true));
 
-    this.context.peerId = request.node.peerId;
+    context.peerId = request.node.peerId;
 
-    this.emit('handshake', request, this.context);
+    this.emit('handshake', request, context, this);
     return false;
   }
 
-  public onTimedSync(cmd: ILevinCommand) {
+  public onTimedSync(cmd: ILevinCommand, context: P2pConnectionContext) {
     const reader = new BufferStreamReader(cmd.buffer);
     timedsync.Reader.request(reader);
 
@@ -234,7 +273,7 @@ export class LevinProtocol extends EventEmitter {
     return false;
   }
 
-  public onPing(cmd: ILevinCommand) {
+  public onPing(cmd: ILevinCommand, context: P2pConnectionContext) {
     const reader = new BufferStreamReader(cmd.buffer);
     if (cmd.isResponse) {
       const response: ping.IResponse = ping.Reader.response(reader);
@@ -249,7 +288,7 @@ export class LevinProtocol extends EventEmitter {
       const response: ping.IResponse = {
         status: 'OK',
         // tslint:disable-next-line:object-literal-sort-keys
-        peerId: this.context.peerId,
+        peerId: context.peerId,
       };
       const writer = new BufferStreamWriter(Buffer.alloc(0));
       ping.Writer.response(writer, response);

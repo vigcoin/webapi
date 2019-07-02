@@ -1,9 +1,9 @@
 import { p2p } from '../config';
 import { INetworkPeer, IServerConfig, P2PServer } from '../p2p/index';
+import { PeerList, PeerManager } from '../p2p/peer-manager';
 import { Handler } from '../p2p/protocol/handler';
 import { IP } from '../util/ip';
-import { getBlockChain } from './blockchain';
-import { PeerList, PeerManager } from '../p2p/peer-manager';
+import { getBlockChain, getBlockFile } from './blockchain';
 
 const config: IServerConfig = {
   host: '127.0.0.1',
@@ -48,6 +48,7 @@ const bc = getBlockChain();
 bc.init();
 
 const handler = new Handler(bc);
+
 export const server: P2PServer = new P2PServer(
   config,
   // networkPeer,
@@ -57,3 +58,10 @@ export const server: P2PServer = new P2PServer(
   handler,
   pm
 );
+
+export function getP2PServer(dir: string): P2PServer {
+  const blc = getBlockChain(getBlockFile(dir));
+  blc.init();
+  const h = new Handler(blc);
+  return new P2PServer(config, h, pm);
+}

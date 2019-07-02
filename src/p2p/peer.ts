@@ -5,6 +5,7 @@ import { ICoreSyncData, INodeData } from '../cryptonote/p2p';
 import * as debug from 'debug';
 import { uint32 } from '../cryptonote/types';
 import { IP } from '../util/ip';
+import { P2pConnectionContext } from './connection';
 
 const logger = debug('vigcoin:p2p:peer');
 
@@ -34,17 +35,18 @@ export class Peer {
         } else {
           logger('Successfually connection: ' + this.host + ':' + this.port);
           this.onConnected();
+          const context = new P2pConnectionContext(s);
           resolve();
         }
       });
       this.socket = s;
-      s.on('data', async data => {
-        await this.update(data);
-      });
-      s.on('end', async () => {
-        logger('p2p connection ended: ' + this.host + ':' + this.port);
-        await this.onEnd();
-      });
+      // s.on('data', async data => {
+      //   await this.update(data);
+      // });
+      // s.on('end', async () => {
+      //   logger('p2p connection ended: ' + this.host + ':' + this.port);
+      //   await this.onEnd();
+      // });
     });
   }
 

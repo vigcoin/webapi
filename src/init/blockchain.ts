@@ -1,8 +1,12 @@
+import { existsSync, mkdirSync } from 'fs';
 import * as path from 'path';
 import { Configuration } from '../config/types';
 import { BlockChain } from '../cryptonote/block/blockchain';
 
 export function getBlockFile(dir: string): Configuration.IBlockFile {
+  if (!existsSync(dir)) {
+    mkdirSync(dir);
+  }
   const indexFile = path.resolve(dir, './blockindexes.dat');
   const blockFile = path.resolve(dir, './blocks.dat');
   const chainFile = path.resolve(dir, './blockchainindices.dat');

@@ -1,6 +1,7 @@
-import { VApplication } from '../src/servers/app';
 import * as express from 'express';
+import { VApplication } from '../src/servers/app';
 
+// tslint:disable-next-line:no-var-requires
 const webapi = require('../src/index');
 const app = express();
 

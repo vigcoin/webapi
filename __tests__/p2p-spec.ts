@@ -9,11 +9,8 @@ describe('test connection', () => {
     await server.start();
     expect(server).toBeTruthy();
     const peers = server.getPeers();
-    expect(peers.length >= 1).toBeTruthy();
-
-    for (const peer of peers) {
-      expect(peer.isConnected()).toBeTruthy();
-    }
+    expect(peers.white.length >= 1).toBeTruthy();
+    expect(peers.gray.length >= 1).toBeTruthy();
   });
 
   test('Should stop peers', async () => {

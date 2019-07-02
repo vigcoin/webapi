@@ -9,14 +9,16 @@ import { ping, timedsync } from '../../src/p2p/protocol';
 import { kvHeader, pingRequest, timesyncRequest } from './data';
 
 import * as path from 'path';
+import { getP2PServer } from '../../src/init/p2p';
 import { Handler } from '../../src/p2p/protocol/handler';
 
-const bc: BlockChain = getBlockChain(
-  getBlockFile(path.resolve(__dirname, '../vigcoin'))
-);
+const dir = path.resolve(__dirname, '../vigcoin');
+const bc: BlockChain = getBlockChain(getBlockFile(dir));
 bc.init();
 
 const handler = new Handler(bc);
+
+const p2pserver = getP2PServer(dir);
 
 describe('test levin protocol', () => {
   it('should read header', () => {
@@ -42,8 +44,7 @@ describe('test levin protocol', () => {
   it('should handle levin ping request protocol', done => {
     let processed = false;
     const server = createServer(socket => {
-      const context = new P2pConnectionContext(socket, handler);
-      const levin = new LevinProtocol(socket, context);
+      const { levin } = p2pserver.initContext(socket);
       levin.on('processed', message => {
         assert(message === 'ping');
         processed = true;
@@ -54,8 +55,7 @@ describe('test levin protocol', () => {
     const client = createConnection({ port }, () => {
       // 'connect' listener
       client.write(Buffer.from(pingRequest));
-      const context = new P2pConnectionContext(client, handler);
-      const levin = new LevinProtocol(client, context);
+      const { levin } = p2pserver.initContext(client);
       levin.on('ping', (res: ping.IResponse) => {
         assert(String(res.status) === 'OK');
         assert(processed);
@@ -69,8 +69,7 @@ describe('test levin protocol', () => {
   it('should handle levin timedsync protocol', done => {
     let processed = false;
     const server = createServer(socket => {
-      const context = new P2pConnectionContext(socket, handler);
-      const levin = new LevinProtocol(socket, context);
+      const { levin } = p2pserver.initContext(socket);
       levin.on('processed', message => {
         assert(message === 'timedsync');
         processed = true;
@@ -80,8 +79,7 @@ describe('test levin protocol', () => {
     server.listen(port);
     const client = createConnection({ port }, () => {
       client.write(Buffer.from(timesyncRequest));
-      const context = new P2pConnectionContext(client, handler);
-      const levin = new LevinProtocol(client, context);
+      const { levin } = p2pserver.initContext(client);
       levin.on('timedsync', (res: timedsync.IResponse) => {
         assert(!!res.localTime);
         assert(processed);

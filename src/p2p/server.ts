@@ -2,16 +2,20 @@ import * as debug from 'debug';
 import { createServer, Server, Socket } from 'net';
 import * as path from 'path';
 import {
+  ICoreSyncData,
   INetworkPeer,
   INodeData,
   IPeerIDType,
   IServerConfig,
   Version,
 } from '../cryptonote/p2p';
+import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { uint8 } from '../cryptonote/types';
-import { P2pConnectionContext } from './connection';
+import { ConnectionState, P2pConnectionContext } from './connection';
+import { LevinProtocol } from './levin';
 import { Peer } from './peer';
-import { PeerManager, PeerList } from './peer-manager';
+import { PeerList, PeerManager } from './peer-manager';
+import { handshake } from './protocol';
 import { Handler } from './protocol/handler';
 
 const logger = debug('vigcoin:p2p:server');
@@ -51,6 +55,17 @@ export class P2PServer {
     // this.absoluteFileName = path.resolve(folder, filename);
     this.handler = handler;
     this.pm = pm;
+
+    handler.on(
+      'handshake',
+      (
+        data: handshake.IRequest,
+        context: P2pConnectionContext,
+        levin: LevinProtocol
+      ) => {
+        this.onHandshake(data, context, levin);
+      }
+    );
   }
 
   get version(): uint8 {
@@ -92,9 +107,31 @@ export class P2PServer {
     }
   }
 
-  // public getPeers() {
-  //   return this.peerList;
-  // }
+  public getPeers() {
+    return this.pm;
+  }
+
+  public initContext(s: Socket) {
+    const context = new P2pConnectionContext(s);
+    const levin = new LevinProtocol(s);
+    levin.on('state', (state: ConnectionState) => {
+      context.state = state;
+    });
+    s.on('data', buffer => {
+      levin.onIncomingData(
+        new BufferStreamReader(buffer),
+        context,
+        this.handler
+      );
+    });
+    s.on('end', () => {
+      s.destroy();
+    });
+    return {
+      context,
+      levin,
+    };
+  }
 
   // protected async onIdle() {
   //   const timer = setTimeout(async () => {
@@ -139,7 +176,8 @@ export class P2PServer {
     if (this.clientList.indexOf(s) === -1) {
       this.clientList.push(s);
     }
-    this.connections.push(new P2pConnectionContext(s, this.handler));
+    const context = this.initContext(s);
+    this.connections.push(context.context);
   }
 
   // protected handshake(peer: Peer) {
@@ -155,4 +193,16 @@ export class P2PServer {
   //     version: Version.CURRENT,
   //   };
   // }
+
+  private onHandshake(
+    data: handshake.IRequest,
+    context: P2pConnectionContext,
+    levin: LevinProtocol
+  ) {
+    if (!data.node.peerId.equals(this.peerId) && data.node.myPort !== 0) {
+      const peerId = data.node.peerId;
+      const port = data.node.myPort;
+      levin.tryPing(data, context);
+    }
+  }
 }
