@@ -13,8 +13,6 @@ describe('test connection', () => {
   test('Should connect servers', async () => {
     await server.start();
     expect(server).toBeTruthy();
-    const pm = server.getPeers();
-    assert(pm);
   });
 
   test('Should stop peers', async () => {

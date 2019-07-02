@@ -14,7 +14,7 @@ import { uint8 } from '../cryptonote/types';
 import { ConnectionState, P2pConnectionContext } from './connection';
 import { LevinProtocol } from './levin';
 import { Peer } from './peer';
-import { PeerList, PeerManager } from './peer-manager';
+import { PeerManager } from './peer-manager';
 import { handshake } from './protocol';
 import { Handler } from './protocol/handler';
 
@@ -34,6 +34,7 @@ export class P2PServer {
   // private hidePort: boolean = false;
   private connections: P2pConnectionContext[];
   private handler: Handler;
+  private peerList: Peer[] = [];
 
   // tslint:disable-next-line:variable-name
   private _version: uint8 = 1;
@@ -92,9 +93,9 @@ export class P2PServer {
   }
 
   public async stop() {
-    // for (const peer of this.peerList) {
-    //   await peer.stop();
-    // }
+    for (const peer of this.peerList) {
+      await peer.stop();
+    }
     if (this.server) {
       await new Promise((resolve, reject) => {
         this.server.close(e => {
@@ -108,7 +109,7 @@ export class P2PServer {
   }
 
   public getPeers() {
-    return this.pm;
+    return this.peerList;
   }
 
   public initContext(s: Socket) {
@@ -164,7 +165,7 @@ export class P2PServer {
       const peer = new Peer(seed.port, seed.ip);
       try {
         await peer.start();
-        // this.peerList.push(peer);
+        this.peerList.push(peer);
       } catch (e) {
         // tslint:disable-next-line:no-console
         console.error(e);
