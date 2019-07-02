@@ -83,12 +83,8 @@ export class P2pConnectionContext extends ConnectionContext {
     return this._peerId;
   }
 
-  public getRandomPeerId() {
-    const random = [];
-    for (let i = 0; i < 8; i++) {
-      random.push(Math.floor(Math.random() * 256));
-    }
-    return Buffer.from(random);
+  set peerId(peer: IPeerIDType) {
+    this._peerId = peer;
   }
 
   public processPayLoad(data: ICoreSyncData, first: boolean): boolean {

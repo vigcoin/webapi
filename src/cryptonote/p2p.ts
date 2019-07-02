@@ -42,7 +42,7 @@ export interface INetwork {
 
 export interface INetworkPeer {
   network: INetwork;
-  id: number;
+  id: IPeerIDType;
 }
 
 export interface INodeData {

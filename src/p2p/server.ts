@@ -11,6 +11,7 @@ import {
 import { uint8 } from '../cryptonote/types';
 import { P2pConnectionContext } from './connection';
 import { Peer } from './peer';
+import { PeerManager, PeerList } from './peer-manager';
 import { Handler } from './protocol/handler';
 
 const logger = debug('vigcoin:p2p:server');
@@ -20,7 +21,7 @@ export class P2PServer {
   // private folder: string;
   // private filename: string;
   // private absoluteFileName: string;
-  private peerList: Peer[] = [];
+  private pm: PeerManager;
   private clientList: Socket[] = [];
   private server: Server;
   // private networkPeer: INetworkPeer;
@@ -39,7 +40,8 @@ export class P2PServer {
     // networkId: number[],
     // folder: string,
     // filename: string,
-    handler: Handler
+    handler: Handler,
+    pm: PeerManager
   ) {
     this.config = config;
     // this.networkPeer = networkPeer;
@@ -48,6 +50,7 @@ export class P2PServer {
     // this.filename = filename;
     // this.absoluteFileName = path.resolve(folder, filename);
     this.handler = handler;
+    this.pm = pm;
   }
 
   get version(): uint8 {
@@ -74,9 +77,9 @@ export class P2PServer {
   }
 
   public async stop() {
-    for (const peer of this.peerList) {
-      await peer.stop();
-    }
+    // for (const peer of this.peerList) {
+    //   await peer.stop();
+    // }
     if (this.server) {
       await new Promise((resolve, reject) => {
         this.server.close(e => {
@@ -89,9 +92,9 @@ export class P2PServer {
     }
   }
 
-  public getPeers() {
-    return this.peerList;
-  }
+  // public getPeers() {
+  //   return this.peerList;
+  // }
 
   // protected async onIdle() {
   //   const timer = setTimeout(async () => {
@@ -124,7 +127,7 @@ export class P2PServer {
       const peer = new Peer(seed.port, seed.ip);
       try {
         await peer.start();
-        this.peerList.push(peer);
+        // this.peerList.push(peer);
       } catch (e) {
         // tslint:disable-next-line:no-console
         console.error(e);

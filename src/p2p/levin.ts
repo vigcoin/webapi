@@ -203,7 +203,11 @@ export class LevinProtocol extends EventEmitter {
     assert(this.context.isIncoming);
     assert(!this.context.peerId.length);
 
-    if (this) this.emit('processed', 'handshake');
+    assert(this.context.processPayLoad(request.payload, true));
+
+    this.context.peerId = request.node.peerId;
+
+    this.emit('handshake', request, this.context);
     return false;
   }
 
