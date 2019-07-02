@@ -13,9 +13,11 @@ const config: IServerConfig = {
 config.isAllowLocalIp = true;
 
 config.seedNode = [
-  { port: 19800, ip: IP.toNumber('69.171.73.252') },
-  { port: 19800, ip: IP.toNumber('39.108.160.252') },
-  // { port: 19800, ip: IP.toNumber("144.202.10.183") }
+  // { port: 19800, ip: IP.toNumber('69.171.73.252') },
+  { port: 19800, ip: IP.toNumber('78.141.199.140') },
+  { port: 19800, ip: IP.toNumber('47.91.226.168') },
+  // { port: 19800, ip: IP.toNumber('39.108.160.252') },  // deprecated
+  // { port: 19800, ip: IP.toNumber("144.202.10.183") }   // deprecated
 ];
 
 export function getRandomPeerId() {
