@@ -44,17 +44,6 @@ export class P2PServer {
     // this.absoluteFileName = path.resolve(folder, filename);
     this.handler = handler;
     this.pm = pm;
-
-    handler.on(
-      'handshake',
-      (
-        data: handshake.IRequest,
-        context: P2pConnectionContext,
-        levin: LevinProtocol
-      ) => {
-        this.onHandshake(data, context, levin);
-      }
-    );
   }
 
   get version(): uint8 {
@@ -105,6 +94,9 @@ export class P2PServer {
     const levin = new LevinProtocol(s);
     levin.on('state', (state: ConnectionState) => {
       context.state = state;
+    });
+    levin.on('handshake', (data: handshake.IRequest) => {
+      this.onHandshake(data, context, levin);
     });
     s.on('data', buffer => {
       levin.onIncomingData(
