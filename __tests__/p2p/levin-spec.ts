@@ -149,6 +149,8 @@ describe('test levin protocol', () => {
       };
       context.ip = IP.toNumber('183.14.133.114');
       assert(!levin.tryPing(data, context));
+      client.destroy();
+      server.close();
       done();
     });
   });
@@ -175,6 +177,8 @@ describe('test levin protocol', () => {
         peerId: Buffer.from([0x12, 0x75, 0x23, 0x65, 0x0f, 0x9b, 0x42, 0x3b]),
       };
       assert(!levin.tryPing(data, context));
+      client.destroy();
+      server.close();
       done();
     });
   });
