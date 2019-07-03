@@ -1,4 +1,4 @@
-import { p2p } from '../config';
+import { cryptonote, p2p } from '../config';
 import { INetworkPeer, IServerConfig, P2PServer } from '../p2p/index';
 import { PeerList, PeerManager } from '../p2p/peer-manager';
 import { Handler } from '../p2p/protocol/handler';
@@ -13,7 +13,7 @@ const config: IServerConfig = {
 config.isAllowLocalIp = true;
 
 config.seedNode = [
-  // { port: 19800, ip: IP.toNumber('69.171.73.252') },
+  { port: 19800, ip: IP.toNumber('69.171.73.252') },
   { port: 19800, ip: IP.toNumber('78.141.199.140') },
   { port: 19800, ip: IP.toNumber('47.91.226.168') },
   // { port: 19800, ip: IP.toNumber('39.108.160.252') },  // deprecated
@@ -54,7 +54,7 @@ const handler = new Handler(bc);
 export const server: P2PServer = new P2PServer(
   config,
   // networkPeer,
-  // cryptonote.NETWORK_ID,
+  cryptonote.NETWORK_ID,
   // '',
   // 'p2pstate.bin'
   handler,
@@ -65,5 +65,5 @@ export function getP2PServer(dir: string): P2PServer {
   const blc = getBlockChain(getBlockFile(dir));
   blc.init();
   const h = new Handler(blc);
-  return new P2PServer(config, h, pm);
+  return new P2PServer(config, cryptonote.NETWORK_ID, h, pm);
 }
