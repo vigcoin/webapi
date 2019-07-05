@@ -1,10 +1,10 @@
 import * as assert from 'assert';
 import { EventEmitter } from 'events';
 import { Socket } from 'net';
-import * as uuid from 'uuid';
 import { Hash } from '../crypto/types';
 import { ICoreSyncData, IMessage, IPeerIDType } from '../cryptonote/p2p';
 import { uint32, uint8 } from '../cryptonote/types';
+import { getRandomBytes } from '../util/bytes';
 import { IP } from '../util/ip';
 import { Handler } from './protocol/handler';
 
@@ -19,17 +19,23 @@ export enum ConnectionState {
 }
 
 export class ConnectionContext extends EventEmitter {
+  public static UUID_LENGTH = 16;
+
+  public static randomId() {
+    return getRandomBytes(ConnectionContext.UUID_LENGTH);
+  }
+
   public remoteBlockchainHeight: uint32 = 0; // uint32;
+  public id: Buffer; // boost::uuids::uuid, uint8[16]
   public ip: uint32 = 0; // uint32
 
   protected version: uint8; // unit8
-  protected id: string; // boost::uuids::uuid
   protected port: uint32 = 0; // uint32
   // tslint:disable-next-line:variable-name
   protected _isIncoming: boolean = false;
-  protected startTime: Date;
   // tslint:disable-next-line:variable-name
   protected _state: ConnectionState = ConnectionState.BEFORE_HANDSHAKE;
+  protected startTime: Date;
   protected neededObjects: Hash[];
   protected requestedObjects: Hash[];
   protected lastResponseHeight: uint32 = 0; // unit32;
@@ -63,7 +69,7 @@ export class P2pConnectionContext extends ConnectionContext {
     super();
     this._peerId = Buffer.from([]);
     this.socket = socket;
-    this.id = uuid.v4();
+    this.id = P2pConnectionContext.randomId();
     this.isIncoming = true;
     this.startTime = new Date();
     this.ip = IP.toNumber(socket.remoteAddress);

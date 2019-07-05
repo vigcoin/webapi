@@ -22,7 +22,7 @@ export class P2PServer {
   private server: Server;
   private peerId: IPeerIDType;
   // private hidePort: boolean = false;
-  private connections: P2pConnectionContext[];
+  private connections: Map<string, P2pConnectionContext>;
   private handler: Handler;
   private peerList: Peer[] = [];
 
@@ -44,6 +44,7 @@ export class P2PServer {
     // this.absoluteFileName = path.resolve(folder, filename);
     this.handler = handler;
     this.pm = pm;
+    this.connections = new Map();
   }
 
   get version(): uint8 {
@@ -89,9 +90,11 @@ export class P2PServer {
     return this.peerList;
   }
 
-  public initContext(s: Socket) {
+  public initContext(s: Socket, inComing: boolean) {
     const context = new P2pConnectionContext(s);
+    context.isIncoming = inComing;
     const levin = new LevinProtocol(s);
+    this.connections.set(context.id.toString('hex'), context);
     levin.on('state', (state: ConnectionState) => {
       context.state = state;
     });
@@ -99,11 +102,18 @@ export class P2PServer {
       this.onHandshake(data, context, levin);
     });
     s.on('data', buffer => {
-      levin.onIncomingData(
-        new BufferStreamReader(buffer),
-        context,
-        this.handler
-      );
+      try {
+        levin.onIncomingData(
+          new BufferStreamReader(buffer),
+          context,
+          this.handler
+        );
+      } catch (e) {
+        // TODO: onclose
+        // this.handler.onClose();
+        s.destroy();
+        this.connections.delete(context.id.toString('hex'));
+      }
     });
     s.on('end', () => {
       s.destroy();
@@ -153,12 +163,12 @@ export class P2PServer {
     }
   }
 
+  // acceptLoop of the original code
   protected onIncomingConnection(s: Socket) {
     if (this.clientList.indexOf(s) === -1) {
       this.clientList.push(s);
     }
-    const context = this.initContext(s);
-    this.connections.push(context.context);
+    this.initContext(s, true);
   }
 
   // protected handshake(peer: Peer) {

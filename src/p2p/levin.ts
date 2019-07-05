@@ -6,7 +6,7 @@ import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../cryptonote/serialize/writer';
 import { int32, uint32, uint64, UINT64 } from '../cryptonote/types';
 import { IP } from '../util/ip';
-import { P2pConnectionContext } from './connection';
+import { ConnectionState, P2pConnectionContext } from './connection';
 import { handshake, ping, timedsync } from './protocol';
 import { Handler } from './protocol/handler';
 
@@ -182,6 +182,16 @@ export class LevinProtocol extends EventEmitter {
     context: P2pConnectionContext,
     handler: Handler
   ) {
+    switch (context.state) {
+      case ConnectionState.SYNC_REQURIED:
+        context.state = ConnectionState.SYNCHRONIZING;
+        // handler.startSync(context);
+        break;
+      case ConnectionState.POOL_SYNC_REQUIRED:
+        context.state = ConnectionState.NORMAL;
+        // handler.requestMissingPoolTransactions(context);
+        break;
+    }
     const cmd = LevinProtocol.readCommand(reader);
     this.onCommand(cmd, context, handler);
   }
@@ -235,7 +245,7 @@ export class LevinProtocol extends EventEmitter {
 
     context.peerId = request.node.peerId;
 
-    this.emit('handshake', request, context, this);
+    this.emit('handshake', request);
   }
 
   public onTimedSync(cmd: ILevinCommand, context: P2pConnectionContext) {
