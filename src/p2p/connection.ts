@@ -119,5 +119,6 @@ export class P2pConnectionContext extends ConnectionContext {
     if (first) {
       handler.peers++;
     }
+    return true;
   }
 }

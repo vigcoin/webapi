@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import { EventEmitter } from 'events';
 import { Socket } from 'net';
+import { cryptonote } from '../config';
 import { IPeerNodeData } from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../cryptonote/serialize/writer';
@@ -56,7 +57,7 @@ const LEVIN_DEFAULT_MAX_PACKET_SIZE = 100000000; // 100MB by default
 const LEVIN_PROTOCOL_VER_1 = 1;
 
 export class LevinProtocol extends EventEmitter {
-  public static networkId: number[];
+  public static networkId: number[] = cryptonote.NETWORK_ID;
   public static readHeader(reader: BufferStreamReader): ILevinHeader {
     const signature = reader.read(8);
     assert(signature.equals(LEVIN_SIGNATURE));
@@ -192,8 +193,13 @@ export class LevinProtocol extends EventEmitter {
         // handler.requestMissingPoolTransactions(context);
         break;
     }
-    const cmd = LevinProtocol.readCommand(reader);
-    this.onCommand(cmd, context, handler);
+
+    try {
+      const cmd = LevinProtocol.readCommand(reader);
+      this.onCommand(cmd, context, handler);
+    } catch (e) {
+      context.state = ConnectionState.SHUTDOWN;
+    }
   }
 
   public onCommand(
@@ -233,12 +239,15 @@ export class LevinProtocol extends EventEmitter {
   ) {
     const reader = new BufferStreamReader(cmd.buffer);
     const request: handshake.IRequest = handshake.Reader.request(reader);
+
     assert(
       Buffer.from(request.node.networkId).equals(
         Buffer.from(LevinProtocol.networkId)
       )
     );
+
     assert(context.isIncoming);
+
     assert(!context.peerId.length);
 
     assert(context.processPayLoad(handler, request.payload, true));
@@ -246,6 +255,7 @@ export class LevinProtocol extends EventEmitter {
     context.peerId = request.node.peerId;
 
     this.emit('handshake', request);
+    this.emit('processed', 'handshake');
   }
 
   public onTimedSync(cmd: ILevinCommand, context: P2pConnectionContext) {
