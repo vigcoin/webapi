@@ -3,16 +3,15 @@ import { createConnection, createServer } from 'net';
 import { BlockChain } from '../../src/cryptonote/block/blockchain';
 import { BufferStreamReader } from '../../src/cryptonote/serialize/reader';
 import { getBlockChain, getBlockFile } from '../../src/init/blockchain';
-import { P2pConnectionContext } from '../../src/p2p/connection';
 import { LevinProtocol } from '../../src/p2p/levin';
 import { handshake, ping, timedsync } from '../../src/p2p/protocol';
 import { kvHeader, pingRequest, timesyncRequest } from './data';
 
 import * as path from 'path';
-import { getP2PServer } from '../../src/init/p2p';
-import { Handler } from '../../src/p2p/protocol/handler';
 import { cryptonote } from '../../src/config';
 import { IPeerNodeData } from '../../src/cryptonote/p2p';
+import { getP2PServer } from '../../src/init/p2p';
+import { Handler } from '../../src/p2p/protocol/handler';
 import { IP } from '../../src/util/ip';
 
 const dir = path.resolve(__dirname, '../vigcoin');

@@ -90,7 +90,7 @@ export class P2PServer {
     return this.peerList;
   }
 
-  public initContext(s: Socket, inComing: boolean) {
+  public initContext(s: Socket, inComing: boolean = true) {
     const context = new P2pConnectionContext(s);
     context.isIncoming = inComing;
     const levin = new LevinProtocol(s);
