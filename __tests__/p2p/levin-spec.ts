@@ -333,4 +333,8 @@ describe('test levin protocol', () => {
       // client.write(Buffer.from([1, 2, 3, 4]));
     });
   });
+
+  it('should close p2p server', async () => {
+    await p2pserver.stop();
+  });
 });
