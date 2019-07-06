@@ -300,6 +300,7 @@ describe('test levin protocol', () => {
         catched = true;
       }
       assert(catched);
+      client.destroy();
       server.close();
       done();
     });
@@ -325,6 +326,7 @@ describe('test levin protocol', () => {
       levin.onIncomingData(bsr, context, handler);
       assert(context.state === ConnectionState.SHUTDOWN);
       server.close();
+      client.destroy();
       done();
     });
     const port = Math.floor(Math.random() * 1000) + 1024;

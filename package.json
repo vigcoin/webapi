@@ -46,6 +46,7 @@
     "@types/node": "^10.11.4",
     "coveralls": "^3.0.2",
     "jest": "^23.6.0",
+    "mem": "^5.1.1",
     "prettier": "^1.14.3",
     "rimraf": "^2.6.2",
     "supertest": "^4.0.2",
