@@ -263,6 +263,7 @@ export class LevinProtocol extends EventEmitter {
     timedsync.Reader.request(reader);
 
     if (this.isReply(cmd)) {
+      // TODO: update to correct data
       const response: timedsync.IResponse = {
         localTime: new Date(),
         payload: {
