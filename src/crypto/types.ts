@@ -1,6 +1,4 @@
 import * as assert from 'assert';
-import { type } from 'os';
-
 export const HASH_LENGTH = 32;
 export const SIGNATURE_LENGTH = 64;
 export const NULL_HASH: Buffer = Buffer.alloc(HASH_LENGTH);

@@ -3,7 +3,8 @@ import * as path from 'path';
 import { Configuration } from '../../src/config/types';
 import { BlockChain } from '../../src/cryptonote/block/blockchain';
 
-import { getBlockChain, getBlockFile } from '../../src/init/blockchain';
+import { getBlockChain } from '../../src/init/blockchain';
+import { getBlockFile } from '../../src/util/fs';
 
 describe('read from file', () => {
   const blockChain: BlockChain = getBlockChain(

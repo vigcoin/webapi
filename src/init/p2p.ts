@@ -3,8 +3,9 @@ import { INetworkPeer, IServerConfig, P2PServer } from '../p2p/index';
 import { PeerList, PeerManager } from '../p2p/peer-manager';
 import { Handler } from '../p2p/protocol/handler';
 import { getRandomBytes } from '../util/bytes';
+import { getBlockFile } from '../util/fs';
 import { IP } from '../util/ip';
-import { getBlockChain, getBlockFile } from './blockchain';
+import { getBlockChain } from './blockchain';
 
 const config: IServerConfig = {
   host: '127.0.0.1',

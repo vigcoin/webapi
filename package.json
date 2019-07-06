@@ -36,6 +36,7 @@
     "@types/uuid": "^3.4.4",
     "@vigcoin/neon": "^0.1.6",
     "braces": "^3.0.2",
+    "commander": "^2.20.0",
     "debug": "^4.1.1",
     "express": "^4.16.4",
     "vig": "^1.0.0-rc-2"

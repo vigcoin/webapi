@@ -1,5 +1,12 @@
 import { Hash } from '../crypto/types';
-import { IBlock as IBlockTypes } from '../cryptonote/types';
+import { Hardfork } from '../cryptonote/hardfork';
+import {
+  IBlock as IBlockTypes,
+  uint16,
+  uint32,
+  uint64,
+  uint8,
+} from '../cryptonote/types';
 
 // tslint:disable-next-line: no-namespace
 export namespace Configuration {
@@ -14,6 +21,23 @@ export namespace Configuration {
     version: IVersion;
   }
 
+  export interface ITransaction {
+    version: IVersion;
+  }
+
+  export interface INet {
+    pubKey: string;
+    p2pPort: uint16;
+    rpcPort: uint16;
+    walletPort: uint16;
+    version: IVersion;
+  }
+
+  export interface ICheckPoint {
+    height: uint32;
+    blockId: string;
+  }
+
   export interface IBlockFile {
     data: string;
     index: string;
@@ -21,11 +45,22 @@ export namespace Configuration {
     chain: string;
   }
 
+  export interface IExtFile {
+    pool: string;
+    p2p: string;
+    miner: string;
+  }
+
   export interface IHardfork {
-    version: number;
-    height: number;
-    threshold: number;
+    version: uint8;
+    height: uint64;
+    threshold: uint8;
     time: Date;
+  }
+
+  export interface IStorageVersion {
+    blockCacheArchive: IVersion;
+    blockCacheIndicesArchive: IVersion;
   }
 
   export interface ICurrency {
@@ -37,5 +72,25 @@ export namespace Configuration {
   export interface IGenesis {
     block: IBlockTypes;
     hash: Hash;
+  }
+
+  export interface IConfig {
+    name: string;
+    createTime: Date;
+    block: IBlock;
+    transaction: ITransaction;
+    net: INet;
+    seeds: string[];
+    checkpoints: ICheckPoint[];
+    hardforks: IHardfork[];
+    storageVersions: IStorageVersion;
+    blockFiles: IBlockFile;
+    extFiles: IExtFile;
+  }
+
+  export enum ENetType {
+    MAIN = 1,
+    TEST,
+    STAGE,
   }
 }

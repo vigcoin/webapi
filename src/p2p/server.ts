@@ -66,11 +66,13 @@ export class P2PServer {
 
   public async start() {
     logger('p2p server bootstraping...');
-    // await this.init();
+    this.init();
     await this.startServer();
     await this.connectPeers();
     // await this.onIdle();
   }
+
+  public init() {}
 
   public async stop() {
     for (const peer of this.peerList) {
@@ -129,14 +131,6 @@ export class P2PServer {
     };
   }
 
-  // protected async onIdle() {
-  //   const timer = setTimeout(async () => {
-  //     for (const peer of this.peerList) {
-  //       await this.handshake(peer);
-  //     }
-  //   }, 1000);
-  // }
-
   protected async startServer() {
     return new Promise((resolve, reject) => {
       const server = createServer(s => {
@@ -175,20 +169,6 @@ export class P2PServer {
     }
     this.initContext(s, true);
   }
-
-  // protected handshake(peer: Peer) {
-  //   const iNodeData: INodeData = this.prepareNodeData();
-  // }
-
-  // protected prepareNodeData(): INodeData {
-  //   return {
-  //     localTime: new Date(),
-  //     myPort: this.hidePort ? 0 : this.config.port,
-  //     networkId: this.networkId,
-  //     peerId: this.peerId,
-  //     version: Version.CURRENT,
-  //   };
-  // }
 
   private onHandshake(
     data: handshake.IRequest,

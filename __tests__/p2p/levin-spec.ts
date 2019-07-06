@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import { createConnection, createServer } from 'net';
 import { BlockChain } from '../../src/cryptonote/block/blockchain';
 import { BufferStreamReader } from '../../src/cryptonote/serialize/reader';
-import { getBlockChain, getBlockFile } from '../../src/init/blockchain';
+import { getBlockChain } from '../../src/init/blockchain';
 import { ILevinCommand, LevinProtocol } from '../../src/p2p/levin';
 import { handshake, ping, timedsync } from '../../src/p2p/protocol';
 import {
@@ -19,8 +19,8 @@ import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';
 import { getP2PServer } from '../../src/init/p2p';
 import { ConnectionContext, ConnectionState } from '../../src/p2p/connection';
 import { Handler } from '../../src/p2p/protocol/handler';
+import { getBlockFile } from '../../src/util/fs';
 import { IP } from '../../src/util/ip';
-import { getRandomBytes } from '../../src/util/bytes';
 
 const dir = path.resolve(__dirname, '../vigcoin');
 const bc: BlockChain = getBlockChain(getBlockFile(dir));
