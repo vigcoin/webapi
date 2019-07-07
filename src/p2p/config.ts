@@ -26,7 +26,7 @@ export class Config {
   }
 
   public initOptions() {
-    const config = getConfigByType(getType());
+    const config = getConfigByType(getType(process.argv));
     const net = config.net;
     this.commander
       .option('p2p-bind-ip', 'Interface for p2p network protocol', '0.0.0.0')

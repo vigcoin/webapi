@@ -2,7 +2,7 @@ import { getFastHash } from '@vigcoin/neon';
 import * as assert from 'assert';
 import { closeSync, openSync, readSync, writeSync } from 'fs';
 import { Configuration } from '../../config/types';
-import { BaseBuffer, Hash } from '../../crypto/types';
+import { Hash, HASH_LENGTH } from '../../crypto/types';
 import { BufferStreamReader } from '../serialize/reader';
 import { BufferStreamWriter } from '../serialize/writer';
 import { Transaction } from '../transaction';
@@ -98,7 +98,7 @@ export class Block {
     return {
       header: {
         nonce: 70,
-        preHash: BaseBuffer.getBuffer().get(),
+        preHash: Buffer.alloc(HASH_LENGTH),
         timestamp: 0,
         version: conf.version,
       },
