@@ -6,10 +6,14 @@ import { data as test } from './net-types/testnet';
 export function getType(argv: string[]) {
   const cmd = new Command();
   cmd.option(
-    '-t, --testnet',
+    '-t, --testnet [',
     'Used to deploy test nets. Checkpoints and hardcoded seeds are ignored, ',
     false
   );
+
+  cmd.on('command:*', () => {
+    return true;
+  });
 
   cmd.parse(argv);
   if (cmd.testnet) {
