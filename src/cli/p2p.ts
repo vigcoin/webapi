@@ -1,6 +1,6 @@
 import { Command } from 'commander';
-import { getType, getConfigByType } from '../init/cryptonote';
 import { Config } from '../p2p/config';
+import { getConfigByType, getType } from '../init/cryptonote';
 
 const commander = new Command();
 
@@ -12,7 +12,7 @@ commander
     false
   )
   .option('--p2p-bind-ip <ip>', 'Interface for p2p network protocol', '0.0.0.0')
-  .option('--p2p-bind-port <ip>', 'Port for p2p network protocol')
+  .option('--p2p-bind-port <port>', 'Port for p2p network protocol')
   .option(
     '--p2p-external-port <port>',
     'External port for p2p network protocol (if port forwarding used with NAT)',
@@ -22,7 +22,7 @@ commander
     '--allow-local-ip',
     'Allow local ip add to peer list, mostly in debug purposes'
   )
-  .option('add-peer', 'Manually add peer to local peerlist')
+  .option('--add-peer <peers>', 'Manually add peer to local peerlist')
   .option(
     '--add-priority-node <nodes>',
     'Specify list of peers to connect to and attempt to keep the connection open'
@@ -44,6 +44,10 @@ commander
   .option('--config-file <file>', 'Specify configuration file')
   .option('--data-dir <dir>', 'Specify data directory');
 commander.parse(process.argv);
-console.log(commander);
-const config = getConfigByType(getType(!!commander.testnet));
-// if (commander.bind) console.log(type);
+const gConfig = getConfigByType(getType(commander.testnet));
+try {
+  const p2pConfig = new Config(gConfig);
+  p2pConfig.init(commander);
+} catch (e) {
+  console.error(e);
+}

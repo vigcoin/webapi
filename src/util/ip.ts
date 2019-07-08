@@ -30,18 +30,16 @@ export class IP {
     if (ip.substr(0, 7) === '::ffff:') {
       ip = ip.substr(7);
     }
-    if (
-      !/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
-        ip
-      )
-    ) {
+    const re = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+    const matches = ip.match(re);
+    if (!matches) {
       throw new Error('Invalid IP Address');
     }
     const buffer = new Buffer(4);
-    buffer.writeUInt8(parseInt(RegExp.$1, 10), 0);
-    buffer.writeUInt8(parseInt(RegExp.$2, 10), 1);
-    buffer.writeUInt8(parseInt(RegExp.$3, 10), 2);
-    buffer.writeUInt8(parseInt(RegExp.$4, 10), 3);
+    buffer.writeUInt8(parseInt(matches[1], 10), 0);
+    buffer.writeUInt8(parseInt(matches[2], 10), 1);
+    buffer.writeUInt8(parseInt(matches[3], 10), 2);
+    buffer.writeUInt8(parseInt(matches[4], 10), 3);
     return buffer.readUInt32BE(0);
   }
 
