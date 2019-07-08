@@ -29,6 +29,7 @@ before_install:
 
 install:
   - npm install
+  - npm install -g ts-node
   - npm run build
 
 # http://docs.travis-ci.com/user/pull-requests/
