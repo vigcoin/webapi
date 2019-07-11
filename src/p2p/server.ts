@@ -16,6 +16,7 @@ import { PeerManager } from './peer-manager';
 import { handshake, ping } from './protocol';
 import { Handler } from './protocol/handler';
 import { P2PStore } from './serializer';
+import { Configuration } from '../config/types';
 
 const logger = debug('vigcoin:p2p:server');
 
@@ -57,6 +58,10 @@ export class P2PServer {
     this.connections = new Map();
     this.p2pConfig = new P2PConfig();
     this.peerId = randomBytes(8);
+    this.p2pConfig.seedNodes = this.p2pConfig.seedNodes.concat(
+      this.config.seedNode
+    );
+    this.p2pConfig.seedNodes = Array.from(new Set(this.p2pConfig.seedNodes));
   }
 
   get version(): uint8 {
@@ -81,13 +86,9 @@ export class P2PServer {
     // await this.onIdle();
   }
 
-  public init(cmd) {
+  public init(cmd, config: Configuration.IConfig) {
     this.p2pConfig.init(cmd);
-    const config = getConfigByType(getType(this.p2pConfig.testnet));
-    this.p2pConfig.seedNodes.concat(
-      this.p2pConfig.parseNode(config.seeds.join(','))
-    );
-    this.p2pConfig.seedNodes = Array.from(new Set(this.p2pConfig.seedNodes));
+    this.initSeeds(config);
     if (!this.p2pConfig.dataDir) {
       this.p2pConfig.dataDir = getDefaultAppDir();
     }
@@ -104,6 +105,13 @@ export class P2PServer {
     } else {
       this.id = randomBytes(8);
     }
+  }
+
+  public initSeeds(config: Configuration.IConfig) {
+    this.p2pConfig.seedNodes.concat(
+      this.p2pConfig.parseNode(config.seeds.join(','))
+    );
+    this.p2pConfig.seedNodes = Array.from(new Set(this.p2pConfig.seedNodes));
   }
 
   public async stop() {
