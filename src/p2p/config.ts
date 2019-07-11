@@ -1,4 +1,3 @@
-import { Configuration } from '../config/types';
 import { IPeer, IPeerEntry } from '../cryptonote/p2p';
 import { uint16 } from '../cryptonote/types';
 import { IP } from '../util/ip';
@@ -35,6 +34,7 @@ export class P2PConfig {
         this[key] = cmd[key];
       }
     }
+    IP.allowLocalIP = this.allowLocalIp;
     const nodeKeys = [
       { name: 'priorityNodes', value: 'addPriorityNode' },
       { name: 'exclusiveNodes', value: 'addExclusiveNode' },

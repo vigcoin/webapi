@@ -4,7 +4,12 @@ import { existsSync } from 'fs';
 import { createServer, Server, Socket } from 'net';
 import * as path from 'path';
 import { Configuration } from '../config/types';
-import { INetwork, IPeerEntry, IPeerIDType, IServerConfig } from '../cryptonote/p2p';
+import {
+  INetwork,
+  IPeerEntry,
+  IPeerIDType,
+  IServerConfig,
+} from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { uint8 } from '../cryptonote/types';
 import { getDefaultAppDir } from '../util/fs';
@@ -100,6 +105,10 @@ export class P2PServer {
       this.p2pStore.read(this, this.pm);
     } else {
       this.id = randomBytes(8);
+    }
+
+    for (const peer of this.p2pConfig.peers) {
+      this.pm.appendWhite(peer);
     }
   }
 

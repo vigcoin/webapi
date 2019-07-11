@@ -1,5 +1,6 @@
 import { uint32 } from '../cryptonote/types';
 export class IP {
+  public static allowLocalIP: boolean = false;
   public static isLoopback(ip: uint32) {
     // 127.0.0.0/8
     // tslint:disable-next-line:no-bitwise
@@ -68,6 +69,4 @@ export class IP {
   public static enableLocalIP(enable: boolean = false) {
     IP.allowLocalIP = enable;
   }
-
-  private static allowLocalIP: boolean = false;
 }
