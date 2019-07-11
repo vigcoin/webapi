@@ -40,11 +40,6 @@ export interface INetwork {
   sendPeerListSize: uint32;
 }
 
-export interface INetworkPeer {
-  network: INetwork;
-  id: IPeerIDType;
-}
-
 export interface INodeData {
   networkId: uuid;
   version: uint8;

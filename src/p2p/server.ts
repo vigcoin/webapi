@@ -4,7 +4,7 @@ import { existsSync } from 'fs';
 import { createServer, Server, Socket } from 'net';
 import * as path from 'path';
 import { Configuration } from '../config/types';
-import { IPeerEntry, IPeerIDType, IServerConfig } from '../cryptonote/p2p';
+import { INetwork, IPeerEntry, IPeerIDType, IServerConfig } from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { uint8 } from '../cryptonote/types';
 import { getDefaultAppDir } from '../util/fs';
@@ -37,9 +37,6 @@ export class P2PServer {
   public p2pConfig: P2PConfig;
   private config: IServerConfig;
 
-  // private folder: string;
-  // private filename: string;
-  // private absoluteFileName: string;
   private pm: PeerManager;
   private clientList: Socket[] = [];
   private server: Server;
@@ -48,6 +45,8 @@ export class P2PServer {
   private connections: Map<string, P2pConnectionContext>;
   private handler: Handler;
   private peerList: Peer[] = [];
+  private network: INetwork;
+  private networkId: uint8[];
 
   // tslint:disable-next-line:variable-name
   private _version: uint8 = 1;
@@ -57,13 +56,16 @@ export class P2PServer {
 
   constructor(
     config: IServerConfig,
-    // networkPeer: INetworkPeer,
-    networkId: number[],
+    network: INetwork,
+    networkId: uint8[],
     handler: Handler,
     pm: PeerManager
   ) {
     this.config = config;
     this.handler = handler;
+
+    this.network = network;
+    this.networkId = networkId;
     this.pm = pm;
     this.connections = new Map();
     this.p2pConfig = new P2PConfig();
