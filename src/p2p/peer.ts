@@ -35,55 +35,22 @@ export class Peer {
         } else {
           logger('Successfually connection: ' + this.host + ':' + this.port);
           this.onConnected();
-          const context = new P2pConnectionContext(s);
           resolve();
         }
       });
       this.socket = s;
-      // s.on('data', async data => {
-      //   await this.update(data);
-      // });
-      // s.on('end', async () => {
-      //   logger('p2p connection ended: ' + this.host + ':' + this.port);
-      //   await this.onEnd();
-      // });
     });
   }
 
   public async onConnected() {
     this.connected = true;
-    console.log('connected');
-  }
-
-  public async update(data) {
-    console.log('updating');
-    console.log(data);
   }
 
   public stop() {
-    console.log('stopping');
     this.socket.end();
-  }
-
-  public async onEnd() {
-    this.connected = false;
-    console.log('onEnd');
   }
 
   public isConnected() {
     return this.connected;
-  }
-
-  public prepareCoreData(
-    hash: Hash = Buffer.alloc(HASH_LENGTH),
-    height: number = 0
-  ): ICoreSyncData {
-    return {
-      currentHeight: height,
-      hash,
-    };
-  }
-  public async handshake(coreData: ICoreSyncData, nodeData: INodeData) {
-    this.started = new Date();
   }
 }

@@ -1,15 +1,21 @@
 import { randomBytes } from 'crypto';
 import * as debug from 'debug';
+import { existsSync } from 'fs';
 import { createServer, Server, Socket } from 'net';
+import * as path from 'path';
 import { IPeerEntry, IPeerIDType, IServerConfig } from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { uint8 } from '../cryptonote/types';
+import { getConfigByType, getType } from '../init/cryptonote';
+import { getDefaultAppDir } from '../util/fs';
+import { P2PConfig } from './config';
 import { ConnectionState, P2pConnectionContext } from './connection';
 import { LevinProtocol } from './levin';
 import { Peer } from './peer';
 import { PeerManager } from './peer-manager';
 import { handshake, ping } from './protocol';
 import { Handler } from './protocol/handler';
+import { P2PStore } from './serializer';
 
 const logger = debug('vigcoin:p2p:server');
 
@@ -30,6 +36,9 @@ export class P2PServer {
   // tslint:disable-next-line:variable-name
   private _version: uint8 = 1;
 
+  private p2pConfig: P2PConfig;
+  private serializeFile: string;
+  private p2pStore: P2PStore;
   constructor(
     config: IServerConfig,
     // networkPeer: INetworkPeer,
@@ -46,6 +55,7 @@ export class P2PServer {
     this.handler = handler;
     this.pm = pm;
     this.connections = new Map();
+    this.p2pConfig = new P2PConfig();
     this.peerId = randomBytes(8);
   }
 
@@ -66,13 +76,35 @@ export class P2PServer {
 
   public async start() {
     logger('p2p server bootstraping...');
-    this.init();
     await this.startServer();
     await this.connectPeers();
     // await this.onIdle();
   }
 
-  public init() {}
+  public init(cmd) {
+    this.p2pConfig.init(cmd);
+    const config = getConfigByType(getType(this.p2pConfig.testnet));
+    this.p2pConfig.seedNodes.concat(
+      this.p2pConfig.parseNode(config.seeds.join(','))
+    );
+    this.p2pConfig.seedNodes = Array.from(new Set(this.p2pConfig.seedNodes));
+    if (!this.p2pConfig.dataDir) {
+      this.p2pConfig.dataDir = getDefaultAppDir();
+    }
+    if (!this.p2pConfig.filename) {
+      this.p2pConfig.filename = config.extFiles.p2p;
+    }
+    this.serializeFile = path.resolve(
+      this.p2pConfig.dataDir,
+      this.p2pConfig.filename
+    );
+    if (existsSync(this.serializeFile)) {
+      this.p2pStore = new P2PStore(this.serializeFile);
+      this.p2pStore.read(this, this.pm);
+    } else {
+      this.id = randomBytes(8);
+    }
+  }
 
   public async stop() {
     for (const peer of this.peerList) {
@@ -149,7 +181,7 @@ export class P2PServer {
   }
 
   protected async connectPeers() {
-    const seeds = this.config.seedNode;
+    const seeds = this.p2pConfig.seedNodes;
     for (const seed of seeds) {
       const peer = new Peer(seed.port, seed.ip);
       try {

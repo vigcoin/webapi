@@ -1,34 +1,27 @@
-import { Command } from 'commander';
 import { Configuration } from '../config/types';
 import { IPeer, IPeerEntry } from '../cryptonote/p2p';
 import { uint16 } from '../cryptonote/types';
 import { IP } from '../util/ip';
 import { ConnectionContext } from './connection';
 
-export class Config {
+export class P2PConfig {
   // p2p cli version
   public static VERSION = '0.1.0';
 
-  private testnet: boolean = false;
-  private p2pBindIp: string = '0.0.0.0';
-  private p2pBindPort: uint16 = 0;
-  private p2pExternalPort: uint16 = 0;
-  private allowLocalIP: boolean = false;
-  // private peers: IPeerEntry[] = [];
-  private priorityNodes: IPeer[] = [];
-  private exclusiveNodes: IPeer[] = [];
-  private seedNodes: IPeer[] = [];
-  private hideMyPort: boolean = false;
-  private dataDir: string = '';
-  private filename: string = '';
+  public testnet: boolean = false;
+  public p2pBindIp: string = '0.0.0.0';
+  public p2pBindPort: uint16 = 0;
+  public p2pExternalPort: uint16 = 0;
+  public allowLocalIp: boolean = false;
+  public peers: IPeerEntry[] = [];
+  public priorityNodes: IPeer[] = [];
+  public exclusiveNodes: IPeer[] = [];
+  public seedNodes: IPeer[] = [];
+  public hideMyPort: boolean = false;
+  public dataDir: string = '';
+  public filename: string = '';
 
-  private config: Configuration.IConfig;
-
-  constructor(config: Configuration.IConfig) {
-    this.config = config;
-  }
-
-  public init(cmd: Command) {
+  public init(cmd) {
     const keys = [
       'p2pBindIp',
       'allowLocalIp',
@@ -54,7 +47,7 @@ export class Config {
     }
 
     const peerKeys = [{ name: 'peers', value: 'addPeer' }];
-    for (const key of nodeKeys) {
+    for (const key of peerKeys) {
       if (cmd[key.value]) {
         this[key.name] = this.parsePeer(cmd[key.value]);
       }

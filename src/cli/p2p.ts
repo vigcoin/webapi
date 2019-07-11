@@ -1,10 +1,10 @@
 import { Command } from 'commander';
-import { Config } from '../p2p/config';
 import { getConfigByType, getType } from '../init/cryptonote';
+import { P2PConfig } from '../p2p/config';
 
 const commander = new Command();
 
-commander.version(Config.VERSION);
+commander.version(P2PConfig.VERSION);
 commander
   .option(
     '-t, --testnet',
@@ -44,10 +44,3 @@ commander
   .option('--config-file <file>', 'Specify configuration file')
   .option('--data-dir <dir>', 'Specify data directory');
 commander.parse(process.argv);
-const gConfig = getConfigByType(getType(commander.testnet));
-try {
-  const p2pConfig = new Config(gConfig);
-  p2pConfig.init(commander);
-} catch (e) {
-  console.error(e);
-}
