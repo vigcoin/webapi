@@ -49,8 +49,6 @@ export const server: P2PServer = new P2PServer(
   config,
   // networkPeer,
   cryptonote.NETWORK_ID,
-  // '',
-  // 'p2pstate.bin'
   handler,
   pm
 );

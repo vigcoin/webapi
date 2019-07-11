@@ -1,6 +1,10 @@
 import { Command } from 'commander';
+import * as debug from 'debug';
 import { getConfigByType, getType } from '../init/cryptonote';
+import { server } from '../init/p2p';
 import { P2PConfig } from '../p2p/config';
+
+const logger = debug('vigcoin:p2p');
 
 const commander = new Command();
 
@@ -44,3 +48,14 @@ commander
   .option('--config-file <file>', 'Specify configuration file')
   .option('--data-dir <dir>', 'Specify data directory');
 commander.parse(process.argv);
+server.p2pConfig.init(commander);
+const config = getConfigByType(getType(server.p2pConfig.testnet));
+server.init(config);
+server
+  .start()
+  .then(() => {
+    logger('p2p server started');
+  })
+  .catch(e => {
+    logger('error occure');
+  });

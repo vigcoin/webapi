@@ -264,12 +264,10 @@ describe('test levin protocol', () => {
   });
 
   it('should handle levin handshake protocol', done => {
-    let processed = false;
     const server = createServer(socket => {
       const { levin } = p2pserver.initContext(socket);
       levin.on('processed', message => {
         assert(message === 'handshake');
-        processed = true;
         client.destroy();
         server.close();
         done();

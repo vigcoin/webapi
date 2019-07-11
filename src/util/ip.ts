@@ -35,7 +35,7 @@ export class IP {
     if (!matches) {
       throw new Error('Invalid IP Address');
     }
-    const buffer = new Buffer(4);
+    const buffer = Buffer.alloc(4);
     buffer.writeUInt8(parseInt(matches[1], 10), 0);
     buffer.writeUInt8(parseInt(matches[2], 10), 1);
     buffer.writeUInt8(parseInt(matches[3], 10), 2);
@@ -44,7 +44,7 @@ export class IP {
   }
 
   public static toString(ip: uint32): string {
-    const buffer = new Buffer(4);
+    const buffer = Buffer.alloc(4);
     buffer.writeUInt32BE(ip, 0);
     const slices = [];
     for (let i = 0; i < buffer.length; i++) {

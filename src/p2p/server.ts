@@ -3,10 +3,10 @@ import * as debug from 'debug';
 import { existsSync } from 'fs';
 import { createServer, Server, Socket } from 'net';
 import * as path from 'path';
+import { Configuration } from '../config/types';
 import { IPeerEntry, IPeerIDType, IServerConfig } from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { uint8 } from '../cryptonote/types';
-import { getConfigByType, getType } from '../init/cryptonote';
 import { getDefaultAppDir } from '../util/fs';
 import { P2PConfig } from './config';
 import { ConnectionState, P2pConnectionContext } from './connection';
@@ -16,12 +16,27 @@ import { PeerManager } from './peer-manager';
 import { handshake, ping } from './protocol';
 import { Handler } from './protocol/handler';
 import { P2PStore } from './serializer';
-import { Configuration } from '../config/types';
 
 const logger = debug('vigcoin:p2p:server');
 
 export class P2PServer {
+  get version(): uint8 {
+    return this._version;
+  }
+
+  set version(version: uint8) {
+    this._version = version;
+  }
+
+  get id() {
+    return this.peerId;
+  }
+  set id(id: IPeerIDType) {
+    this.peerId = id;
+  }
+  public p2pConfig: P2PConfig;
   private config: IServerConfig;
+
   // private folder: string;
   // private filename: string;
   // private absoluteFileName: string;
@@ -37,22 +52,17 @@ export class P2PServer {
   // tslint:disable-next-line:variable-name
   private _version: uint8 = 1;
 
-  private p2pConfig: P2PConfig;
   private serializeFile: string;
   private p2pStore: P2PStore;
+
   constructor(
     config: IServerConfig,
     // networkPeer: INetworkPeer,
     networkId: number[],
-    // folder: string,
-    // filename: string,
     handler: Handler,
     pm: PeerManager
   ) {
     this.config = config;
-    // this.folder = folder;
-    // this.filename = filename;
-    // this.absoluteFileName = path.resolve(folder, filename);
     this.handler = handler;
     this.pm = pm;
     this.connections = new Map();
@@ -64,21 +74,6 @@ export class P2PServer {
     this.p2pConfig.seedNodes = Array.from(new Set(this.p2pConfig.seedNodes));
   }
 
-  get version(): uint8 {
-    return this._version;
-  }
-
-  set version(version: uint8) {
-    this._version = version;
-  }
-
-  get id() {
-    return this.peerId;
-  }
-  set id(id: IPeerIDType) {
-    this.peerId = id;
-  }
-
   public async start() {
     logger('p2p server bootstraping...');
     await this.startServer();
@@ -86,8 +81,7 @@ export class P2PServer {
     // await this.onIdle();
   }
 
-  public init(cmd, config: Configuration.IConfig) {
-    this.p2pConfig.init(cmd);
+  public init(config: Configuration.IConfig) {
     this.initSeeds(config);
     if (!this.p2pConfig.dataDir) {
       this.p2pConfig.dataDir = getDefaultAppDir();
