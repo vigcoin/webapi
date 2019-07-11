@@ -1,9 +1,9 @@
+import { randomBytes } from 'crypto';
 import * as debug from 'debug';
 import { createServer, Server, Socket } from 'net';
 import { IPeerEntry, IPeerIDType, IServerConfig } from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { uint8 } from '../cryptonote/types';
-import { getRandomBytes } from '../util/bytes';
 import { ConnectionState, P2pConnectionContext } from './connection';
 import { LevinProtocol } from './levin';
 import { Peer } from './peer';
@@ -46,7 +46,7 @@ export class P2PServer {
     this.handler = handler;
     this.pm = pm;
     this.connections = new Map();
-    this.peerId = getRandomBytes(8);
+    this.peerId = randomBytes(8);
   }
 
   get version(): uint8 {

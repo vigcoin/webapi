@@ -1,8 +1,8 @@
+import { randomBytes } from 'crypto';
 import { cryptonote, p2p } from '../config';
 import { INetworkPeer, IServerConfig, P2PServer } from '../p2p/index';
 import { PeerList, PeerManager } from '../p2p/peer-manager';
 import { Handler } from '../p2p/protocol/handler';
-import { getRandomBytes } from '../util/bytes';
 import { getBlockFile } from '../util/fs';
 import { IP } from '../util/ip';
 import { getBlockChain } from './blockchain';
@@ -22,10 +22,8 @@ config.seedNode = [
   // { port: 19800, ip: IP.toNumber("144.202.10.183") }   // deprecated
 ];
 
-export const getRandomPeerId = getRandomBytes;
-
 const networkPeer: INetworkPeer = {
-  id: getRandomPeerId(),
+  id: randomBytes(8),
   network: {
     conectionTimeout: p2p.P2P_DEFAULT_CONNECTION_TIMEOUT,
     connectionsCount: p2p.P2P_DEFAULT_CONNECTIONS_COUNT,

@@ -1,4 +1,5 @@
 import * as assert from 'assert';
+import { randomBytes } from 'crypto';
 import { EventEmitter } from 'events';
 import { Socket } from 'net';
 import { cryptonote } from '../config';
@@ -268,7 +269,7 @@ export class LevinProtocol extends EventEmitter {
         localTime: new Date(),
         payload: {
           currentHeight: Math.floor(Math.random() * 10000),
-          hash: this.getRandomBuffer(32),
+          hash: randomBytes(32),
         },
         // tslint:disable-next-line:object-literal-sort-keys
         localPeerList: [],
@@ -308,13 +309,5 @@ export class LevinProtocol extends EventEmitter {
 
   private isReply(cmd: ILevinCommand) {
     return !(cmd.isNotify || cmd.isResponse);
-  }
-
-  private getRandomBuffer(length: number) {
-    const random = [];
-    for (let i = 0; i < length; i++) {
-      random.push(Math.floor(Math.random() * 256));
-    }
-    return Buffer.from(random);
   }
 }

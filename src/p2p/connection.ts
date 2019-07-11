@@ -1,10 +1,10 @@
 import * as assert from 'assert';
+import { randomBytes } from 'crypto';
 import { EventEmitter } from 'events';
 import { Socket } from 'net';
 import { Hash } from '../crypto/types';
 import { ICoreSyncData, IMessage, IPeerIDType } from '../cryptonote/p2p';
 import { uint32, uint8 } from '../cryptonote/types';
-import { getRandomBytes } from '../util/bytes';
 import { IP } from '../util/ip';
 import { Handler } from './protocol/handler';
 
@@ -22,7 +22,7 @@ export class ConnectionContext extends EventEmitter {
   public static UUID_LENGTH = 16;
 
   public static randomId() {
-    return getRandomBytes(ConnectionContext.UUID_LENGTH);
+    return randomBytes(ConnectionContext.UUID_LENGTH);
   }
 
   public remoteBlockchainHeight: uint32 = 0; // uint32;
