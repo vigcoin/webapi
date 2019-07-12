@@ -28,9 +28,9 @@ export class ConnectionContext extends EventEmitter {
   public remoteBlockchainHeight: uint32 = 0; // uint32;
   public id: Buffer; // boost::uuids::uuid, uint8[16]
   public ip: uint32 = 0; // uint32
+  public port: uint32 = 0; // uint32
 
   protected version: uint8; // unit8
-  protected port: uint32 = 0; // uint32
   // tslint:disable-next-line:variable-name
   protected _isIncoming: boolean = false;
   // tslint:disable-next-line:variable-name
@@ -70,7 +70,6 @@ export class P2pConnectionContext extends ConnectionContext {
     this._peerId = Buffer.from([]);
     this.socket = socket;
     this.id = P2pConnectionContext.randomId();
-    this.isIncoming = true;
     this.startTime = new Date();
     this.ip = IP.toNumber(socket.remoteAddress);
     this.port = socket.remotePort;
@@ -82,6 +81,11 @@ export class P2pConnectionContext extends ConnectionContext {
 
   set peerId(peer: IPeerIDType) {
     this._peerId = peer;
+  }
+
+  public stop() {
+    this.socket.end();
+    this.socket.destroy();
   }
 
   public processPayLoad(

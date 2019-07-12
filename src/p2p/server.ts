@@ -1,6 +1,6 @@
 import { randomBytes } from 'crypto';
 import { existsSync } from 'fs';
-import { createServer, Server, Socket } from 'net';
+import { createConnection, createServer, Server, Socket } from 'net';
 import * as path from 'path';
 import { Configuration } from '../config/types';
 import {
@@ -10,17 +10,19 @@ import {
   IServerConfig,
 } from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
-import { uint8 } from '../cryptonote/types';
+import { uint8, uint16 } from '../cryptonote/types';
 import { logger } from '../logger';
 import { getDefaultAppDir } from '../util/fs';
 import { P2PConfig } from './config';
 import { ConnectionState, P2pConnectionContext } from './connection';
 import { LevinProtocol } from './levin';
-import { Peer } from './peer';
 import { PeerManager } from './peer-manager';
 import { handshake, ping } from './protocol';
 import { Handler } from './protocol/handler';
 import { P2PStore } from './serializer';
+import { ConnectionContext } from './connection';
+import { IP } from '../util/ip';
+import { IPeer } from '../cryptonote/p2p';
 
 export class P2PServer {
   get version(): uint8 {
@@ -47,7 +49,6 @@ export class P2PServer {
   // private hidePort: boolean = false;
   private connections: Map<string, P2pConnectionContext>;
   private handler: Handler;
-  private peerList: Peer[] = [];
   private network: INetwork;
   private networkId: uint8[];
 
@@ -84,8 +85,38 @@ export class P2PServer {
   public async start() {
     logger.info('P2P server bootstraping...');
     await this.startServer();
-    await this.connectPeers();
-    // await this.onIdle();
+    this.onIdle();
+  }
+
+  public onIdle() {
+    const interval = setInterval(async () => {
+      await this.startConnection();
+    }, this.network.handshakeInterval);
+  }
+
+  public async connect(host: string, port: uint16) {
+    let timer: NodeJS.Timeout;
+    return new Promise(async (resolve, reject) => {
+      logger.info('start connecting: ' + host + ':' + port);
+      const s = createConnection({ port, host }, e => {
+        if (e) {
+          logger.error('Error connecting to ' + host + ':' + port + '!');
+          logger.error(e);
+          reject(e);
+        } else {
+          logger.info('Successfually connected to ' + host + ':' + port);
+          clearTimeout(timer);
+          this.initContext(s, false);
+          resolve();
+        }
+      });
+      timer = setTimeout(() => {
+        const e = new Error('Time out!');
+        logger.error('Error connecting to ' + host + ':' + port + '!');
+        logger.error(e);
+        reject(e);
+      }, this.network.conectionTimeout);
+    });
   }
 
   public init(config: Configuration.IConfig) {
@@ -144,11 +175,11 @@ export class P2PServer {
   }
 
   public async stop() {
-    logger.info('stopping Peers...');
-    for (const peer of this.peerList) {
-      await peer.stop();
-    }
-    logger.info('Peers stopped');
+    logger.info('Stopping connections...');
+    this.connections.forEach((context: P2pConnectionContext) => {
+      context.stop();
+    });
+    logger.info('Connections stopped!');
 
     if (this.server) {
       logger.info('P2P Server stopping...');
@@ -166,11 +197,7 @@ export class P2PServer {
     }
   }
 
-  public getPeers() {
-    return this.peerList;
-  }
-
-  public initContext(s: Socket, inComing: boolean = true, peer: Peer = null) {
+  public initContext(s: Socket, inComing: boolean = true) {
     if (inComing) {
       logger.info('New incoming context creating');
     } else {
@@ -203,12 +230,7 @@ export class P2PServer {
         }
       } catch (e) {
         logger.error('Error processing new data!');
-        if (peer) {
-          this.removePeer(peer);
-          peer.stop();
-        } else {
-          s.destroy();
-        }
+        s.destroy();
         this.connections.delete(context.id.toString('hex'));
       }
     });
@@ -220,15 +242,6 @@ export class P2PServer {
       context,
       levin,
     };
-  }
-
-  public removePeer(peer: Peer) {
-    logger.info('Peer processing new data!');
-
-    const index = this.peerList.indexOf(peer);
-    if (index !== -1) {
-      this.peerList.splice(index, 1);
-    }
   }
 
   protected async startServer() {
@@ -248,16 +261,32 @@ export class P2PServer {
     });
   }
 
-  protected async connectPeers() {
-    const seeds = this.p2pConfig.seedNodes;
-    for (const seed of seeds) {
-      const peer = new Peer(seed.port, seed.ip);
-      try {
-        await peer.start(this, this.network);
-        this.peerList.push(peer);
-      } catch (e) {
-        // tslint:disable-next-line:no-console
-        console.error(e);
+  protected async startConnection() {
+    await this.connectPeers(this.p2pConfig.exclusiveNodes);
+  }
+
+  protected isConnected(peer: IPeer) {
+    let connected = false;
+    this.connections.forEach((context: P2pConnectionContext) => {
+      if (context.isIncoming) {
+        return;
+      }
+      if (peer.ip !== context.ip) {
+        return;
+      }
+
+      if (peer.port !== context.port) {
+        return;
+      }
+      connected = true;
+    });
+    return connected;
+  }
+
+  protected async connectPeers(peers: IPeer[]) {
+    for (const peer of peers) {
+      if (!this.isConnected(peer)) {
+        await this.connect(IP.toString(peer.ip), peer.port);
       }
     }
   }
