@@ -1,13 +1,9 @@
 import { createConnection, Socket } from 'net';
-import { Hash, HASH_LENGTH } from '../crypto/types';
-import { ICoreSyncData, INodeData } from '../cryptonote/p2p';
-
-import * as debug from 'debug';
+import { INetwork } from '../cryptonote/p2p';
 import { uint32 } from '../cryptonote/types';
+import { logger } from '../logger';
 import { IP } from '../util/ip';
-import { P2pConnectionContext } from './connection';
-
-const logger = debug('vigcoin:p2p:peer');
+import { P2PServer } from './server';
 
 export class Peer {
   private socket: Socket;
@@ -17,29 +13,43 @@ export class Peer {
   private id: number;
   private connected: boolean = false;
   private started: Date;
+  private timer: NodeJS.Timeout;
 
   constructor(port: uint32, ip: uint32) {
     this.port = port;
     this.ip = ip;
     this.host = IP.toString(ip);
   }
-  public async start() {
+  public async start(p2pServer: P2PServer, net: INetwork) {
     return new Promise(async (resolve, reject) => {
-      logger('start connecting: ' + this.host + ':' + this.port);
+      logger.info('start connecting: ' + this.host + ':' + this.port);
       const s = createConnection({ port: this.port, host: this.host }, e => {
         if (e) {
-          logger('Error connection: ' + this.host + ':' + this.port);
-          logger(e);
-          s.destroy();
+          this.onError(e, p2pServer);
           reject(e);
         } else {
-          logger('Successfually connection: ' + this.host + ':' + this.port);
+          logger.info(
+            'Successfually connected to ' + this.host + ':' + this.port
+          );
+          clearTimeout(this.timer);
           this.onConnected();
+          p2pServer.initContext(s, false);
           resolve();
         }
       });
       this.socket = s;
+      this.timer = setTimeout(() => {
+        const e = new Error('Time out!');
+        this.onError(e, p2pServer);
+        reject(e);
+      }, net.conectionTimeout);
     });
+  }
+  public onError(e: Error, p2pServer: P2PServer) {
+    logger.error('Error connecting to ' + this.host + ':' + this.port + '!');
+    logger.error(e);
+    p2pServer.removePeer(this);
+    this.stop();
   }
 
   public async onConnected() {
@@ -48,9 +58,6 @@ export class Peer {
 
   public stop() {
     this.socket.end();
-  }
-
-  public isConnected() {
-    return this.connected;
+    this.socket.destroy();
   }
 }

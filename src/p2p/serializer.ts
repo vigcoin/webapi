@@ -5,6 +5,8 @@ import { BufferStreamWriter } from '../cryptonote/serialize/writer';
 import { uint32, uint64, UINT64 } from '../cryptonote/types';
 import { PeerManager } from './peer-manager';
 import { P2PServer } from './server';
+import { logger } from '../logger';
+import { IP } from '../util/ip';
 
 export class P2PStore {
   private file: string;
@@ -26,10 +28,16 @@ export class P2PStore {
     const buffer: Buffer = readFileSync(this.file);
     const reader = new BufferStreamReader(buffer);
     server.version = reader.readVarint();
+    logger.info('Read P2PServer version : ' + server.version);
+
     peerManager.version = reader.readVarint();
+    logger.info('Read peer manager version : ' + peerManager.version);
+    logger.info('Read white peer list : ' + peerManager.version);
     peerManager.white = this.readPeerEntryList(reader);
+    logger.info('Read gray peer list : ' + peerManager.version);
     peerManager.gray = this.readPeerEntryList(reader);
     server.id = reader.readVarintBuffer();
+    logger.info('Read P2PServer peer id : ' + server.id.toString('hex'));
   }
 
   private writePeerEntryList(writer: BufferStreamWriter, list: IPeerEntry[]) {
@@ -49,9 +57,20 @@ export class P2PStore {
 
   private readPeerEntryList(reader: BufferStreamReader): IPeerEntry[] {
     const size = reader.readVarint();
+    logger.info('Read peer entry list size : ' + size);
     const list = [];
     for (let i = 0; i < size; i++) {
       const pe = this.readPeerEntry(reader);
+      logger.info(
+        'Read peer entry ' +
+          IP.toString(pe.peer.ip) +
+          ':' +
+          pe.peer.port +
+          ', last seen: ' +
+          pe.lastSeen +
+          ', id: ' +
+          pe.id.toString('hex')
+      );
       list.push(pe);
     }
     return list;

@@ -39,6 +39,7 @@
     "commander": "^2.20.0",
     "debug": "^4.1.1",
     "express": "^4.16.4",
+    "pino": "^5.12.6",
     "vig": "^1.0.0-rc-2"
   },
   "devDependencies": {

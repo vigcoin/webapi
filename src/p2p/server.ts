@@ -1,5 +1,4 @@
 import { randomBytes } from 'crypto';
-import * as debug from 'debug';
 import { existsSync } from 'fs';
 import { createServer, Server, Socket } from 'net';
 import * as path from 'path';
@@ -12,6 +11,7 @@ import {
 } from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { uint8 } from '../cryptonote/types';
+import { logger } from '../logger';
 import { getDefaultAppDir } from '../util/fs';
 import { P2PConfig } from './config';
 import { ConnectionState, P2pConnectionContext } from './connection';
@@ -21,8 +21,6 @@ import { PeerManager } from './peer-manager';
 import { handshake, ping } from './protocol';
 import { Handler } from './protocol/handler';
 import { P2PStore } from './serializer';
-
-const logger = debug('vigcoin:p2p:server');
 
 export class P2PServer {
   get version(): uint8 {
@@ -56,6 +54,8 @@ export class P2PServer {
   // tslint:disable-next-line:variable-name
   private _version: uint8 = 1;
 
+  private stopped = false;
+
   private serializeFile: string;
   private p2pStore: P2PStore;
 
@@ -82,32 +82,56 @@ export class P2PServer {
   }
 
   public async start() {
-    logger('p2p server bootstraping...');
+    logger.info('P2P server bootstraping...');
     await this.startServer();
     await this.connectPeers();
     // await this.onIdle();
   }
 
   public init(config: Configuration.IConfig) {
+    logger.info('P2P server initializing ... ');
+    logger.info('Seed initializing...');
     this.initSeeds(config);
+    logger.info('Seed initialized!');
+
     if (!this.p2pConfig.dataDir) {
       this.p2pConfig.dataDir = getDefaultAppDir();
     }
+    logger.info('dataDir set to : ' + this.p2pConfig.dataDir);
+
     if (!this.p2pConfig.filename) {
       this.p2pConfig.filename = config.extFiles.p2p;
     }
+    logger.info('P2PState filename set to : ' + this.p2pConfig.filename);
+
     this.serializeFile = path.resolve(
       this.p2pConfig.dataDir,
       this.p2pConfig.filename
     );
     if (existsSync(this.serializeFile)) {
+      logger.info('Found P2PState File : ' + this.serializeFile);
+      logger.info('Reading P2PState from File : ' + this.serializeFile);
       this.p2pStore = new P2PStore(this.serializeFile);
       this.p2pStore.read(this, this.pm);
+      logger.info(
+        'Finished Reading P2PState from File : ' + this.serializeFile
+      );
     } else {
       this.id = randomBytes(8);
+      logger.info('Random P2PState Peer ID Created : ' + this.id);
     }
 
     for (const peer of this.p2pConfig.peers) {
+      logger.info(
+        'Appending peer id ' +
+          peer.id +
+          ', ' +
+          peer.peer.ip +
+          ':' +
+          peer.peer.port +
+          ', last seen: ' +
+          peer.lastSeen
+      );
       this.pm.appendWhite(peer);
     }
   }
@@ -120,15 +144,22 @@ export class P2PServer {
   }
 
   public async stop() {
+    logger.info('stopping Peers...');
     for (const peer of this.peerList) {
       await peer.stop();
     }
+    logger.info('Peers stopped');
+
     if (this.server) {
+      logger.info('P2P Server stopping...');
       await new Promise((resolve, reject) => {
         this.server.close(e => {
           if (e) {
+            logger.error('Error stopping P2P server!');
+            logger.error(e);
             return reject(e);
           }
+          logger.info('P2P Server stopped');
           resolve();
         });
       });
@@ -139,18 +170,28 @@ export class P2PServer {
     return this.peerList;
   }
 
-  public initContext(s: Socket, inComing: boolean = true) {
+  public initContext(s: Socket, inComing: boolean = true, peer: Peer = null) {
+    if (inComing) {
+      logger.info('New incoming context creating');
+    } else {
+      logger.info('New outcoming context creating');
+    }
     const context = new P2pConnectionContext(s);
     context.isIncoming = inComing;
     const levin = new LevinProtocol(s);
     this.connections.set(context.id.toString('hex'), context);
     levin.on('state', (state: ConnectionState) => {
+      logger.info(
+        'Context state changed from ' + context.state + ' to ' + state
+      );
       context.state = state;
     });
     levin.on('handshake', (data: handshake.IRequest) => {
+      logger.info('Receiving handshaking command!');
       this.onHandshake(data, context, levin);
     });
     s.on('data', buffer => {
+      logger.info('Receiving new data!');
       try {
         levin.onIncomingData(
           new BufferStreamReader(buffer),
@@ -161,19 +202,33 @@ export class P2PServer {
           s.destroy();
         }
       } catch (e) {
-        // TODO: onclose
-        // this.handler.onClose();
-        s.destroy();
+        logger.error('Error processing new data!');
+        if (peer) {
+          this.removePeer(peer);
+          peer.stop();
+        } else {
+          s.destroy();
+        }
         this.connections.delete(context.id.toString('hex'));
       }
     });
     s.on('end', () => {
+      logger.info('Connection ended!');
       s.destroy();
     });
     return {
       context,
       levin,
     };
+  }
+
+  public removePeer(peer: Peer) {
+    logger.info('Peer processing new data!');
+
+    const index = this.peerList.indexOf(peer);
+    if (index !== -1) {
+      this.peerList.splice(index, 1);
+    }
   }
 
   protected async startServer() {
@@ -198,7 +253,7 @@ export class P2PServer {
     for (const seed of seeds) {
       const peer = new Peer(seed.port, seed.ip);
       try {
-        await peer.start();
+        await peer.start(this, this.network);
         this.peerList.push(peer);
       } catch (e) {
         // tslint:disable-next-line:no-console
