@@ -22,7 +22,9 @@ import { Handler } from './protocol/handler';
 import { P2PStore } from './serializer';
 import { ConnectionContext } from './connection';
 import { IP } from '../util/ip';
-import { IPeer } from '../cryptonote/p2p';
+import { IPeer, IPeerNodeData, Version } from '../cryptonote/p2p';
+import { BufferStreamWriter } from '../cryptonote/serialize/writer';
+import { p2p } from '../config';
 
 export class P2PServer {
   get version(): uint8 {
@@ -82,6 +84,7 @@ export class P2PServer {
     this.p2pConfig.seedNodes = Array.from(new Set(this.p2pConfig.seedNodes));
   }
 
+  // Main process
   public async start() {
     logger.info('P2P server bootstraping...');
     await this.startServer();
@@ -91,7 +94,16 @@ export class P2PServer {
   public onIdle() {
     const interval = setInterval(async () => {
       await this.startConnection();
+      this.storeP2PState();
     }, this.network.handshakeInterval);
+  }
+
+  public storeP2PState() {
+    if (existsSync(this.serializeFile)) {
+      logger.info('Saveing P2PState file : ' + this.serializeFile);
+      this.p2pStore.write(this, this.pm);
+      logger.info('Finished writing P2PState to File : ' + this.serializeFile);
+    }
   }
 
   public async connect(host: string, port: uint16) {
@@ -106,7 +118,8 @@ export class P2PServer {
         } else {
           logger.info('Successfually connected to ' + host + ':' + port);
           clearTimeout(timer);
-          this.initContext(s, false);
+          const { levin, context } = this.initContext(s, false);
+          this.handshake(levin, context);
           resolve();
         }
       });
@@ -262,7 +275,63 @@ export class P2PServer {
   }
 
   protected async startConnection() {
-    await this.connectPeers(this.p2pConfig.exclusiveNodes);
+    if (this.p2pConfig.exclusiveNodes.length) {
+      await this.connectPeers(this.p2pConfig.exclusiveNodes);
+      return;
+    }
+    if (!this.pm.white.length && this.p2pConfig.seedNodes.length) {
+      await this.connectPeers(this.p2pConfig.seedNodes);
+    }
+    if (this.p2pConfig.priorityNodes.length) {
+      await this.connectPeers(this.p2pConfig.priorityNodes);
+    }
+    this.checkConnection();
+  }
+
+  protected checkConnection() {
+    const expectedWhiteConPercent =
+      (this.network.connectionsCount *
+        p2p.P2P_DEFAULT_WHITELIST_CONNECTIONS_PERCENT) /
+      100;
+    const connectionCount = this.getOutGoingConnectionCount();
+    if (connectionCount < this.network.connectionsCount) {
+      if (connectionCount < expectedWhiteConPercent) {
+      }
+    }
+  }
+
+  protected getOutGoingConnectionCount(): number {
+    let count = 0;
+    this.connections.forEach((context: P2pConnectionContext) => {
+      if (!context.isIncoming) {
+        count++;
+      }
+    });
+    return count;
+  }
+
+  protected isPeerUsed(pe: IPeerEntry): boolean {
+    if (pe.id.equals(this.peerId)) {
+      return true;
+    }
+    let used = false;
+    this.connections.forEach((context: P2pConnectionContext) => {
+      if (context.peerId.equals(pe.id)) {
+        used = true;
+        return;
+      }
+      if (context.isIncoming) {
+        return;
+      }
+      if (pe.peer.ip !== context.ip) {
+        return;
+      }
+      if (pe.peer.port !== context.port) {
+        return;
+      }
+      used = true;
+    });
+    return used;
   }
 
   protected isConnected(peer: IPeer) {
@@ -332,5 +401,25 @@ export class P2PServer {
       };
       this.pm.appendWhite(pe);
     }
+  }
+
+  private handshake(levin: LevinProtocol, context: P2pConnectionContext) {
+    const request: handshake.IRequest = {
+      node: this.getLocalPeerDate(),
+      payload: this.handler.getPayLoad(),
+    };
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    handshake.Writer.request(writer, request);
+    levin.invoke(handshake.ID.ID, writer.getBuffer());
+  }
+
+  private getLocalPeerDate(): IPeerNodeData {
+    return {
+      localTime: new Date(),
+      myPort: this.p2pConfig.getMyPort(),
+      networkId: this.networkId,
+      peerId: this.peerId,
+      version: Version.CURRENT,
+    };
   }
 }

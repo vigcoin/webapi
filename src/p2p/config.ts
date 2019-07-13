@@ -81,4 +81,15 @@ export class P2PConfig {
     }
     return list;
   }
+
+  public getMyPort(): number {
+    if (this.hideMyPort) {
+      return 0;
+    }
+    if (this.p2pExternalPort) {
+      return this.p2pExternalPort;
+    }
+
+    return this.p2pBindPort;
+  }
 }
