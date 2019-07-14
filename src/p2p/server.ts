@@ -2,17 +2,23 @@ import { randomBytes } from 'crypto';
 import { existsSync } from 'fs';
 import { createConnection, createServer, Server, Socket } from 'net';
 import * as path from 'path';
+import { p2p } from '../config';
 import { Configuration } from '../config/types';
 import {
   INetwork,
+  IPeer,
   IPeerEntry,
   IPeerIDType,
+  IPeerNodeData,
   IServerConfig,
+  Version,
 } from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
-import { uint8, uint16 } from '../cryptonote/types';
+import { BufferStreamWriter } from '../cryptonote/serialize/writer';
+import { uint8 } from '../cryptonote/types';
 import { logger } from '../logger';
 import { getDefaultAppDir } from '../util/fs';
+import { IP } from '../util/ip';
 import { P2PConfig } from './config';
 import { ConnectionState, P2pConnectionContext } from './connection';
 import { LevinProtocol } from './levin';
@@ -20,11 +26,6 @@ import { PeerManager } from './peer-manager';
 import { handshake, ping } from './protocol';
 import { Handler } from './protocol/handler';
 import { P2PStore } from './serializer';
-import { ConnectionContext } from './connection';
-import { IP } from '../util/ip';
-import { IPeer, IPeerNodeData, Version } from '../cryptonote/p2p';
-import { BufferStreamWriter } from '../cryptonote/serialize/writer';
-import { p2p } from '../config';
 
 export class P2PServer {
   get version(): uint8 {
@@ -106,7 +107,9 @@ export class P2PServer {
     }
   }
 
-  public async connect(host: string, port: uint16) {
+  public async connect(peer: IPeer, handshakeOnly: boolean) {
+    const host = IP.toString(peer.ip);
+    const port = peer.port;
     let timer: NodeJS.Timeout;
     return new Promise(async (resolve, reject) => {
       logger.info('start connecting: ' + host + ':' + port);
@@ -118,8 +121,7 @@ export class P2PServer {
         } else {
           logger.info('Successfually connected to ' + host + ':' + port);
           clearTimeout(timer);
-          const { levin, context } = this.initContext(s, false);
-          this.handshake(levin, context);
+          this.initContext(s, false, handshakeOnly);
           resolve();
         }
       });
@@ -210,7 +212,11 @@ export class P2PServer {
     }
   }
 
-  public initContext(s: Socket, inComing: boolean = true) {
+  public initContext(
+    s: Socket,
+    inComing: boolean = true,
+    handshakeOnly: boolean = false
+  ) {
     if (inComing) {
       logger.info('New incoming context creating');
     } else {
@@ -275,29 +281,77 @@ export class P2PServer {
   }
 
   protected async startConnection() {
+    // Check exclusive nodes
     if (this.p2pConfig.exclusiveNodes.length) {
       await this.connectPeers(this.p2pConfig.exclusiveNodes);
       return;
     }
+
     if (!this.pm.white.length && this.p2pConfig.seedNodes.length) {
       await this.connectPeers(this.p2pConfig.seedNodes);
     }
     if (this.p2pConfig.priorityNodes.length) {
       await this.connectPeers(this.p2pConfig.priorityNodes);
     }
-    this.checkConnection();
+    await this.checkConnection();
   }
 
-  protected checkConnection() {
+  protected async checkConnection() {
     const expectedWhiteConPercent =
       (this.network.connectionsCount *
         p2p.P2P_DEFAULT_WHITELIST_CONNECTIONS_PERCENT) /
       100;
     const connectionCount = this.getOutGoingConnectionCount();
-    if (connectionCount < this.network.connectionsCount) {
-      if (connectionCount < expectedWhiteConPercent) {
+    if (connectionCount < expectedWhiteConPercent) {
+      if (
+        await this.makeExpectedConnectionCount(true, expectedWhiteConPercent)
+      ) {
+        return;
+      }
+      await this.makeExpectedConnectionCount(
+        false,
+        this.network.connectionsCount
+      );
+    } else {
+      if (
+        await this.makeExpectedConnectionCount(
+          false,
+          this.network.connectionsCount
+        )
+      ) {
+        return;
+      }
+
+      await this.makeExpectedConnectionCount(
+        true,
+        this.network.connectionsCount
+      );
+    }
+  }
+
+  protected async makeExpectedConnectionCount(
+    isWhite: boolean,
+    expectedCount: number
+  ): Promise<boolean> {
+    let currentCount = 0;
+    let peers: IPeerEntry[] = this.pm.gray;
+    if (isWhite) {
+      peers = this.pm.white;
+    }
+    for (const peer of peers) {
+      if (!this.isConnected(peer.peer)) {
+        await this.connect(peer.peer, false);
+        currentCount = this.getOutGoingConnectionCount();
+        if (currentCount >= expectedCount) {
+          break;
+        }
       }
     }
+    currentCount = this.getOutGoingConnectionCount();
+    if (currentCount < expectedCount) {
+      return false;
+    }
+    return true;
   }
 
   protected getOutGoingConnectionCount(): number {
@@ -355,7 +409,7 @@ export class P2PServer {
   protected async connectPeers(peers: IPeer[]) {
     for (const peer of peers) {
       if (!this.isConnected(peer)) {
-        await this.connect(IP.toString(peer.ip), peer.port);
+        await this.connect(peer, true);
       }
     }
   }
