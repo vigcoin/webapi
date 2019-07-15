@@ -59,11 +59,12 @@ export class ConnectionContext extends EventEmitter {
 
 // tslint:disable-next-line:max-classes-per-file
 export class P2pConnectionContext extends ConnectionContext {
+  public socket: Socket;
+
   // tslint:disable-next-line:variable-name
   private _peerId: IPeerIDType;
   private writeQueue: IMessage[];
   private stopped: boolean = false;
-  private socket: Socket;
 
   constructor(socket: Socket) {
     super();

@@ -121,7 +121,7 @@ export class P2PServer {
         } else {
           logger.info('Successfually connected to ' + host + ':' + port);
           clearTimeout(timer);
-          this.initContext(s, false, handshakeOnly);
+          this.initContext(s, false);
           resolve();
         }
       });
@@ -225,6 +225,14 @@ export class P2PServer {
     const context = new P2pConnectionContext(s);
     context.isIncoming = inComing;
     const levin = new LevinProtocol(s);
+    return this.initLevin(s, context, levin);
+  }
+
+  protected initLevin(
+    s: Socket,
+    context: P2pConnectionContext,
+    levin: LevinProtocol
+  ) {
     this.connections.set(context.id.toString('hex'), context);
     levin.on('state', (state: ConnectionState) => {
       logger.info(
@@ -457,7 +465,11 @@ export class P2PServer {
     }
   }
 
-  private handshake(levin: LevinProtocol, context: P2pConnectionContext) {
+  private handshake(
+    s: Socket,
+    context: P2pConnectionContext,
+    levin: LevinProtocol
+  ) {
     const request: handshake.IRequest = {
       node: this.getLocalPeerDate(),
       payload: this.handler.getPayLoad(),
@@ -465,6 +477,22 @@ export class P2PServer {
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     handshake.Writer.request(writer, request);
     levin.invoke(handshake.ID.ID, writer.getBuffer());
+    context.socket.on('data', buffer => {
+      logger.info('Receiving handshake response data!');
+      try {
+        const reader = new BufferStreamReader(buffer);
+        const cmd = LevinProtocol.readCommand(reader);
+        if (!cmd.isResponse) {
+          return;
+        }
+        const response = handshake.Reader.response(
+          new BufferStreamReader(cmd.buffer)
+        );
+      } catch (e) {
+        logger.error('Error processing handshake response data!');
+        s.destroy();
+      }
+    });
   }
 
   private getLocalPeerDate(): IPeerNodeData {

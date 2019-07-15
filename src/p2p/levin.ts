@@ -7,6 +7,7 @@ import { IPeerNodeData } from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../cryptonote/serialize/writer';
 import { int32, uint32, uint64, UINT64 } from '../cryptonote/types';
+import { logger } from '../logger';
 import { IP } from '../util/ip';
 import { ConnectionState, P2pConnectionContext } from './connection';
 import { handshake, ping, timedsync } from './protocol';
@@ -152,11 +153,9 @@ export class LevinProtocol extends EventEmitter {
   }
 
   private socket: Socket;
-  // private context: P2pConnectionContext;
   constructor(socket: Socket) {
     super();
     this.socket = socket;
-    // this.context = context;
   }
 
   public tryPing(data: IPeerNodeData, context: P2pConnectionContext): boolean {
@@ -170,13 +169,35 @@ export class LevinProtocol extends EventEmitter {
     const request: ping.IRequest = {};
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     ping.Writer.request(writer, request);
-    this.invoke(ping.ID.ID, writer.getBuffer());
+    this.invoke(ping, writer.getBuffer());
     return true;
   }
 
-  public invoke(cmd: uint32, buffer: Buffer) {
-    const request = LevinProtocol.request(cmd, buffer, 0, true);
-    this.socket.write(request);
+  public invoke(t: any, outgoing: Buffer) {
+    return new Promise((resovle, reject) => {
+      const request = LevinProtocol.request(t.ID.ID, outgoing, 0, true);
+
+      this.socket.on('data', buffer => {
+        logger.info('Receiving invoking response data!');
+        try {
+          const reader = new BufferStreamReader(buffer);
+          const cmd = LevinProtocol.readCommand(reader);
+          if (!cmd.isResponse) {
+            reject(new Error('None Response'));
+            return;
+          }
+          const response = t.Reader.response(
+            new BufferStreamReader(cmd.buffer)
+          );
+          resovle(response);
+        } catch (e) {
+          logger.error('Error processing handshake response data!');
+          this.socket.destroy();
+          reject(e);
+        }
+      });
+      this.socket.write(request);
+    });
   }
 
   public onIncomingData(
