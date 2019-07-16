@@ -173,10 +173,9 @@ export class LevinProtocol extends EventEmitter {
     return true;
   }
 
-  public invoke(t: any, outgoing: Buffer) {
+  public async invoke(t: any, outgoing: Buffer) {
     return new Promise((resovle, reject) => {
       const request = LevinProtocol.request(t.ID.ID, outgoing, 0, true);
-
       this.socket.on('data', buffer => {
         logger.info('Receiving invoking response data!');
         try {
@@ -272,7 +271,7 @@ export class LevinProtocol extends EventEmitter {
 
     assert(!context.peerId.length);
 
-    assert(context.processPayLoad(handler, request.payload, true));
+    assert(handler.processPayLoad(context, request.payload, true));
 
     context.peerId = request.node.peerId;
 

@@ -60,6 +60,7 @@ export class ConnectionContext extends EventEmitter {
 // tslint:disable-next-line:max-classes-per-file
 export class P2pConnectionContext extends ConnectionContext {
   public socket: Socket;
+  public version: uint32;
 
   // tslint:disable-next-line:variable-name
   private _peerId: IPeerIDType;
@@ -87,43 +88,5 @@ export class P2pConnectionContext extends ConnectionContext {
   public stop() {
     this.socket.end();
     this.socket.destroy();
-  }
-
-  public processPayLoad(
-    handler: Handler,
-    data: ICoreSyncData,
-    first: boolean
-  ): boolean {
-    // Ignore none first handshake when state is not set.
-    if (this.state === ConnectionState.BEFORE_HANDSHAKE && !first) {
-      return true;
-    }
-
-    // Ignore handshake after synchronizing
-    if (this.state !== ConnectionState.SYNCHRONIZING) {
-      // Searching block by hash
-      if (handler.haveBlock(data.hash)) {
-        // tslint:disable-next-line:prefer-conditional-expression
-        if (first) {
-          //
-          this.state = ConnectionState.POOL_SYNC_REQUIRED;
-        } else {
-          this.state = ConnectionState.NORMAL;
-        }
-      } else {
-        // Start synchronizing if not found
-        const diff = data.currentHeight - handler.height;
-        assert(diff > 0);
-        this.state = ConnectionState.SYNC_REQURIED;
-      }
-    }
-
-    handler.updateObserverHeight(data.currentHeight, this);
-
-    this.remoteBlockchainHeight = data.currentHeight;
-    if (first) {
-      handler.peers++;
-    }
-    return true;
   }
 }

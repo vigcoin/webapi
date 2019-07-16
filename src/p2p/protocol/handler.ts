@@ -1,16 +1,22 @@
 import { EventEmitter } from 'events';
+import {
+  BLOCK_HIEGHT_UPDATED,
+  BLOCKCHAIN_SYNCHRONZIED,
+} from '../../config/events';
 import { BlockChain } from '../../cryptonote/block/blockchain';
 import { ICoreSyncData } from '../../cryptonote/p2p';
 import { uint32 } from '../../cryptonote/types';
-import { P2pConnectionContext } from '../connection';
+import { logger } from '../../logger';
+import { ConnectionState, P2pConnectionContext } from '../connection';
 import { Command } from './command';
+import { PEERS_COUNT_UPDATED } from '../../config/events';
 
 export class Handler extends EventEmitter {
   public peers: uint32 = 0;
+  public observedHeight: uint32 = 0;
 
   private blockchain: BlockChain;
   // tslint:disable-next-line:variable-name
-  private observedHeight: uint32 = 0;
 
   constructor(blockchain: BlockChain) {
     super();
@@ -28,6 +34,38 @@ export class Handler extends EventEmitter {
     };
   }
 
+  public processPayLoad(
+    context: P2pConnectionContext,
+    data: ICoreSyncData,
+    isInitial: boolean
+  ): boolean {
+    if (context.state === ConnectionState.BEFORE_HANDSHAKE && !isInitial) {
+      return false;
+    }
+
+    if (context.state !== ConnectionState.SYNCHRONIZING) {
+      if (this.haveBlock(data.hash)) {
+        if (isInitial) {
+          this.emit(BLOCKCHAIN_SYNCHRONZIED); //
+          context.state = ConnectionState.POOL_SYNC_REQUIRED;
+        } else {
+          context.state = ConnectionState.NORMAL;
+        }
+      } else {
+        const diff = data.currentHeight - this.blockchain.height;
+        context.state = ConnectionState.SYNC_REQURIED;
+        if (diff > 0) {
+          logger.info('New block height found: ' + data.currentHeight);
+        } else {
+          logger.info('Old block height found: ' + data.currentHeight);
+        }
+        logger.info('Current block height is: ' + this.blockchain.height);
+        logger.info('Synchronization required!');
+      }
+    }
+    return true;
+  }
+
   public haveBlock(hash: Buffer) {
     return this.blockchain.have(hash);
   }
@@ -36,12 +74,15 @@ export class Handler extends EventEmitter {
     return this.blockchain.height;
   }
 
-  public updateObserverHeight(current, context: P2pConnectionContext) {
-    const height = this.observedHeight;
-    if (current > context.remoteBlockchainHeight && current > height) {
+  public notifyNewHeight(current: number) {
+    if (this.observedHeight < current) {
       this.observedHeight = current;
-      this.emit('block-height-updated', this.observedHeight);
+      this.emit(BLOCK_HIEGHT_UPDATED, this.observedHeight);
     }
+  }
+
+  public notifyPeerCount(count: number) {
+    this.emit(PEERS_COUNT_UPDATED, count);
   }
 
   public onCommand(cmd: Command) {

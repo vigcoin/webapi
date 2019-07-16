@@ -114,4 +114,10 @@ export class PeerManager {
     }
     this.grayPeers.append(pe);
   }
+
+  public merge(pes: IPeerEntry[]) {
+    for (const pe of pes) {
+      this.appendGray(pe);
+    }
+  }
 }

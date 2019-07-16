@@ -1,8 +1,15 @@
+import * as assert from 'assert';
 import { randomBytes } from 'crypto';
+import { EventEmitter } from 'events';
 import { existsSync } from 'fs';
+import * as moment from 'moment';
 import { createConnection, createServer, Server, Socket } from 'net';
 import * as path from 'path';
 import { p2p } from '../config';
+import {
+  BLOCKCHAIN_SYNCHRONZIED,
+  BLOCK_HIEGHT_UPDATED,
+} from '../config/events';
 import { Configuration } from '../config/types';
 import {
   INetwork,
@@ -12,6 +19,7 @@ import {
   IPeerNodeData,
   IServerConfig,
   Version,
+  ICoreSyncData,
 } from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../cryptonote/serialize/writer';
@@ -22,12 +30,12 @@ import { IP } from '../util/ip';
 import { P2PConfig } from './config';
 import { ConnectionState, P2pConnectionContext } from './connection';
 import { LevinProtocol } from './levin';
-import { PeerManager } from './peer-manager';
+import { PeerList, PeerManager } from './peer-manager';
 import { handshake, ping } from './protocol';
 import { Handler } from './protocol/handler';
 import { P2PStore } from './serializer';
 
-export class P2PServer {
+export class P2PServer extends EventEmitter {
   get version(): uint8 {
     return this._version;
   }
@@ -70,6 +78,7 @@ export class P2PServer {
     handler: Handler,
     pm: PeerManager
   ) {
+    super();
     this.config = config;
     this.handler = handler;
 
@@ -83,6 +92,9 @@ export class P2PServer {
       this.config.seedNode
     );
     this.p2pConfig.seedNodes = Array.from(new Set(this.p2pConfig.seedNodes));
+    this.handler.on(BLOCKCHAIN_SYNCHRONZIED, () => {
+      this.emit(BLOCKCHAIN_SYNCHRONZIED, this.getConnectionHeight());
+    });
   }
 
   // Main process
@@ -225,6 +237,12 @@ export class P2PServer {
     const context = new P2pConnectionContext(s);
     context.isIncoming = inComing;
     const levin = new LevinProtocol(s);
+    if (handshakeOnly) {
+      return {
+        context,
+        levin,
+      };
+    }
     return this.initLevin(s, context, levin);
   }
 
@@ -465,34 +483,95 @@ export class P2PServer {
     }
   }
 
-  private handshake(
-    s: Socket,
-    context: P2pConnectionContext,
-    levin: LevinProtocol
-  ) {
+  private async handshake(s: Socket, takePeerListOnly: boolean = false) {
     const request: handshake.IRequest = {
       node: this.getLocalPeerDate(),
       payload: this.handler.getPayLoad(),
     };
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     handshake.Writer.request(writer, request);
-    levin.invoke(handshake.ID.ID, writer.getBuffer());
-    context.socket.on('data', buffer => {
-      logger.info('Receiving handshake response data!');
-      try {
-        const reader = new BufferStreamReader(buffer);
-        const cmd = LevinProtocol.readCommand(reader);
-        if (!cmd.isResponse) {
-          return;
-        }
-        const response = handshake.Reader.response(
-          new BufferStreamReader(cmd.buffer)
-        );
-      } catch (e) {
-        logger.error('Error processing handshake response data!');
-        s.destroy();
+    const { context, levin } = this.initContext(s, false, true);
+    try {
+      const response: any = await levin.invoke(handshake, writer.getBuffer());
+      context.version = response.node.version;
+      if (
+        !Buffer.from(this.networkId).equals(
+          Buffer.from(response.node.networkId)
+        )
+      ) {
+        logger.error('handshake failed! network id is mismatched!');
+        return false;
       }
-    });
+
+      if (
+        !this.handleRemotePeerList(
+          context,
+          response.node.localTime,
+          response.localPeerList
+        )
+      ) {
+        logger.error('Fail to handle remote local peer list!');
+        return false;
+      }
+
+      if (takePeerListOnly) {
+        return true;
+      }
+
+      this.processPayLoad(context, response.payload, true);
+
+      return true;
+    } catch (e) {
+      logger.error('Fail to invoke handshaking!');
+      logger.error(e);
+      return false;
+    }
+  }
+
+  private processPayLoad(
+    context: P2pConnectionContext,
+    data: ICoreSyncData,
+    isInitial
+  ) {
+    this.handler.processPayLoad(context, data, isInitial);
+
+    const newHeight = this.getNewHeight(
+      this.handler.observedHeight,
+      data.currentHeight,
+      context
+    );
+
+    this.handler.notifyNewHeight(newHeight);
+
+    context.remoteBlockchainHeight = data.currentHeight;
+    if (isInitial) {
+      this.handler.notifyPeerCount(this.connections.size);
+    }
+  }
+
+  private handleRemotePeerList(
+    context: P2pConnectionContext,
+    localTime: Date,
+    peerEntries: IPeerEntry[]
+  ): boolean {
+    const now = Date.now();
+    const delta = now - localTime.getTime();
+    for (const pe of peerEntries) {
+      if (pe.lastSeen.getTime() > localTime.getTime()) {
+        logger.error('Found FUTURE peer entry!');
+        logger.error(
+          'Last seen: ' + moment(pe.lastSeen).format('YYYY-MM-DD HH:mm:ss')
+        );
+        logger.error(
+          'Remote local time: ' +
+            moment(localTime).format('YYYY-MM-DD HH:mm:ss')
+        );
+        return false;
+      }
+      pe.lastSeen = new Date(pe.lastSeen.getTime() + delta);
+    }
+    this.pm.merge(peerEntries);
+    return true;
   }
 
   private getLocalPeerDate(): IPeerNodeData {
@@ -503,5 +582,42 @@ export class P2PServer {
       peerId: this.peerId,
       version: Version.CURRENT,
     };
+  }
+
+  private getConnectionHeight() {
+    let height = 0;
+    this.connections.forEach((connection: P2pConnectionContext) => {
+      if (connection.remoteBlockchainHeight > height) {
+        height = connection.remoteBlockchainHeight;
+      }
+    });
+    return height;
+  }
+
+  private getNewHeight(
+    observedHeight: number,
+    newHeight: number,
+    context: P2pConnectionContext
+  ) {
+    const height = observedHeight;
+    if (newHeight > context.remoteBlockchainHeight) {
+      if (observedHeight < newHeight) {
+        observedHeight = newHeight;
+      }
+    } else {
+      if (newHeight !== context.remoteBlockchainHeight) {
+        if (context.remoteBlockchainHeight === observedHeight) {
+          let currentPeerHeight = this.getConnectionHeight();
+          const blockHeight = this.handler.height;
+          if (currentPeerHeight < blockHeight) {
+            currentPeerHeight = blockHeight;
+          }
+          if (currentPeerHeight !== height) {
+            observedHeight = currentPeerHeight;
+          }
+        }
+      }
+    }
+    return observedHeight;
   }
 }
