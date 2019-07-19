@@ -2,6 +2,7 @@ import { EventEmitter } from 'events';
 import {
   BLOCK_HIEGHT_UPDATED,
   BLOCKCHAIN_SYNCHRONZIED,
+  PEERS_COUNT_UPDATED,
 } from '../../config/events';
 import { BlockChain } from '../../cryptonote/block/blockchain';
 import { ICoreSyncData } from '../../cryptonote/p2p';
@@ -9,7 +10,6 @@ import { uint32 } from '../../cryptonote/types';
 import { logger } from '../../logger';
 import { ConnectionState, P2pConnectionContext } from '../connection';
 import { Command } from './command';
-import { PEERS_COUNT_UPDATED } from '../../config/events';
 
 export class Handler extends EventEmitter {
   public peers: uint32 = 0;
@@ -102,6 +102,10 @@ export class Handler extends EventEmitter {
       default:
         break;
     }
+  }
+
+  public onIdle() {
+    // TODO
   }
 
   public onNewBlock() {}

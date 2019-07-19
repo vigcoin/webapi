@@ -7,11 +7,12 @@ import { createConnection, createServer, Server, Socket } from 'net';
 import * as path from 'path';
 import { p2p } from '../config';
 import {
-  BLOCKCHAIN_SYNCHRONZIED,
   BLOCK_HIEGHT_UPDATED,
+  BLOCKCHAIN_SYNCHRONZIED,
 } from '../config/events';
 import { Configuration } from '../config/types';
 import {
+  ICoreSyncData,
   INetwork,
   IPeer,
   IPeerEntry,
@@ -19,7 +20,6 @@ import {
   IPeerNodeData,
   IServerConfig,
   Version,
-  ICoreSyncData,
 } from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../cryptonote/serialize/writer';
@@ -67,6 +67,7 @@ export class P2PServer extends EventEmitter {
   private _version: uint8 = 1;
 
   private stopped = false;
+  private isConnecting = false;
 
   private serializeFile: string;
   private p2pStore: P2PStore;
@@ -105,10 +106,35 @@ export class P2PServer extends EventEmitter {
   }
 
   public onIdle() {
-    const interval = setInterval(async () => {
-      await this.startConnection();
-      this.storeP2PState();
-    }, this.network.handshakeInterval);
+    logger.info('On idle started!');
+    // const p2pSaverInterval = setInterval(async () => {
+    //   try {
+    //     this.storeP2PState();
+    //   } catch(e) {
+    //     logger.error(e);
+    //     clearInterval(p2pSaverInterval);
+    //   }
+    // }, this.network.handshakeInterval * 1000);
+
+    try {
+      this.idleWorker();
+      this.handler.onIdle();
+    } catch (e) {
+      logger.error(e);
+      logger.info('Idle Finished!');
+    }
+  }
+
+  public idleWorker() {
+    this.connectionMaker().then(() => {
+      setInterval(() => {
+        this.storeP2PState();
+      }, 1000 * 60 * 30);
+    });
+  }
+
+  public async connectionMaker() {
+    await this.startConnection();
   }
 
   public storeP2PState() {
@@ -120,30 +146,14 @@ export class P2PServer extends EventEmitter {
   }
 
   public async connect(peer: IPeer, handshakeOnly: boolean) {
+    const ignoreList = ['226.19.52.123', '228.114.136.119'];
     const host = IP.toString(peer.ip);
-    const port = peer.port;
-    let timer: NodeJS.Timeout;
-    return new Promise(async (resolve, reject) => {
-      logger.info('start connecting: ' + host + ':' + port);
-      const s = createConnection({ port, host }, e => {
-        if (e) {
-          logger.error('Error connecting to ' + host + ':' + port + '!');
-          logger.error(e);
-          reject(e);
-        } else {
-          logger.info('Successfually connected to ' + host + ':' + port);
-          clearTimeout(timer);
-          this.initContext(s, false);
-          resolve();
-        }
-      });
-      timer = setTimeout(() => {
-        const e = new Error('Time out!');
-        logger.error('Error connecting to ' + host + ':' + port + '!');
-        logger.error(e);
-        reject(e);
-      }, this.network.conectionTimeout);
-    });
+    if (ignoreList.indexOf(host) !== -1) {
+      logger.info('host: ' + host + ' ignored! ');
+      return;
+    }
+    const s = await P2pConnectionContext.createConnection(peer, this.network);
+    this.initContext(s, false);
   }
 
   public init(config: Configuration.IConfig) {
@@ -307,27 +317,42 @@ export class P2PServer extends EventEmitter {
   }
 
   protected async startConnection() {
+    if (this.isConnecting) {
+      return;
+    }
+    this.isConnecting = true;
     // Check exclusive nodes
     if (this.p2pConfig.exclusiveNodes.length) {
+      logger.info('Exclusive nodes!');
       await this.connectPeers(this.p2pConfig.exclusiveNodes);
       return;
     }
 
     if (!this.pm.white.length && this.p2pConfig.seedNodes.length) {
+      logger.info('Connecting to seed nodes!');
       await this.connectPeers(this.p2pConfig.seedNodes);
     }
     if (this.p2pConfig.priorityNodes.length) {
+      logger.info('Connecting to priority nodes!');
       await this.connectPeers(this.p2pConfig.priorityNodes);
     }
     await this.checkConnection();
+    this.isConnecting = false;
   }
 
   protected async checkConnection() {
+    logger.info('Check connection!');
     const expectedWhiteConPercent =
       (this.network.connectionsCount *
         p2p.P2P_DEFAULT_WHITELIST_CONNECTIONS_PERCENT) /
       100;
+
+    logger.info(
+      'Expected white connections default percent : ' + expectedWhiteConPercent
+    );
     const connectionCount = this.getOutGoingConnectionCount();
+
+    logger.info('Current connection count : ' + connectionCount);
     if (connectionCount < expectedWhiteConPercent) {
       if (
         await this.makeExpectedConnectionCount(true, expectedWhiteConPercent)
@@ -339,6 +364,7 @@ export class P2PServer extends EventEmitter {
         this.network.connectionsCount
       );
     } else {
+      logger.info('Connecting gray list! ');
       if (
         await this.makeExpectedConnectionCount(
           false,
@@ -347,7 +373,7 @@ export class P2PServer extends EventEmitter {
       ) {
         return;
       }
-
+      logger.info('Connecting white list!');
       await this.makeExpectedConnectionCount(
         true,
         this.network.connectionsCount
@@ -362,11 +388,16 @@ export class P2PServer extends EventEmitter {
     let currentCount = 0;
     let peers: IPeerEntry[] = this.pm.gray;
     if (isWhite) {
+      logger.info('Use white list!');
       peers = this.pm.white;
     }
     for (const peer of peers) {
       if (!this.isConnected(peer.peer)) {
-        await this.connect(peer.peer, false);
+        try {
+          await this.connect(peer.peer, false);
+        } catch (e) {
+          // logger.error(e);
+        }
         currentCount = this.getOutGoingConnectionCount();
         if (currentCount >= expectedCount) {
           break;
@@ -433,9 +464,16 @@ export class P2PServer extends EventEmitter {
   }
 
   protected async connectPeers(peers: IPeer[]) {
+    logger.info('Connecting to peers!');
     for (const peer of peers) {
       if (!this.isConnected(peer)) {
-        await this.connect(peer, true);
+        try {
+          await this.connect(peer, true);
+        } catch (e) {
+          logger.error(
+            'Error connecting: ' + IP.toString(peer.ip) + ':' + peer.port
+          );
+        }
       }
     }
   }
