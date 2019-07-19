@@ -28,6 +28,7 @@ describe('test connections', () => {
     let caught = false;
     try {
       const socket = await P2pConnectionContext.createConnection(peer, network);
+      socket.destroy();
     } catch (e) {
       caught = true;
     }

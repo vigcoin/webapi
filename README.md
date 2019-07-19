@@ -11,7 +11,7 @@ Webapi is tested on ubuntu 16.04. Other Linux platform can easily adapte to use 
 Before running webapi, here are some bash steps you should follow:
 
 ```
-sudo apt-get install gcc
+sudo apt-get install gcc make
 curl https://sh.rustup.rs -sSf | sh -s -- -y
 source "$HOME/.cargo/env"
 curl -o- https://raw.githubusercontent.com/calidion/chinese-noder-the-easy-way/master/install.sh | bash

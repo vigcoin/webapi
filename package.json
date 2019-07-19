@@ -5,12 +5,15 @@
   "license": "GPLv3",
   "repository": "",
   "author": {
-    "name": "",
-    "email": "",
-    "url": ""
+    "name": "calidion",
+    "email": "calidion@gmail.com",
+    "url": "https://t1bao.com"
   },
   "keywords": [
-    ""
+    "cryptonote",
+    "bitcoin",
+    "cryptocurrency",
+    "blockchain"
   ],
   "files": [
     "lib"
