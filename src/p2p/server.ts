@@ -6,12 +6,10 @@ import * as moment from 'moment';
 import { createConnection, createServer, Server, Socket } from 'net';
 import * as path from 'path';
 import { p2p } from '../config';
-import {
-  BLOCKCHAIN_SYNCHRONZIED,
-  BLOCK_HIEGHT_UPDATED,
-} from '../config/events';
+import { BLOCKCHAIN_SYNCHRONZIED } from '../config/events';
 import { Configuration } from '../config/types';
 import {
+  ICoreSyncData,
   INetwork,
   IPeer,
   IPeerEntry,
@@ -19,7 +17,6 @@ import {
   IPeerNodeData,
   IServerConfig,
   Version,
-  ICoreSyncData,
 } from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../cryptonote/serialize/writer';
@@ -120,30 +117,12 @@ export class P2PServer extends EventEmitter {
   }
 
   public async connect(peer: IPeer, handshakeOnly: boolean) {
-    const host = IP.toString(peer.ip);
-    const port = peer.port;
-    let timer: NodeJS.Timeout;
-    return new Promise(async (resolve, reject) => {
-      logger.info('start connecting: ' + host + ':' + port);
-      const s = createConnection({ port, host }, e => {
-        if (e) {
-          logger.error('Error connecting to ' + host + ':' + port + '!');
-          logger.error(e);
-          reject(e);
-        } else {
-          logger.info('Successfually connected to ' + host + ':' + port);
-          clearTimeout(timer);
-          this.initContext(s, false);
-          resolve();
-        }
-      });
-      timer = setTimeout(() => {
-        const e = new Error('Time out!');
-        logger.error('Error connecting to ' + host + ':' + port + '!');
-        logger.error(e);
-        reject(e);
-      }, this.network.conectionTimeout);
-    });
+    const s = await P2pConnectionContext.createConnection(peer, this.network);
+    if (handshakeOnly) {
+      await this.handshake(s, handshakeOnly);
+      return;
+    }
+    this.initContext(s, false);
   }
 
   public init(config: Configuration.IConfig) {
