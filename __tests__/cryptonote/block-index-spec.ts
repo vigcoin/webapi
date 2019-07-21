@@ -27,12 +27,9 @@ describe('test raw block', () => {
     blockIndex = new BlockIndex(indexFile);
   });
 
-  test('Should test block index loading', () => {
+  test('Should test block index saving', () => {
     blockIndex.init();
-    blockIndex.writeHeight(items.length);
-    for (const item of items) {
-      blockIndex.writeItem(item);
-    }
+    blockIndex.writeItems(items);
     blockIndex.deinit();
   });
 
