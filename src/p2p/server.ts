@@ -64,6 +64,7 @@ export class P2PServer extends EventEmitter {
   private _version: uint8 = 1;
 
   private stopped = false;
+  private isConnecting = false;
 
   private serializeFile: string;
   private p2pStore: P2PStore;
@@ -286,27 +287,42 @@ export class P2PServer extends EventEmitter {
   }
 
   protected async startConnection() {
+    if (this.isConnecting) {
+      return;
+    }
+    this.isConnecting = true;
     // Check exclusive nodes
     if (this.p2pConfig.exclusiveNodes.length) {
+      logger.info('Exclusive nodes!');
       await this.connectPeers(this.p2pConfig.exclusiveNodes);
       return;
     }
 
     if (!this.pm.white.length && this.p2pConfig.seedNodes.length) {
+      logger.info('Connecting to seed nodes!');
       await this.connectPeers(this.p2pConfig.seedNodes);
     }
     if (this.p2pConfig.priorityNodes.length) {
+      logger.info('Connecting to priority nodes!');
       await this.connectPeers(this.p2pConfig.priorityNodes);
     }
     await this.checkConnection();
+    this.isConnecting = false;
   }
 
   protected async checkConnection() {
+    logger.info('Check connection!');
     const expectedWhiteConPercent =
       (this.network.connectionsCount *
         p2p.P2P_DEFAULT_WHITELIST_CONNECTIONS_PERCENT) /
       100;
+
+    logger.info(
+      'Expected white connections default percent : ' + expectedWhiteConPercent
+    );
     const connectionCount = this.getOutGoingConnectionCount();
+
+    logger.info('Current connection count : ' + connectionCount);
     if (connectionCount < expectedWhiteConPercent) {
       if (
         await this.makeExpectedConnectionCount(true, expectedWhiteConPercent)
@@ -318,6 +334,7 @@ export class P2PServer extends EventEmitter {
         this.network.connectionsCount
       );
     } else {
+      logger.info('Connecting gray list! ');
       if (
         await this.makeExpectedConnectionCount(
           false,
@@ -326,7 +343,7 @@ export class P2PServer extends EventEmitter {
       ) {
         return;
       }
-
+      logger.info('Connecting white list!');
       await this.makeExpectedConnectionCount(
         true,
         this.network.connectionsCount
@@ -341,11 +358,16 @@ export class P2PServer extends EventEmitter {
     let currentCount = 0;
     let peers: IPeerEntry[] = this.pm.gray;
     if (isWhite) {
+      logger.info('Use white list!');
       peers = this.pm.white;
     }
     for (const peer of peers) {
       if (!this.isConnected(peer.peer)) {
-        await this.connect(peer.peer, false);
+        try {
+          await this.connect(peer.peer, true);
+        } catch (e) {
+          logger.error(e);
+        }
         currentCount = this.getOutGoingConnectionCount();
         if (currentCount >= expectedCount) {
           break;
@@ -412,9 +434,17 @@ export class P2PServer extends EventEmitter {
   }
 
   protected async connectPeers(peers: IPeer[]) {
+    logger.info('Connecting to peers!');
     for (const peer of peers) {
       if (!this.isConnected(peer)) {
-        await this.connect(peer, true);
+        try {
+          await this.connect(peer, true);
+        } catch (e) {
+          logger.error(e);
+          logger.error(
+            'Error connecting: ' + IP.toString(peer.ip) + ':' + peer.port
+          );
+        }
       }
     }
   }
@@ -478,7 +508,7 @@ export class P2PServer extends EventEmitter {
           Buffer.from(response.node.networkId)
         )
       ) {
-        logger.error('handshake failed! network id is mismatched!');
+        logger.error('Handshake failed! Network id is mismatched!');
         return false;
       }
 
