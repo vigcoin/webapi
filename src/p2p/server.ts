@@ -146,13 +146,11 @@ export class P2PServer extends EventEmitter {
   }
 
   public async connect(peer: IPeer, handshakeOnly: boolean) {
-    const ignoreList = ['226.19.52.123', '228.114.136.119'];
-    const host = IP.toString(peer.ip);
-    if (ignoreList.indexOf(host) !== -1) {
-      logger.info('host: ' + host + ' ignored! ');
+    const s = await P2pConnectionContext.createConnection(peer, this.network);
+    if (handshakeOnly) {
+      await this.handshake(s, handshakeOnly);
       return;
     }
-    const s = await P2pConnectionContext.createConnection(peer, this.network);
     this.initContext(s, false);
   }
 
@@ -394,7 +392,7 @@ export class P2PServer extends EventEmitter {
     for (const peer of peers) {
       if (!this.isConnected(peer.peer)) {
         try {
-          await this.connect(peer.peer, false);
+          await this.connect(peer.peer, true);
         } catch (e) {
           // logger.error(e);
         }
@@ -470,6 +468,7 @@ export class P2PServer extends EventEmitter {
         try {
           await this.connect(peer, true);
         } catch (e) {
+          logger.error(e);
           logger.error(
             'Error connecting: ' + IP.toString(peer.ip) + ':' + peer.port
           );
@@ -537,7 +536,7 @@ export class P2PServer extends EventEmitter {
           Buffer.from(response.node.networkId)
         )
       ) {
-        logger.error('handshake failed! network id is mismatched!');
+        logger.error('Handshake failed! Network id is mismatched!');
         return false;
       }
 

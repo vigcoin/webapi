@@ -81,6 +81,8 @@ export class P2pConnectionContext extends ConnectionContext {
         resolve(s);
       });
       s.on('error', e => {
+        logger.error('Connection Error!');
+        logger.error(e);
         s.destroy();
         reject(e);
       });
