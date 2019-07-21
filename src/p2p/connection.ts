@@ -1,12 +1,19 @@
 import * as assert from 'assert';
 import { randomBytes } from 'crypto';
 import { EventEmitter } from 'events';
-import { Socket } from 'net';
+import { Socket, createConnection } from 'net';
 import { Hash } from '../crypto/types';
-import { ICoreSyncData, IMessage, IPeerIDType } from '../cryptonote/p2p';
+import {
+  ICoreSyncData,
+  IMessage,
+  IPeerIDType,
+  IPeer,
+  INetwork,
+} from '../cryptonote/p2p';
 import { uint32, uint8 } from '../cryptonote/types';
 import { IP } from '../util/ip';
 import { Handler } from './protocol/handler';
+import { logger } from '../logger';
 
 export enum ConnectionState {
   BEFORE_HANDSHAKE = 0,
@@ -59,6 +66,35 @@ export class ConnectionContext extends EventEmitter {
 
 // tslint:disable-next-line:max-classes-per-file
 export class P2pConnectionContext extends ConnectionContext {
+  public static createConnection(
+    peer: IPeer,
+    network: INetwork
+  ): Promise<Socket> {
+    const host = IP.toString(peer.ip);
+    const port = peer.port;
+    let timer: NodeJS.Timeout;
+    return new Promise(async (resolve, reject) => {
+      logger.info('start connecting: ' + host + ':' + port);
+      const s = createConnection(port, host, () => {
+        logger.info('Successfually connected to ' + host + ':' + port);
+        clearTimeout(timer);
+        resolve(s);
+      });
+      s.on('error', e => {
+        logger.error('Connection Error!');
+        logger.error(e);
+        s.destroy();
+        reject(e);
+      });
+      timer = setTimeout(() => {
+        const e = new Error('Time out!');
+        logger.error('Error connecting to ' + host + ':' + port + '!');
+        // logger.error(e);
+        s.destroy();
+        reject(e);
+      }, network.conectionTimeout);
+    });
+  }
   public socket: Socket;
   public version: uint32;
 

@@ -1,12 +1,13 @@
 import { readFileSync, writeFileSync } from 'fs';
+import * as moment from 'moment';
 import { IPeerEntry } from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../cryptonote/serialize/writer';
 import { uint32, uint64, UINT64 } from '../cryptonote/types';
-import { PeerManager } from './peer-manager';
-import { P2PServer } from './server';
 import { logger } from '../logger';
 import { IP } from '../util/ip';
+import { PeerManager } from './peer-manager';
+import { P2PServer } from './server';
 
 export class P2PStore {
   private file: string;
@@ -67,7 +68,7 @@ export class P2PStore {
           ':' +
           pe.peer.port +
           ', last seen: ' +
-          pe.lastSeen +
+          moment(pe.lastSeen).format('YYYY-MM-DD HH:mm:ss') +
           ', id: ' +
           pe.id.toString('hex')
       );

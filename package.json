@@ -5,12 +5,15 @@
   "license": "GPLv3",
   "repository": "",
   "author": {
-    "name": "",
-    "email": "",
-    "url": ""
+    "name": "calidion",
+    "email": "calidion@gmail.com",
+    "url": "https://t1bao.com"
   },
   "keywords": [
-    ""
+    "cryptonote",
+    "bitcoin",
+    "cryptocurrency",
+    "blockchain"
   ],
   "files": [
     "lib"
@@ -29,7 +32,8 @@
     "test": "jest --coverage --detectOpenHandles",
     "coverage": "jest --coverage",
     "watch": "npm run build -- --watch",
-    "watch:test": "jest --watch"
+    "watch:test": "jest --watch",
+    "p2p": "ts-node src/cli/p2p.ts | pino-pretty -c -t"
   },
   "dependencies": {
     "@types/express": "^4.16.1",
@@ -51,8 +55,9 @@
     "jest": "^23.6.0",
     "lodash": "^4.17.14",
     "mem": "^5.1.1",
+    "pino-pretty": "^3.2.0",
     "prettier": "^1.14.3",
-    "rimraf": "^2.6.2",
+    "rimraf": "^2.6.3",
     "supertest": "^4.0.2",
     "ts-jest": "^23.10.3",
     "ts-node": "^7.0.1",

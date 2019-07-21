@@ -62,6 +62,13 @@ export class BlockIndex {
     }
   }
 
+  public writeItems(items: number[]) {
+    this.writeHeight(items.length);
+    for (const item of items) {
+      this.writeItem(item);
+    }
+  }
+
   public getOffsets() {
     return this.offsets;
   }
