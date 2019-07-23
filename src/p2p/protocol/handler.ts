@@ -26,12 +26,23 @@ export class Handler extends EventEmitter {
 
   public getPayLoad(): ICoreSyncData {
     const height = this.blockchain.height;
-    const be = this.blockchain.get(height);
-    const hash = BlockChain.hash(be.block);
-    return {
-      currentHeight: height,
-      hash,
-    };
+    if (this.blockchain.empty()) {
+      if (height > 1) {
+        throw new Error('Error height!');
+      }
+      const genesis = this.blockchain.genesis();
+      return {
+        currentHeight: height,
+        hash: genesis.hash,
+      };
+    } else {
+      const be = this.blockchain.get(height);
+      const hash = BlockChain.hash(be.block);
+      return {
+        currentHeight: height,
+        hash,
+      };
+    }
   }
 
   public processPayLoad(

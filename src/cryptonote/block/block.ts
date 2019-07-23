@@ -1,6 +1,13 @@
 import { getFastHash } from '@vigcoin/neon';
 import * as assert from 'assert';
-import { closeSync, openSync, readSync, writeSync } from 'fs';
+import {
+  closeSync,
+  existsSync,
+  openSync,
+  readSync,
+  statSync,
+  writeSync,
+} from 'fs';
 import { Configuration } from '../../config/types';
 import { Hash, HASH_LENGTH } from '../../crypto/types';
 import { BufferStreamReader } from '../serialize/reader';
@@ -136,6 +143,17 @@ export class Block {
 
   constructor(filename: string) {
     this.filename = filename;
+  }
+
+  public empty(): boolean {
+    if (!existsSync(this.filename)) {
+      return true;
+    }
+    const stat = statSync(this.filename);
+    if (stat.size === 0) {
+      return true;
+    }
+    return false;
   }
 
   public read(offset: number, length: number): IBlockEntry {

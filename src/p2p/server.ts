@@ -6,10 +6,7 @@ import * as moment from 'moment';
 import { createConnection, createServer, Server, Socket } from 'net';
 import * as path from 'path';
 import { p2p } from '../config';
-import {
-  BLOCK_HIEGHT_UPDATED,
-  BLOCKCHAIN_SYNCHRONZIED,
-} from '../config/events';
+import { BLOCKCHAIN_SYNCHRONZIED } from '../config/events';
 import { Configuration } from '../config/types';
 import {
   ICoreSyncData,
@@ -106,35 +103,10 @@ export class P2PServer extends EventEmitter {
   }
 
   public onIdle() {
-    logger.info('On idle started!');
-    // const p2pSaverInterval = setInterval(async () => {
-    //   try {
-    //     this.storeP2PState();
-    //   } catch(e) {
-    //     logger.error(e);
-    //     clearInterval(p2pSaverInterval);
-    //   }
-    // }, this.network.handshakeInterval * 1000);
-
-    try {
-      this.idleWorker();
-      this.handler.onIdle();
-    } catch (e) {
-      logger.error(e);
-      logger.info('Idle Finished!');
-    }
-  }
-
-  public idleWorker() {
-    this.connectionMaker().then(() => {
-      setInterval(() => {
-        this.storeP2PState();
-      }, 1000 * 60 * 30);
-    });
-  }
-
-  public async connectionMaker() {
-    await this.startConnection();
+    const interval = setInterval(async () => {
+      await this.startConnection();
+      this.storeP2PState();
+    }, this.network.handshakeInterval);
   }
 
   public storeP2PState() {
@@ -394,7 +366,7 @@ export class P2PServer extends EventEmitter {
         try {
           await this.connect(peer.peer, true);
         } catch (e) {
-          // logger.error(e);
+          logger.error(e);
         }
         currentCount = this.getOutGoingConnectionCount();
         if (currentCount >= expectedCount) {

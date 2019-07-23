@@ -1,4 +1,5 @@
 import { Configuration } from '../../config/types';
+import { IP } from '../../util/ip';
 
 export const data: Configuration.IConfig = {
   name: 'vigcointest',
@@ -32,7 +33,10 @@ export const data: Configuration.IConfig = {
       patch: 0,
     },
   },
-  seeds: ['192.168.9.5:29800', '192.168.9.3:29800'],
+  seeds: [
+    { port: 19800, ip: IP.toNumber('192.168.9.5') },
+    { port: 19800, ip: IP.toNumber('192.168.9.3') },
+  ],
   checkpoints: [],
   hardforks: [
     {

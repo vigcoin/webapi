@@ -4,12 +4,24 @@ import { Configuration } from '../../src/config/types';
 import { BlockChain } from '../../src/cryptonote/block/blockchain';
 
 import { getBlockChain } from '../../src/init/blockchain';
+import { data } from '../../src/init/net-types/testnet';
 import { getBlockFile } from '../../src/util/fs';
 
 describe('read from file', () => {
-  const blockChain: BlockChain = getBlockChain(
-    getBlockFile(path.resolve(__dirname, '../vigcoin'))
-  );
+  const config: Configuration.ICurrency = {
+    block: {
+      genesisCoinbaseTxHex: '111',
+      version: {
+        major: 1,
+        minor: 1,
+        patch: 1,
+      },
+    },
+    blockFiles: getBlockFile(path.resolve(__dirname, '../vigcoin'), data),
+    hardfork: [],
+  };
+
+  const blockChain: BlockChain = getBlockChain(config);
 
   test('should init block chain', () => {
     blockChain.init();
@@ -58,9 +70,22 @@ describe('read from file', () => {
 });
 
 describe('read from empty file', () => {
-  const blockChain: BlockChain = getBlockChain(
-    getBlockFile(path.resolve(__dirname, '../vigcoinempty'))
-  );
+  const dir = path.resolve(__dirname, '../vigcoinempty');
+  const blockFiles = getBlockFile(dir, data);
+  const config: Configuration.ICurrency = {
+    block: {
+      genesisCoinbaseTxHex: '111',
+      version: {
+        major: 1,
+        minor: 1,
+        patch: 1,
+      },
+    },
+    blockFiles,
+    hardfork: [],
+  };
+
+  const blockChain: BlockChain = getBlockChain(config);
   test('should init block chain', () => {
     blockChain.init();
   });

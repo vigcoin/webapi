@@ -20,16 +20,22 @@ export class BlockChain {
   }
 
   private files: Configuration.IBlockFile;
+  private currency: Configuration.ICurrency;
   private blockIndex: BlockIndex;
   private block: Block;
   private offsets: number[];
   private initialized = false;
 
-  constructor(files: Configuration.IBlockFile) {
-    this.files = files;
-    this.blockIndex = new BlockIndex(files.index);
-    this.block = new Block(files.data);
+  constructor(config: Configuration.ICurrency) {
+    this.currency = config;
+    this.files = config.blockFiles;
+    this.blockIndex = new BlockIndex(this.files.index);
+    this.block = new Block(this.files.data);
     this.offsets = [0];
+  }
+
+  public genesis() {
+    return BlockChain.genesis(this.currency.block);
   }
 
   public init() {
@@ -44,6 +50,11 @@ export class BlockChain {
     }
     this.initialized = true;
   }
+
+  public empty(): boolean {
+    return this.block.empty();
+  }
+
   public get(height: number): IBlockEntry {
     assert(this.initialized);
     assert(height >= 0);

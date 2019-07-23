@@ -1,28 +1,13 @@
-import { randomBytes } from 'crypto';
 import { cryptonote, p2p } from '../config';
+import { Configuration } from '../config/types';
 import { INetwork, IServerConfig, P2PServer } from '../p2p/index';
 import { PeerList, PeerManager } from '../p2p/peer-manager';
 import { Handler } from '../p2p/protocol/handler';
-import { getBlockFile } from '../util/fs';
+import { getBlockFile, getDefaultAppDir } from '../util/fs';
 import { IP } from '../util/ip';
 import { getBlockChain } from './blockchain';
 
-const config: IServerConfig = {
-  host: '127.0.0.1',
-  port: 29800,
-};
-
-config.isAllowLocalIp = true;
-
-config.seedNode = [
-  { port: 19800, ip: IP.toNumber('69.171.73.252') },
-  { port: 19800, ip: IP.toNumber('78.141.199.140') },
-  { port: 19800, ip: IP.toNumber('47.91.226.168') },
-  // { port: 19800, ip: IP.toNumber('39.108.160.252') },  // deprecated
-  // { port: 19800, ip: IP.toNumber("144.202.10.183") }   // deprecated
-];
-
-const network: INetwork = {
+export const network: INetwork = {
   conectionTimeout: p2p.P2P_DEFAULT_CONNECTION_TIMEOUT,
   connectionsCount: p2p.P2P_DEFAULT_CONNECTIONS_COUNT,
   handshakeInterval: p2p.P2P_DEFAULT_HANDSHAKE_INTERVAL,
@@ -35,24 +20,42 @@ const network: INetwork = {
 const white = new PeerList(p2p.P2P_LOCAL_WHITE_PEERLIST_LIMIT);
 const gray = new PeerList(p2p.P2P_LOCAL_GRAY_PEERLIST_LIMIT);
 
-const pm = new PeerManager(white, gray);
+export const pm = new PeerManager(white, gray);
 
-const bc = getBlockChain();
-bc.init();
+export function getServerConfig(config: Configuration.IConfig): IServerConfig {
+  return {
+    host: '0.0.0.0',
+    port: config.net.p2pPort,
+    seedNode: config.seeds,
+    // tslint:disable-next-line:object-literal-sort-keys
+    isAllowLocalIp: true,
+  };
+}
 
-const handler = new Handler(bc);
-
-export const server: P2PServer = new P2PServer(
-  config,
-  network,
-  cryptonote.NETWORK_ID,
-  handler,
-  pm
-);
-
-export function getP2PServer(dir: string): P2PServer {
-  const blc = getBlockChain(getBlockFile(dir));
+export function getHandler(dir: string, config: Configuration.IConfig) {
+  const files: Configuration.IBlockFile = getBlockFile(dir, config);
+  const currency: Configuration.ICurrency = {
+    block: {
+      genesisCoinbaseTxHex: config.block.genesisCoinbaseTxHex,
+      version: {
+        major: 1,
+        minor: 0,
+        patch: 0,
+      },
+    },
+    blockFiles: files,
+    hardfork: [],
+  };
+  const blc = getBlockChain(currency);
   blc.init();
-  const h = new Handler(blc);
-  return new P2PServer(config, network, cryptonote.NETWORK_ID, h, pm);
+  return new Handler(blc);
+}
+
+export function getP2PServer(
+  dir: string,
+  config: Configuration.IConfig
+): P2PServer {
+  const h = getHandler(dir, config);
+  const serverConfig = getServerConfig(config);
+  return new P2PServer(serverConfig, network, cryptonote.NETWORK_ID, h, pm);
 }

@@ -10,7 +10,7 @@ export class Currency {
 
   constructor(config: Configuration.ICurrency) {
     this.config = config;
-    this.blockchain = new BlockChain(config.blockFiles);
+    this.blockchain = new BlockChain(config);
     this.init();
   }
 

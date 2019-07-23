@@ -1,12 +1,14 @@
 import * as assert from 'assert';
 import { readFileSync, unlinkSync } from 'fs';
 import * as path from 'path';
-import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';
-import { server } from '../../src/init/p2p';
+import { getP2PServer } from '../../src/init/p2p';
 import { PeerList, PeerManager } from '../../src/p2p/peer-manager';
 import { P2PStore } from '../../src/p2p/serializer';
 import { IP } from '../../src/util/ip';
 
+import { data } from '../../src/init/net-types/testnet';
+
+const server = getP2PServer(path.resolve(__dirname, '../vigcoin'), data);
 describe('test peer server', () => {
   const p2pFile = path.resolve(__dirname, '../vigcoin/p2pstate.bin');
   const p2pFile1 = path.resolve(__dirname, '../vigcoin/p2pstate.bin.new');
@@ -21,6 +23,7 @@ describe('test peer server', () => {
     const whitePeerList = new PeerList(100);
     const grayPeerList = new PeerList(100);
     const pm = new PeerManager(whitePeerList, grayPeerList);
+
     ps.read(server, pm);
     assert(server.version === 1);
     assert(pm.version === 1);
