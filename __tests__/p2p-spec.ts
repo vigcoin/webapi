@@ -1,9 +1,10 @@
 import assert = require('assert');
 import * as path from 'path';
+import { data } from '../src/init/net-types/testnet';
 import { getP2PServer } from '../src/init/p2p';
 
 const dir = path.resolve(__dirname, './vigcoin');
-const server = getP2PServer(dir);
+const server = getP2PServer(dir, data);
 
 describe('test connection', () => {
   beforeEach(() => {

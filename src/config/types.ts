@@ -1,5 +1,4 @@
 import { Hash } from '../crypto/types';
-import { Hardfork } from '../cryptonote/hardfork';
 import {
   IBlock as IBlockTypes,
   uint16,
@@ -7,6 +6,7 @@ import {
   uint64,
   uint8,
 } from '../cryptonote/types';
+import { IPeer } from '../p2p';
 
 // tslint:disable-next-line: no-namespace
 export namespace Configuration {
@@ -80,7 +80,7 @@ export namespace Configuration {
     block: IBlock;
     transaction: ITransaction;
     net: INet;
-    seeds: string[];
+    seeds: IPeer[];
     checkpoints: ICheckPoint[];
     hardforks: IHardfork[];
     storageVersions: IStorageVersion;

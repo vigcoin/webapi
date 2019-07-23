@@ -1,9 +1,10 @@
 import { Command } from 'commander';
 import { getConfigByType, getType } from '../init/cryptonote';
-import { server } from '../init/p2p';
 import { P2PConfig } from '../p2p/config';
 
 import { logger } from '../logger';
+import { getP2PServer } from '../init/p2p';
+import { getDefaultAppDir } from '../util/fs';
 
 const commander = new Command();
 
@@ -48,8 +49,12 @@ commander
   .option('--data-dir <dir>', 'Specify data directory');
 
 commander.parse(process.argv);
-server.p2pConfig.init(commander);
-const config = getConfigByType(getType(server.p2pConfig.testnet));
+
+const p2pConfig = new P2PConfig();
+p2pConfig.init(commander);
+const config = getConfigByType(getType(p2pConfig.testnet));
+const dir = p2pConfig.dataDir ? p2pConfig.dataDir : getDefaultAppDir();
+const server = getP2PServer(dir, config);
 server.init(config);
 server
   .start()

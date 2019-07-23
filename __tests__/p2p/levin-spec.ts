@@ -12,8 +12,11 @@ import {
   timesyncRequest,
 } from './data';
 
+import { data } from '../../src/init/net-types/mainnet';
+
 import * as path from 'path';
 import { cryptonote } from '../../src/config';
+import { Configuration } from '../../src/config/types';
 import { IPeerNodeData } from '../../src/cryptonote/p2p';
 import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';
 import { getP2PServer } from '../../src/init/p2p';
@@ -23,12 +26,24 @@ import { getBlockFile } from '../../src/util/fs';
 import { IP } from '../../src/util/ip';
 
 const dir = path.resolve(__dirname, '../vigcoin');
-const bc: BlockChain = getBlockChain(getBlockFile(dir));
+const config: Configuration.ICurrency = {
+  block: {
+    genesisCoinbaseTxHex: '111',
+    version: {
+      major: 1,
+      minor: 1,
+      patch: 1,
+    },
+  },
+  blockFiles: getBlockFile(dir, data),
+  hardfork: [],
+};
+const bc: BlockChain = getBlockChain(config);
 bc.init();
 
 const handler = new Handler(bc);
 
-const p2pserver = getP2PServer(dir);
+const p2pserver = getP2PServer(dir, data);
 
 describe('test levin protocol', () => {
   it('should read header', () => {

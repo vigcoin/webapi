@@ -1,23 +1,20 @@
 import { existsSync, mkdirSync } from 'fs';
+import * as _ from 'lodash';
 import * as path from 'path';
 import { Configuration } from '../config/types';
 
-export function getBlockFile(dir: string): Configuration.IBlockFile {
+export function getBlockFile(
+  dir: string,
+  config: Configuration.IConfig
+): Configuration.IBlockFile {
   if (!existsSync(dir)) {
     mkdirSync(dir);
   }
-  const indexFile = path.resolve(dir, './blockindexes.dat');
-  const blockFile = path.resolve(dir, './blocks.dat');
-  const chainFile = path.resolve(dir, './blockchainindices.dat');
-  const cacheFile = path.resolve(dir, './blockscache.dat');
-
-  return {
-    data: blockFile,
-    index: indexFile,
-    // tslint:disable-next-line:object-literal-sort-keys
-    chain: chainFile,
-    cache: cacheFile,
-  };
+  const files = _.clone(config.blockFiles);
+  for (const key of Object.keys(config.blockFiles)) {
+    files[key] = path.resolve(dir, config.blockFiles[key]);
+  }
+  return files;
 }
 
 export function getDefaultAppDir(appName: string = 'vigcoin'): string {
