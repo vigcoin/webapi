@@ -111,7 +111,7 @@ export class PeerManager {
       logger.warn("IP : " + IP.toString(pe.peer.ip) + " not allowed!")
       return;
     }
-    if (this.whitePeers.find(pe) !== -1) {
+    if (this.grayPeers.find(pe) !== -1) {
       logger.warn("IP : " + IP.toString(pe.peer.ip) + " existed!")
       return;
     }

@@ -106,7 +106,7 @@ export class P2PServer extends EventEmitter {
     const interval = setInterval(async () => {
       await this.startConnection();
       this.storeP2PState();
-    }, this.network.handshakeInterval);
+    }, this.network.handshakeInterval * 1000);
   }
 
   public storeP2PState() {
