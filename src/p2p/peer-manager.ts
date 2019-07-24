@@ -108,14 +108,14 @@ export class PeerManager {
 
   public appendGray(pe: IPeerEntry) {
     if (!IP.isAllowed(pe.peer.ip)) {
-      logger.warn("IP : " + IP.toString(pe.peer.ip) + " not allowed!")
+      logger.warn('IP : ' + IP.toString(pe.peer.ip) + ' not allowed!');
       return;
     }
     if (this.grayPeers.find(pe) !== -1) {
-      logger.warn("IP : " + IP.toString(pe.peer.ip) + " existed!")
+      logger.warn('IP : ' + IP.toString(pe.peer.ip) + ' existed!');
       return;
     }
-    logger.warn("IP : " + IP.toString(pe.peer.ip) + " successfully added!")
+    logger.warn('IP : ' + IP.toString(pe.peer.ip) + ' successfully added!');
     this.grayPeers.append(pe);
   }
 

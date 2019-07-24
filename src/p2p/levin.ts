@@ -176,7 +176,7 @@ export class LevinProtocol extends EventEmitter {
   public async invoke(t: any, outgoing: Buffer) {
     return new Promise((resovle, reject) => {
       const request = LevinProtocol.request(t.ID.ID, outgoing, 0, true);
-      logger.info("Invoking Levin request : " + t.ID.ID);
+      logger.info('Invoking Levin request : ' + t.ID.ID);
       this.socket.on('data', buffer => {
         logger.info('Receiving Levin response data!');
         try {
