@@ -176,8 +176,9 @@ export class LevinProtocol extends EventEmitter {
   public async invoke(t: any, outgoing: Buffer) {
     return new Promise((resovle, reject) => {
       const request = LevinProtocol.request(t.ID.ID, outgoing, 0, true);
+      logger.info("Invoking Levin request : " + t.ID.ID);
       this.socket.on('data', buffer => {
-        logger.info('Receiving invoking response data!');
+        logger.info('Receiving Levin response data!');
         try {
           const reader = new BufferStreamReader(buffer);
           const cmd = LevinProtocol.readCommand(reader);
@@ -189,6 +190,7 @@ export class LevinProtocol extends EventEmitter {
             new BufferStreamReader(cmd.buffer)
           );
           resovle(response);
+          logger.info('Successfuly processed Levin invocation!');
         } catch (e) {
           logger.error('Error processing handshake response data!');
           this.socket.destroy();

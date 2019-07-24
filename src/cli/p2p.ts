@@ -2,8 +2,8 @@ import { Command } from 'commander';
 import { getConfigByType, getType } from '../init/cryptonote';
 import { P2PConfig } from '../p2p/config';
 
-import { logger } from '../logger';
 import { getP2PServer } from '../init/p2p';
+import { logger } from '../logger';
 import { getDefaultAppDir } from '../util/fs';
 
 const commander = new Command();

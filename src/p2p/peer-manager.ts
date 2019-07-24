@@ -1,5 +1,6 @@
 import { IPeerEntry } from '../cryptonote/p2p';
 import { uint32, uint8 } from '../cryptonote/types';
+import { logger } from '../logger';
 import { IP } from '../util/ip';
 
 export class PeerList {
@@ -107,11 +108,14 @@ export class PeerManager {
 
   public appendGray(pe: IPeerEntry) {
     if (!IP.isAllowed(pe.peer.ip)) {
+      logger.warn("IP : " + IP.toString(pe.peer.ip) + " not allowed!")
       return;
     }
     if (this.whitePeers.find(pe) !== -1) {
+      logger.warn("IP : " + IP.toString(pe.peer.ip) + " existed!")
       return;
     }
+    logger.warn("IP : " + IP.toString(pe.peer.ip) + " successfully added!")
     this.grayPeers.append(pe);
   }
 

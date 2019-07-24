@@ -162,13 +162,13 @@ export class P2PServer extends EventEmitter {
     for (const peer of this.p2pConfig.peers) {
       logger.info(
         'Appending peer id ' +
-          peer.id +
-          ', ' +
-          peer.peer.ip +
-          ':' +
-          peer.peer.port +
-          ', last seen: ' +
-          peer.lastSeen
+        peer.id +
+        ', ' +
+        peer.peer.ip +
+        ':' +
+        peer.peer.port +
+        ', last seen: ' +
+        peer.lastSeen
       );
       this.pm.appendWhite(peer);
     }
@@ -176,7 +176,7 @@ export class P2PServer extends EventEmitter {
 
   public initSeeds(config: Configuration.IConfig) {
     this.p2pConfig.seedNodes.concat(
-      this.p2pConfig.parseNode(config.seeds.join(','))
+      config.seeds
     );
     this.p2pConfig.seedNodes = Array.from(new Set(this.p2pConfig.seedNodes));
   }
@@ -306,7 +306,7 @@ export class P2PServer extends EventEmitter {
       logger.info('Connecting to priority nodes!');
       await this.connectPeers(this.p2pConfig.priorityNodes);
     }
-    await this.checkConnection();
+    // await this.checkConnection();
     this.isConnecting = false;
   }
 
@@ -441,9 +441,6 @@ export class P2PServer extends EventEmitter {
           await this.connect(peer, true);
         } catch (e) {
           logger.error(e);
-          logger.error(
-            'Error connecting: ' + IP.toString(peer.ip) + ':' + peer.port
-          );
         }
       }
     }
@@ -493,6 +490,7 @@ export class P2PServer extends EventEmitter {
   }
 
   private async handshake(s: Socket, takePeerListOnly: boolean = false) {
+    logger.info(" Inside handshake");
     const request: handshake.IRequest = {
       node: this.getLocalPeerDate(),
       payload: this.handler.getPayLoad(),
@@ -563,8 +561,14 @@ export class P2PServer extends EventEmitter {
     localTime: Date,
     peerEntries: IPeerEntry[]
   ): boolean {
+    logger.info("Handle remote peer list!");
+    for(const pe of peerEntries) {
+      logger.info("Peer found: " + IP.toString(pe.peer.ip) + ":" + pe.peer.port);
+      logger.info("Last seen: " + moment(pe.lastSeen).format('YYYY-MM-DD HH:mm:ss'));
+    }
     const now = Date.now();
     const delta = now - localTime.getTime();
+    logger.info("Delta time is " + delta);
     for (const pe of peerEntries) {
       if (pe.lastSeen.getTime() > localTime.getTime()) {
         logger.error('Found FUTURE peer entry!');
@@ -573,12 +577,13 @@ export class P2PServer extends EventEmitter {
         );
         logger.error(
           'Remote local time: ' +
-            moment(localTime).format('YYYY-MM-DD HH:mm:ss')
+          moment(localTime).format('YYYY-MM-DD HH:mm:ss')
         );
         return false;
       }
       pe.lastSeen = new Date(pe.lastSeen.getTime() + delta);
     }
+    logger.info("Entries Merged!");
     this.pm.merge(peerEntries);
     return true;
   }
