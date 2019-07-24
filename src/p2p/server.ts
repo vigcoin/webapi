@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { randomBytes } from 'crypto';
 import { EventEmitter } from 'events';
-import { existsSync, openSync, closeSync } from 'fs';
+import { closeSync, existsSync, openSync } from 'fs';
 import * as moment from 'moment';
 import { createConnection, createServer, Server, Socket } from 'net';
 import * as path from 'path';
@@ -22,7 +22,7 @@ import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../cryptonote/serialize/writer';
 import { uint8 } from '../cryptonote/types';
 import { logger } from '../logger';
-import { getDefaultAppDir, createFileIfNotExists } from '../util/fs';
+import { getDefaultAppDir } from '../util/fs';
 import { IP } from '../util/ip';
 import { P2PConfig } from './config';
 import { ConnectionState, P2pConnectionContext } from './connection';
@@ -99,12 +99,10 @@ export class P2PServer extends EventEmitter {
   public async start() {
     logger.info('P2P server bootstraping...');
     await this.startServer();
-    await this.onIdle();
+    this.onIdle();
   }
 
   public async onIdle() {
-    await this.startConnection();
-    this.storeP2PState();
     const interval = setInterval(async () => {
       await this.startConnection();
       this.storeP2PState();
@@ -112,6 +110,9 @@ export class P2PServer extends EventEmitter {
   }
 
   public storeP2PState() {
+    if (!this.serializeFile) {
+      return;
+    }
     if (!existsSync(this.serializeFile)) {
       closeSync(openSync(this.serializeFile, 'w'));
       this.p2pStore = new P2PStore(this.serializeFile);
@@ -166,13 +167,13 @@ export class P2PServer extends EventEmitter {
     for (const peer of this.p2pConfig.peers) {
       logger.info(
         'Appending peer id ' +
-        peer.id +
-        ', ' +
-        peer.peer.ip +
-        ':' +
-        peer.peer.port +
-        ', last seen: ' +
-        peer.lastSeen
+          peer.id +
+          ', ' +
+          peer.peer.ip +
+          ':' +
+          peer.peer.port +
+          ', last seen: ' +
+          peer.lastSeen
       );
       this.pm.appendWhite(peer);
     }
@@ -583,7 +584,7 @@ export class P2PServer extends EventEmitter {
         );
         logger.error(
           'Remote local time: ' +
-          moment(localTime).format('YYYY-MM-DD HH:mm:ss')
+            moment(localTime).format('YYYY-MM-DD HH:mm:ss')
         );
         return false;
       }
