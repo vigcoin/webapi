@@ -182,7 +182,7 @@ export class Block {
       transactions,
     };
   }
-  public write(offset: number, blockEntry: IBlockEntry) {
+  public write(blockEntry: IBlockEntry, offset: number = 0) {
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     Block.writeBlock(writer, blockEntry.block);
     writer.writeVarint(blockEntry.height);
@@ -194,7 +194,7 @@ export class Block {
       Transaction.writeEntry(writer, tx);
     }
     const fd = openSync(this.filename, 'r+');
-    writeSync(fd, writer.getBuffer());
+    writeSync(fd, writer.getBuffer(), offset);
     closeSync(fd);
   }
 }

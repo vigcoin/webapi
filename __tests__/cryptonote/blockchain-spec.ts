@@ -6,6 +6,8 @@ import { BlockChain } from '../../src/cryptonote/block/blockchain';
 import { getBlockChain } from '../../src/init/blockchain';
 import { data } from '../../src/init/net-types/testnet';
 import { getBlockFile } from '../../src/util/fs';
+import { exists, existsSync, closeSync, openSync, unlinkSync } from 'fs';
+import { Block } from '../../src/cryptonote/block/block';
 
 describe('read from file', () => {
   const config: Configuration.ICurrency = {
@@ -31,6 +33,19 @@ describe('read from file', () => {
     let height = 0;
     let be = blockChain.get(height);
     assert(be.height === height);
+
+    const filename = path.resolve(__dirname, 'temp.data');
+    if (existsSync(filename)) {
+      unlinkSync(filename);
+    }
+    closeSync(openSync(filename, 'w+'));
+
+    const block = new Block(filename);
+
+    assert(block.empty());
+
+    block.write(be);
+
     const hash = BlockChain.hash(be.block);
     const temp = Buffer.from(
       'ab7f4044c541c1ba28b65010ad6191f8f6c981550141fcbca814e7e026627031',
@@ -39,6 +54,8 @@ describe('read from file', () => {
     assert(hash.equals(temp));
     height = 10;
     be = blockChain.get(height);
+    block.write(be);
+    unlinkSync(filename);
     assert(be.height === height);
   });
 
