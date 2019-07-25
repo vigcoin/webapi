@@ -122,13 +122,20 @@ export class P2PServer extends EventEmitter {
     logger.info('Finished writing P2PState to File : ' + this.serializeFile);
   }
 
+  // try_to_connect_and_handshake_with_new_peer
   public async connect(peer: IPeer, handshakeOnly: boolean) {
     const s = await P2pConnectionContext.createConnection(peer, this.network);
     if (handshakeOnly) {
       await this.handshake(s, handshakeOnly);
       return;
     }
-    this.initContext(s, false);
+    const { context } = this.initContext(s, false);
+    const pe: IPeerEntry = {
+      id: context.peerId,
+      lastSeen: new Date(),
+      peer,
+    };
+    this.pm.appendWhite(pe);
   }
 
   public init(config: Configuration.IConfig) {
@@ -505,7 +512,6 @@ export class P2PServer extends EventEmitter {
 
       if (
         !this.handleRemotePeerList(
-          context,
           response.node.localTime,
           response.localPeerList
         )
@@ -550,7 +556,6 @@ export class P2PServer extends EventEmitter {
   }
 
   private handleRemotePeerList(
-    context: P2pConnectionContext,
     localTime: Date,
     peerEntries: IPeerEntry[]
   ): boolean {

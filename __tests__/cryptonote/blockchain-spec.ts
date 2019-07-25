@@ -3,11 +3,11 @@ import * as path from 'path';
 import { Configuration } from '../../src/config/types';
 import { BlockChain } from '../../src/cryptonote/block/blockchain';
 
+import { closeSync, existsSync, openSync, unlinkSync } from 'fs';
+import { Block } from '../../src/cryptonote/block/block';
 import { getBlockChain } from '../../src/init/blockchain';
 import { data } from '../../src/init/net-types/testnet';
 import { getBlockFile } from '../../src/util/fs';
-import { exists, existsSync, closeSync, openSync, unlinkSync } from 'fs';
-import { Block } from '../../src/cryptonote/block/block';
 
 describe('read from file', () => {
   const config: Configuration.ICurrency = {
