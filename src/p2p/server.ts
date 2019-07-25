@@ -521,6 +521,7 @@ export class P2PServer extends EventEmitter {
       }
 
       if (takePeerListOnly) {
+        logger.info('Handshake take peer list only!');
         return true;
       }
 

@@ -44,6 +44,7 @@ describe('test peer server', () => {
     }
     peerId = server.id;
   });
+
   it('should write p2p state file 1', () => {
     const ps = new P2PStore(outFile);
     const whitePeerList = new PeerList(100);
@@ -62,6 +63,11 @@ describe('test peer server', () => {
     const out = readFileSync(outFile);
     assert(origin.equals(out));
     unlinkSync(outFile);
+    const length = pm.gray.length;
+    pm.merge(pm.gray);
+    assert(pm.gray.length === length);
+    pm.merge(pm.white);
+    assert(pm.gray.length > length);
   });
 
   it('should read p2p state file ', () => {

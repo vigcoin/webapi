@@ -57,6 +57,33 @@ describe('test p2p config', () => {
     assert(p2pConfig.dataDir === '/data');
   });
 
+  it('should test hideMyPort', () => {
+    const p2pConfig = new P2PConfig();
+    p2pConfig.init({
+      hideMyPort: true,
+    });
+    const myPort = p2pConfig.getMyPort();
+    assert(myPort === 0);
+  });
+
+  it('should test p2pExternalPort', () => {
+    const p2pConfig = new P2PConfig();
+    p2pConfig.init({
+      p2pExternalPort: 8088,
+    });
+    const myPort = p2pConfig.getMyPort();
+    assert(myPort === 8088);
+  });
+
+  it('should test p2pBindPort', () => {
+    const p2pConfig = new P2PConfig();
+    p2pConfig.init({
+      p2pBindPort: 8081,
+    });
+    const myPort = p2pConfig.getMyPort();
+    assert(myPort === 8081);
+  });
+
   // it('should test cli', async () => {
   //   const res: any = await cli(
   //     path.resolve(__dirname, '../../src/cli/p2p.ts'),
