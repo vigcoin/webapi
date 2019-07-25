@@ -1,8 +1,8 @@
 import * as assert from 'assert';
-import { P2pConnectionContext } from '../../src/p2p/connection';
-import { IPeer, INetwork } from '../../src/p2p';
-import { IP } from '../../src/util/ip';
 import { p2p } from '../../src/config';
+import { INetwork, IPeer } from '../../src/p2p';
+import { P2pConnectionContext } from '../../src/p2p/connection';
+import { IP } from '../../src/util/ip';
 
 describe('test connections', () => {
   it('should connect to peer', async () => {

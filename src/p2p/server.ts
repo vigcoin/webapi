@@ -207,25 +207,15 @@ export class P2PServer extends EventEmitter {
     }
   }
 
-  public initContext(
-    s: Socket,
-    inComing: boolean = true,
-    handshakeOnly: boolean = false
-  ) {
+  public initContext(s: Socket, inComing: boolean = true) {
     if (inComing) {
       logger.info('New incoming context creating');
     } else {
-      logger.info('New outcoming context creating');
+      logger.info('New outgoing context creating');
     }
     const context = new P2pConnectionContext(s);
     context.isIncoming = inComing;
     const levin = new LevinProtocol(s);
-    if (handshakeOnly) {
-      return {
-        context,
-        levin,
-      };
-    }
     return this.initLevin(s, context, levin);
   }
 
@@ -309,7 +299,7 @@ export class P2PServer extends EventEmitter {
       logger.info('Connecting to priority nodes!');
       await this.connectPeers(this.p2pConfig.priorityNodes);
     }
-    // await this.checkConnection();
+    await this.checkConnection();
     this.isConnecting = false;
   }
 
@@ -367,7 +357,7 @@ export class P2PServer extends EventEmitter {
     for (const peer of peers) {
       if (!this.isConnected(peer.peer)) {
         try {
-          await this.connect(peer.peer, true);
+          await this.connect(peer.peer, false);
         } catch (e) {
           logger.error(e);
         }
@@ -493,14 +483,14 @@ export class P2PServer extends EventEmitter {
   }
 
   private async handshake(s: Socket, takePeerListOnly: boolean = false) {
-    logger.info(' Inside handshake');
+    logger.info('Sending handshaking request ...');
     const request: handshake.IRequest = {
       node: this.getLocalPeerDate(),
       payload: this.handler.getPayLoad(),
     };
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     handshake.Writer.request(writer, request);
-    const { context, levin } = this.initContext(s, false, true);
+    const { context, levin } = this.initContext(s, false);
     try {
       const response: any = await levin.invoke(handshake, writer.getBuffer());
       context.version = response.node.version;
@@ -509,7 +499,7 @@ export class P2PServer extends EventEmitter {
           Buffer.from(response.node.networkId)
         )
       ) {
-        logger.error('Handshake failed! Network id is mismatched!');
+        logger.error('Handshaking failed! Network id is mismatched!');
         return false;
       }
 
@@ -532,7 +522,7 @@ export class P2PServer extends EventEmitter {
 
       return true;
     } catch (e) {
-      logger.error('Fail to invoke handshaking!');
+      logger.error('Fail to handshake with peer!');
       logger.error(e);
       return false;
     }
@@ -541,7 +531,7 @@ export class P2PServer extends EventEmitter {
   private processPayLoad(
     context: P2pConnectionContext,
     data: ICoreSyncData,
-    isInitial
+    isInitial: boolean
   ) {
     this.handler.processPayLoad(context, data, isInitial);
 

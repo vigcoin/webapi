@@ -12,7 +12,7 @@ import {
   timesyncRequest,
 } from './data';
 
-import { data } from '../../src/init/net-types/mainnet';
+import { data as mainnet } from '../../src/init/net-types/mainnet';
 
 import * as path from 'path';
 import { cryptonote } from '../../src/config';
@@ -35,7 +35,7 @@ const config: Configuration.ICurrency = {
       patch: 1,
     },
   },
-  blockFiles: getBlockFile(dir, data),
+  blockFiles: getBlockFile(dir, mainnet),
   hardfork: [],
 };
 const bc: BlockChain = getBlockChain(config);
@@ -43,7 +43,7 @@ bc.init();
 
 const handler = new Handler(bc);
 
-const p2pserver = getP2PServer(dir, data);
+const p2pserver = getP2PServer(dir, mainnet);
 
 describe('test levin protocol', () => {
   it('should read header', () => {
