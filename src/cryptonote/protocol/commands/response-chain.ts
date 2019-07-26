@@ -8,8 +8,8 @@ namespace NSResponseChain {
     ID = CN_COMMANDS_POOL_BASE + 7,
   }
   export interface IRequest {
-    blockHashes: Hash[],
-    startHeight: uint32,
-    totalHeight: uint32
+    blockHashes: Hash[];
+    startHeight: uint32;
+    totalHeight: uint32;
   }
 }

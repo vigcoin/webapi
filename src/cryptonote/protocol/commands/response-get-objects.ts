@@ -8,9 +8,9 @@ namespace NSResponseGetObjects {
     ID = CN_COMMANDS_POOL_BASE + 4,
   }
   export interface IRequest {
-    txs: Hash[],
-    blocks: IBlockCompletEntry[],
-    missedHashes: Hash[],
-    currentBlockchainHeight: uint32
+    txs: Hash[];
+    blocks: IBlockCompletEntry[];
+    missedHashes: Hash[];
+    currentBlockchainHeight: uint32;
   }
 }

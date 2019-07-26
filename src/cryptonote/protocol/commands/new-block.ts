@@ -7,8 +7,8 @@ namespace NSNewBlock {
     ID = CN_COMMANDS_POOL_BASE + 1,
   }
   export interface IRequest {
-    blockCompleteEntry: IBlockCompletEntry,
-    currentBlockHeight: uint32,
-    hop: uint32
+    blockCompleteEntry: IBlockCompletEntry;
+    currentBlockHeight: uint32;
+    hop: uint32;
   }
 }

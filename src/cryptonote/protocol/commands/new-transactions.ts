@@ -7,6 +7,6 @@ namespace NSNewTransactions {
     ID = CN_COMMANDS_POOL_BASE + 2,
   }
   export interface IRequest {
-    txs: string[]
+    txs: string[];
   }
 }

@@ -176,13 +176,13 @@ export class P2PServer extends EventEmitter {
     for (const peer of this.p2pConfig.peers) {
       logger.info(
         'Appending peer id ' +
-        peer.id +
-        ', ' +
-        peer.peer.ip +
-        ':' +
-        peer.peer.port +
-        ', last seen: ' +
-        peer.lastSeen
+          peer.id +
+          ', ' +
+          peer.peer.ip +
+          ':' +
+          peer.peer.port +
+          ', last seen: ' +
+          peer.lastSeen
       );
       this.pm.appendWhite(peer);
     }
@@ -584,7 +584,7 @@ export class P2PServer extends EventEmitter {
         );
         logger.error(
           'Remote local time: ' +
-          moment(localTime).format('YYYY-MM-DD HH:mm:ss')
+            moment(localTime).format('YYYY-MM-DD HH:mm:ss')
         );
         return false;
       }

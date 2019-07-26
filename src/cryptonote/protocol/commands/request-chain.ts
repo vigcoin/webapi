@@ -7,6 +7,6 @@ namespace NSRequestChain {
     ID = CN_COMMANDS_POOL_BASE + 6,
   }
   export interface IRequest {
-    blockHashes: Hash[]
+    blockHashes: Hash[];
   }
 }

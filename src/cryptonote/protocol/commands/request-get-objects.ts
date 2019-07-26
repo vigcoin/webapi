@@ -7,7 +7,7 @@ namespace NSRequestGetObjects {
     ID = CN_COMMANDS_POOL_BASE + 3,
   }
   export interface IRequest {
-    txs: Hash[],
-    blocks: Hash[]
+    txs: Hash[];
+    blocks: Hash[];
   }
 }

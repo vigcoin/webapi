@@ -8,6 +8,6 @@ namespace NSRequestTXPool {
     ID = CN_COMMANDS_POOL_BASE + 8,
   }
   export interface IRequest {
-    txs: Hash[]
+    txs: Hash[];
   }
 }
