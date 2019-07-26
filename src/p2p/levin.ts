@@ -201,6 +201,7 @@ export class LevinProtocol extends EventEmitter {
     });
   }
 
+  // connectionHandler
   public onIncomingData(
     reader: BufferStreamReader,
     context: P2pConnectionContext,
@@ -208,10 +209,12 @@ export class LevinProtocol extends EventEmitter {
   ) {
     switch (context.state) {
       case ConnectionState.SYNC_REQURIED:
+        logger.info('Start synchronizing!');
         context.state = ConnectionState.SYNCHRONIZING;
         // handler.startSync(context);
         break;
       case ConnectionState.POOL_SYNC_REQUIRED:
+        logger.info('Into normal state!');
         context.state = ConnectionState.NORMAL;
         // handler.requestMissingPoolTransactions(context);
         break;
@@ -219,8 +222,13 @@ export class LevinProtocol extends EventEmitter {
 
     try {
       const cmd = LevinProtocol.readCommand(reader);
+      logger.info('Command ID: ' + cmd.command);
+      logger.info('Is Response: ' + cmd.isResponse);
+      logger.info('Is Notify: ' + cmd.isNotify);
       this.onCommand(cmd, context, handler);
     } catch (e) {
+      logger.error(e);
+      logger.info('Expection occur! Server shutting down...');
       context.state = ConnectionState.SHUTDOWN;
     }
   }
@@ -230,6 +238,7 @@ export class LevinProtocol extends EventEmitter {
     context: P2pConnectionContext,
     handler: Handler
   ) {
+    logger.info('On command : ' + cmd.command);
     switch (cmd.command) {
       case handshake.ID.ID:
         this.onHandshake(cmd, context, handler);
@@ -245,7 +254,7 @@ export class LevinProtocol extends EventEmitter {
         this.onPing(cmd, context);
         break;
       default:
-        throw new Error('Error Command!');
+        handler.onCommand(cmd.command, cmd.buffer, context);
     }
   }
   public onTimedSyncResponse(cmd: ILevinCommand) {
@@ -269,7 +278,7 @@ export class LevinProtocol extends EventEmitter {
       )
     );
 
-    assert(context.isIncoming);
+    // assert(context.isIncoming);
 
     assert(!context.peerId.length);
 

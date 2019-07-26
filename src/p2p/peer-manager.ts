@@ -39,6 +39,9 @@ export class PeerList {
       this.list.splice(found, 1);
     }
     this.list.push(pe);
+    this.list.sort((a: IPeerEntry, b: IPeerEntry) => {
+      return b.lastSeen.getTime() - a.lastSeen.getTime();
+    });
     this.trim();
   }
 

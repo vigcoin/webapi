@@ -4,9 +4,10 @@ import { PeerList, PeerManager } from '../../src/p2p/peer-manager';
 import { IP } from '../../src/util/ip';
 
 describe('test peer', () => {
+  const lastSeen = new Date();
   const pe = [
     {
-      lastSeen: new Date(),
+      lastSeen,
       peer: {
         port: 1080,
         // tslint:disable-next-line:object-literal-sort-keys
@@ -16,7 +17,7 @@ describe('test peer', () => {
       id: Buffer.from([0, 1, 2, 3, 4, 5, 6, 7]),
     },
     {
-      lastSeen: new Date(),
+      lastSeen,
       peer: {
         port: 1081,
         // tslint:disable-next-line:object-literal-sort-keys
@@ -26,7 +27,7 @@ describe('test peer', () => {
       id: Buffer.from([0, 1, 2, 3, 4, 5, 6, 7]),
     },
     {
-      lastSeen: new Date(),
+      lastSeen,
       peer: {
         port: 1080,
         // tslint:disable-next-line:object-literal-sort-keys
@@ -36,7 +37,7 @@ describe('test peer', () => {
       id: Buffer.from([0, 1, 2, 3, 4, 5, 6, 7]),
     },
     {
-      lastSeen: new Date(),
+      lastSeen,
       peer: {
         port: 1081,
         // tslint:disable-next-line:object-literal-sort-keys
@@ -46,7 +47,7 @@ describe('test peer', () => {
       id: Buffer.from([0, 1, 2, 3, 4, 5, 6, 7]),
     },
     {
-      lastSeen: new Date(),
+      lastSeen,
       peer: {
         port: 1081,
         // tslint:disable-next-line:object-literal-sort-keys
@@ -56,7 +57,7 @@ describe('test peer', () => {
       id: Buffer.from([0, 1, 2, 3, 4, 5, 6, 7]),
     },
     {
-      lastSeen: new Date(),
+      lastSeen,
       peer: {
         port: 2081,
         // tslint:disable-next-line:object-literal-sort-keys

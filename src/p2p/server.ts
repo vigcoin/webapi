@@ -168,19 +168,21 @@ export class P2PServer extends EventEmitter {
       );
     } else {
       this.id = randomBytes(8);
-      logger.info('Random P2PState Peer ID Created : ' + this.id);
+      logger.info(
+        'Random P2PState Peer ID Created : ' + this.id.toString('hex')
+      );
     }
 
     for (const peer of this.p2pConfig.peers) {
       logger.info(
         'Appending peer id ' +
-          peer.id +
-          ', ' +
-          peer.peer.ip +
-          ':' +
-          peer.peer.port +
-          ', last seen: ' +
-          peer.lastSeen
+        peer.id +
+        ', ' +
+        peer.peer.ip +
+        ':' +
+        peer.peer.port +
+        ', last seen: ' +
+        peer.lastSeen
       );
       this.pm.appendWhite(peer);
     }
@@ -260,7 +262,9 @@ export class P2PServer extends EventEmitter {
       }
     });
     s.on('end', () => {
-      logger.info('Connection ended!');
+      logger.info(
+        'Connection ' + s.remoteAddress + ':' + s.remotePort + ' ended!'
+      );
       s.destroy();
     });
     return {
@@ -580,7 +584,7 @@ export class P2PServer extends EventEmitter {
         );
         logger.error(
           'Remote local time: ' +
-            moment(localTime).format('YYYY-MM-DD HH:mm:ss')
+          moment(localTime).format('YYYY-MM-DD HH:mm:ss')
         );
         return false;
       }

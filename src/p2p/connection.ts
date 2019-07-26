@@ -81,15 +81,13 @@ export class P2pConnectionContext extends ConnectionContext {
         resolve(s);
       });
       s.on('error', e => {
-        logger.error('Connection Error!');
-        logger.error(e);
+        logger.error('Connecting to ' + host + ':' + port + ' errored!');
         s.destroy();
         reject(e);
       });
       timer = setTimeout(() => {
+        logger.error('Connecting to ' + host + ':' + port + ' time out!');
         const e = new Error('Time out!');
-        logger.error('Error connecting to ' + host + ':' + port + '!');
-        // logger.error(e);
         s.destroy();
         reject(e);
       }, network.conectionTimeout);

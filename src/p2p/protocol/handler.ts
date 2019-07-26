@@ -96,21 +96,39 @@ export class Handler extends EventEmitter {
     this.emit(PEERS_COUNT_UPDATED, count);
   }
 
-  public onCommand(cmd: Command) {
+  public onCommand(
+    cmd: Command,
+    request: Buffer,
+    context: P2pConnectionContext
+  ) {
     switch (cmd) {
       case Command.NOTIFY_NEW_BLOCK:
+        logger.info('on Notify New Block');
         this.onNewBlock();
         break;
       case Command.NOTIFY_NEW_TRANSACTIONS:
+        logger.info('on Notify New Transactions');
         this.onNewTransactions();
         break;
       case Command.NOTIFY_REQUEST_GET_OBJECTS:
+        logger.info('on Notify Request Objects');
+        break;
+
       case Command.NOTIFY_RESPONSE_GET_OBJECTS:
+        logger.info('on Notify Response Objects');
+
+        break;
       case Command.NOTIFY_REQUEST_CHAIN:
+        logger.info('on Notify Request Chain');
+        break;
       case Command.NOTIFY_RESPONSE_CHAIN_ENTRY:
+        logger.info('on Notify Response Chain Entry');
+        break;
       case Command.NOTIFY_REQUEST_TX_POOL:
+        logger.info('on Notify Request TX Pool');
         break;
       default:
+        logger.info('Unknown Command!');
         break;
     }
   }

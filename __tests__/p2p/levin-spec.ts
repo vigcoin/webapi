@@ -296,7 +296,7 @@ describe('test levin protocol', () => {
     });
   });
 
-  it('should handle catch wrong cmd', done => {
+  it('should handle unkown cmd', done => {
     let catched = false;
     const server = createServer(socket => {
       const { levin, context } = p2pserver.initContext(socket);
@@ -312,7 +312,7 @@ describe('test levin protocol', () => {
       } catch (e) {
         catched = true;
       }
-      assert(catched);
+      assert(!catched);
       client.destroy();
       server.close();
       done();
