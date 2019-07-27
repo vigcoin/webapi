@@ -6,12 +6,12 @@ import {
 } from '../../config/events';
 import { BlockChain } from '../../cryptonote/block/blockchain';
 import { ICoreSyncData } from '../../cryptonote/p2p';
+import { NSNewBlock } from '../../cryptonote/protocol/commands/new-block';
+import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { uint32 } from '../../cryptonote/types';
 import { logger } from '../../logger';
 import { ConnectionState, P2pConnectionContext } from '../connection';
 import { Command } from './command';
-import { NSNewBlock } from '../../cryptonote/protocol/commands/new-block';
-import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 
 export class Handler extends EventEmitter {
   public peers: uint32 = 0;
