@@ -452,7 +452,7 @@ export const buffer = Buffer.from([
   0x00,
 ]);
 
-describe('command data', () => {
+describe('command new block', () => {
   it('should have new block buffer', () => {
     assert(buffer);
   });

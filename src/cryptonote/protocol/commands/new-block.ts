@@ -1,14 +1,12 @@
 import {
-  readJSON,
-  writeKVBlockHeader,
-  writeJSONVarint,
-  writeJSONObjectKeyValue,
   BIN_KV_SERIALIZE_TYPE_OBJECT,
   BIN_KV_SERIALIZE_TYPE_STRING,
-  BIN_KV_SERIALIZE_TYPE_ARRAY,
-  writeJSONName,
-  BIN_KV_SERIALIZE_TYPE_UINT64,
   BIN_KV_SERIALIZE_TYPE_UINT32,
+  readJSON,
+  writeJSONName,
+  writeJSONObjectKeyValue,
+  writeJSONVarint,
+  writeKVBlockHeader,
 } from '../../../p2p/protocol/json';
 import { BufferStreamReader } from '../../serialize/reader';
 import { BufferStreamWriter } from '../../serialize/writer';

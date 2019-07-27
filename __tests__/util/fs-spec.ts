@@ -21,6 +21,8 @@ describe('test fs', () => {
 
   test('Should get env', async () => {
     const dir = path.resolve(__dirname, '../tmp');
+    const home = getDefaultAppDir();
+    assert(home.indexOf(dir) === -1);
     process.env.APPDATA = dir;
     const appDir = getDefaultAppDir();
     assert(appDir.indexOf(dir) !== -1);

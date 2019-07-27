@@ -1,9 +1,11 @@
 import * as assert from 'assert';
 import { NSNewBlock } from '../../../src/cryptonote/protocol/commands/new-block';
+import { NSRequestTXPool } from '../../../src/cryptonote/protocol/commands/request-tx-pool';
 import { BufferStreamReader } from '../../../src/cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../../src/cryptonote/serialize/writer';
 import { Command } from '../../../src/p2p/protocol/command';
-import { buffer as newBlockBuffer, buffer } from './new-block';
+import { buffer as newBlockBuffer } from './new-block';
+import { buffer as txPoolBuffer } from './tx-pool';
 
 describe('test cryptonote protocol command', () => {
   it('should have proper value', () => {
@@ -41,5 +43,28 @@ describe('test cryptonote protocol command', () => {
     );
     assert(request.blockCompleteEntry.txs.length === 1);
     assert(request.blockCompleteEntry.txs[0].equals(buffer1));
+  });
+
+  it('should handle tx pool', () => {
+    const request = NSRequestTXPool.Reader.request(
+      new BufferStreamReader(txPoolBuffer)
+    );
+    console.log(request);
+    assert(!request.txs);
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    NSRequestTXPool.Writer.request(writer, request);
+    assert(txPoolBuffer.equals(writer.getBuffer()));
+    const tx = Buffer.from([0x11, 0x12, 0x13]);
+    const tx1 = Buffer.from([0x11, 0x12, 0x15]);
+    request.txs = [tx, tx1];
+    const writer1 = new BufferStreamWriter(Buffer.alloc(0));
+    NSRequestTXPool.Writer.request(writer1, request);
+    const request1 = NSRequestTXPool.Reader.request(
+      new BufferStreamReader(writer1.getBuffer())
+    );
+    console.log(request1);
+    assert(request1.txs.length === 2);
+    assert(request.txs[0].equals(tx));
+    assert(request.txs[1].equals(tx1));
   });
 });
