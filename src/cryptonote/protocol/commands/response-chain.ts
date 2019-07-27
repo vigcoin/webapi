@@ -3,7 +3,7 @@ import { uint32 } from '../../types';
 import { CN_COMMANDS_POOL_BASE } from '../defines';
 
 // tslint:disable-next-line:no-namespace
-namespace NSResponseChain {
+export namespace NSResponseChain {
   export enum ID {
     ID = CN_COMMANDS_POOL_BASE + 7,
   }

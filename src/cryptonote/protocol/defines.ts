@@ -3,13 +3,13 @@ import { ITransactionPrefix } from '../types';
 export const CN_COMMANDS_POOL_BASE = 2000;
 
 export interface IBlockCompletEntry {
-  block: string;
-  txs: string[];
+  block: Buffer;
+  txs?: Buffer[];
 }
 
 export interface IBlockFullInfo {
-  block: string;
-  txs: string[];
+  block: Buffer;
+  txs: Buffer[];
   hash: Hash;
 }
 
@@ -20,6 +20,6 @@ export interface ITransactionPrefixInfo {
 
 export interface IBlockShortInfo {
   hash: Hash;
-  block: string;
+  block: Buffer;
   txPrefixes: ITransactionPrefixInfo[];
 }

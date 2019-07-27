@@ -10,6 +10,8 @@ import { uint32 } from '../../cryptonote/types';
 import { logger } from '../../logger';
 import { ConnectionState, P2pConnectionContext } from '../connection';
 import { Command } from './command';
+import { NSNewBlock } from '../../cryptonote/protocol/commands/new-block';
+import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 
 export class Handler extends EventEmitter {
   public peers: uint32 = 0;
@@ -96,14 +98,34 @@ export class Handler extends EventEmitter {
     this.emit(PEERS_COUNT_UPDATED, count);
   }
 
+  // public notifyAdaptor(req: Buffer, context: P2pConnectionContext) {
+
+  // }
+
+  // int notifyAdaptor(const binary_array_t& reqBuf, CryptoNoteConnectionContext& ctx, Handler handler) {
+
+  //   typedef typename Command::request Request;
+  //   int command = Command::ID;
+
+  //   Request req = boost::value_initialized<Request>();
+  //   if (!LevinProtocol::decode(reqBuf, req)) {
+  //     throw std::runtime_error("Failed to load_from_binary in command " + std::to_string(command));
+  //   }
+
+  //   return handler(command, req, ctx);
+  // }
+
   public onCommand(
     cmd: Command,
-    request: Buffer,
+    buffer: Buffer,
     context: P2pConnectionContext
   ) {
     switch (cmd) {
       case Command.NOTIFY_NEW_BLOCK:
         logger.info('on Notify New Block');
+        // const request: NSNewBlock.IRequest = NSNewBlock.Reader.request(
+        // new BufferStreamReader(buffer)
+        // );
         this.onNewBlock();
         break;
       case Command.NOTIFY_NEW_TRANSACTIONS:
