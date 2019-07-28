@@ -281,6 +281,7 @@ export function writeJSONDateType(
   writer.writeUInt8(BIN_KV_SERIALIZE_TYPE_UINT64);
   writer.writeDate(date);
 }
+
 export function writeJSONIPeerNodeData(
   writer: BufferStreamWriter,
   name: string,
@@ -393,4 +394,24 @@ export function readJSONIPeerEntryList(
     list.push(readJSONIPeerEntry(reader));
   }
   return list;
+}
+
+// Cryptonote process
+
+export function writeTXList(
+  writer: BufferStreamWriter,
+  name: string,
+  txs: Buffer[]
+) {
+  writeJSONName(writer, name);
+  writer.writeUInt8(
+    // tslint:disable-next-line:no-bitwise
+    BIN_KV_SERIALIZE_TYPE_STRING | BIN_KV_SERIALIZE_FLAG_ARRAY
+  );
+  writeJSONVarint(writer, txs.length);
+  for (const tx of txs) {
+    writer.writeUInt8(BIN_KV_SERIALIZE_TYPE_STRING);
+    writeJSONVarint(writer, tx.length);
+    writer.write(tx);
+  }
 }

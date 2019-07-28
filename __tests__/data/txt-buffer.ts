@@ -1,8 +1,8 @@
 import { writeFileSync } from 'fs';
-import { data } from './response-chain-data';
+import { data } from './response-get-objects-data';
 
-function convert(data: Buffer, filename: string) {
-  writeFileSync(filename, data);
+function convert(buffer: Buffer, filename: string) {
+  writeFileSync(filename, buffer);
 }
 
-convert(Buffer.from(data), 'response-chain.bin');
+convert(Buffer.from(data), 'response-get-objects-data.bin');

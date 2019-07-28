@@ -1,14 +1,17 @@
 import * as assert from 'assert';
+import { randomBytes } from 'crypto';
 import { NSNewBlock } from '../../../src/cryptonote/protocol/commands/new-block';
 import { NSNewTransactions } from '../../../src/cryptonote/protocol/commands/new-transactions';
 import { NSRequestTXPool } from '../../../src/cryptonote/protocol/commands/request-tx-pool';
 import { NSResponseChain } from '../../../src/cryptonote/protocol/commands/response-chain';
+import { NSResponseGetObjects } from '../../../src/cryptonote/protocol/commands/response-get-objects';
 import { BufferStreamReader } from '../../../src/cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../../src/cryptonote/serialize/writer';
 import { Command } from '../../../src/p2p/protocol/command';
 import { buffer as newBlockBuffer } from '../../data/new-block';
 import { buffer as newTransactionsBuffer } from '../../data/new-transactions';
 import { buffer as responseChainBuffer } from '../../data/response-chain';
+import { buffer as responseGetObjectsBuffer } from '../../data/response-get-objects';
 import { buffer as txPoolBuffer } from '../../data/tx-pool';
 
 describe('test cryptonote protocol command', () => {
@@ -95,5 +98,32 @@ describe('test cryptonote protocol command', () => {
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     NSResponseChain.Writer.request(writer, request);
     assert(responseChainBuffer.equals(writer.getBuffer()));
+  });
+
+  it('should handle response get objects', () => {
+    const request: NSResponseGetObjects.IRequest = NSResponseGetObjects.Reader.request(
+      new BufferStreamReader(responseGetObjectsBuffer)
+    );
+    assert(request.currentBlockchainHeight === 328051);
+    assert(request.blocks.length === 200);
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    NSResponseGetObjects.Writer.request(writer, request);
+    const newBuffer = writer.getBuffer();
+    for (let i = 0; i < newBuffer.length; i++) {
+      assert(newBuffer[i] === responseGetObjectsBuffer[i]);
+    }
+    assert(responseGetObjectsBuffer.equals(writer.getBuffer()));
+
+    request.txs = [randomBytes(34)];
+    request.missedHashes = [randomBytes(32)];
+
+    request.blocks[0].txs = [randomBytes(23)];
+    const writer1 = new BufferStreamWriter(Buffer.alloc(0));
+    NSResponseGetObjects.Writer.request(writer1, request);
+
+    // const request1: NSResponseGetObjects.IRequest = NSResponseGetObjects.Reader.request(
+    //   new BufferStreamReader(writer1.getBuffer())
+    // );
+    // assert(request1.missedHashes.length === 1);
   });
 });
