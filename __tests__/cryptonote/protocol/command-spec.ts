@@ -2,12 +2,14 @@ import * as assert from 'assert';
 import { NSNewBlock } from '../../../src/cryptonote/protocol/commands/new-block';
 import { NSNewTransactions } from '../../../src/cryptonote/protocol/commands/new-transactions';
 import { NSRequestTXPool } from '../../../src/cryptonote/protocol/commands/request-tx-pool';
+import { NSResponseChain } from '../../../src/cryptonote/protocol/commands/response-chain';
 import { BufferStreamReader } from '../../../src/cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../../src/cryptonote/serialize/writer';
 import { Command } from '../../../src/p2p/protocol/command';
-import { buffer as newBlockBuffer } from './new-block';
-import { buffer as newTransactionsBuffer } from './new-transactions';
-import { buffer as txPoolBuffer } from './tx-pool';
+import { buffer as newBlockBuffer } from '../../data/new-block';
+import { buffer as newTransactionsBuffer } from '../../data/new-transactions';
+import { buffer as responseChainBuffer } from '../../data/response-chain';
+import { buffer as txPoolBuffer } from '../../data/tx-pool';
 
 describe('test cryptonote protocol command', () => {
   it('should have proper value', () => {
@@ -78,20 +80,20 @@ describe('test cryptonote protocol command', () => {
 
     const newBuffer = writer.getBuffer();
     for (let i = 0; i < newBuffer.length; i++) {
-      console.log(i, newTransactionsBuffer[i], newBuffer[i]);
       assert(newBuffer[i] === newTransactionsBuffer[i]);
     }
-    // assert(newTransactionsBuffer.equals(writer.getBuffer()));
-    // const tx = Buffer.from([0x11, 0x12, 0x13]);
-    // const tx1 = Buffer.from([0x11, 0x12, 0x15]);
-    // request.txs = [tx, tx1];
-    // const writer1 = new BufferStreamWriter(Buffer.alloc(0));
-    // NSNewTransactions.Writer.request(writer1, request);
-    // const request1 = NSNewTransactions.Reader.request(
-    //   new BufferStreamReader(writer1.getBuffer())
-    // );
-    // assert(request1.txs.length === 2);
-    // assert(request.txs[0].equals(tx));
-    // assert(request.txs[1].equals(tx1));
+    assert(newTransactionsBuffer.equals(writer.getBuffer()));
+  });
+
+  it('should handle response chain', () => {
+    const request: NSResponseChain.IRequest = NSResponseChain.Reader.request(
+      new BufferStreamReader(responseChainBuffer)
+    );
+    assert(request.blockHashes.length);
+    assert(request.startHeight === 147);
+    assert(request.totalHeight === 327729);
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    NSResponseChain.Writer.request(writer, request);
+    assert(responseChainBuffer.equals(writer.getBuffer()));
   });
 });
