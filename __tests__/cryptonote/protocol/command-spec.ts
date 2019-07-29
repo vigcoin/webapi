@@ -2,6 +2,7 @@ import * as assert from 'assert';
 import { randomBytes } from 'crypto';
 import { NSNewBlock } from '../../../src/cryptonote/protocol/commands/new-block';
 import { NSNewTransactions } from '../../../src/cryptonote/protocol/commands/new-transactions';
+import { NSRequestGetObjects } from '../../../src/cryptonote/protocol/commands/request-get-objects';
 import { NSRequestTXPool } from '../../../src/cryptonote/protocol/commands/request-tx-pool';
 import { NSResponseChain } from '../../../src/cryptonote/protocol/commands/response-chain';
 import { NSResponseGetObjects } from '../../../src/cryptonote/protocol/commands/response-get-objects';
@@ -100,6 +101,20 @@ describe('test cryptonote protocol command', () => {
     assert(responseChainBuffer.equals(writer.getBuffer()));
   });
 
+  it('should handle response get objects', () => {
+    const request: NSRequestGetObjects.IRequest = {
+      txs: [randomBytes(32)],
+    };
+
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    NSRequestGetObjects.Writer.request(writer, request);
+
+    const request1: NSRequestGetObjects.IRequest = NSRequestGetObjects.Reader.request(
+      new BufferStreamReader(writer.getBuffer())
+    );
+
+    assert(request.txs[0].equals(request1.txs[0]));
+  });
   it('should handle response get objects', () => {
     const request: NSResponseGetObjects.IRequest = NSResponseGetObjects.Reader.request(
       new BufferStreamReader(responseGetObjectsBuffer)
