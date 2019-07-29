@@ -113,17 +113,32 @@ describe('test cryptonote protocol command', () => {
       assert(newBuffer[i] === responseGetObjectsBuffer[i]);
     }
     assert(responseGetObjectsBuffer.equals(writer.getBuffer()));
-
     request.txs = [randomBytes(34)];
     request.missedHashes = [randomBytes(32)];
 
+    delete request.blocks[0].block;
     request.blocks[0].txs = [randomBytes(23)];
     const writer1 = new BufferStreamWriter(Buffer.alloc(0));
     NSResponseGetObjects.Writer.request(writer1, request);
 
-    // const request1: NSResponseGetObjects.IRequest = NSResponseGetObjects.Reader.request(
-    //   new BufferStreamReader(writer1.getBuffer())
-    // );
-    // assert(request1.missedHashes.length === 1);
+    const reader1 = new BufferStreamReader(writer1.getBuffer());
+    const request1: NSResponseGetObjects.IRequest = NSResponseGetObjects.Reader.request(
+      reader1
+    );
+
+    assert(request1.txs.length === 1);
+    assert(request1.missedHashes.length === 1);
+    assert(request1.blocks[0].txs.length === 1);
+
+    delete request.blocks;
+
+    const writer2 = new BufferStreamWriter(Buffer.alloc(0));
+    NSResponseGetObjects.Writer.request(writer2, request);
+
+    const reader2 = new BufferStreamReader(writer2.getBuffer());
+    const request2: NSResponseGetObjects.IRequest = NSResponseGetObjects.Reader.request(
+      reader2
+    );
+    assert(!request2.blocks);
   });
 });

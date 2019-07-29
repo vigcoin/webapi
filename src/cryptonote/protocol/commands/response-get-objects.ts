@@ -77,15 +77,7 @@ export namespace NSResponseGetObjects {
         }
       }
       if (data.missedHashes) {
-        writeJSONName(writer, 'missed_ids');
-        writer.writeUInt8(
-          // tslint:disable-next-line:no-bitwise
-          BIN_KV_SERIALIZE_TYPE_STRING | BIN_KV_SERIALIZE_FLAG_ARRAY
-        );
-        writeJSONVarint(writer, data.missedHashes.length);
-        for (const hash of data.missedHashes) {
-          writer.writeHash(hash);
-        }
+        writeTXList(writer, 'missed_ids', data.missedHashes);
       }
       writeJSONObjectKeyValue(
         writer,

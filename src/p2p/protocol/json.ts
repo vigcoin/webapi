@@ -410,7 +410,6 @@ export function writeTXList(
   );
   writeJSONVarint(writer, txs.length);
   for (const tx of txs) {
-    writer.writeUInt8(BIN_KV_SERIALIZE_TYPE_STRING);
     writeJSONVarint(writer, tx.length);
     writer.write(tx);
   }
