@@ -2,6 +2,7 @@ import * as assert from 'assert';
 import { randomBytes } from 'crypto';
 import { NSNewBlock } from '../../../src/cryptonote/protocol/commands/new-block';
 import { NSNewTransactions } from '../../../src/cryptonote/protocol/commands/new-transactions';
+import { NSRequestChain } from '../../../src/cryptonote/protocol/commands/request-chain';
 import { NSRequestGetObjects } from '../../../src/cryptonote/protocol/commands/request-get-objects';
 import { NSRequestTXPool } from '../../../src/cryptonote/protocol/commands/request-tx-pool';
 import { NSResponseChain } from '../../../src/cryptonote/protocol/commands/response-chain';
@@ -89,6 +90,30 @@ describe('test cryptonote protocol command', () => {
     assert(newTransactionsBuffer.equals(writer.getBuffer()));
   });
 
+  it('should handle request chain', () => {
+    const request: NSRequestChain.IRequest = {
+    };
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    NSRequestChain.Writer.request(writer, request);
+
+    const request1: NSRequestChain.IRequest = NSRequestChain.Reader.request(
+      new BufferStreamReader(writer.getBuffer())
+    );
+
+    assert(!request.blockHashes)
+    assert(!request1.blockHashes);
+    request1.blockHashes = [randomBytes(32)];
+
+    const writer1 = new BufferStreamWriter(Buffer.alloc(0));
+    NSRequestChain.Writer.request(writer1, request1);
+
+    const request2: NSRequestChain.IRequest = NSRequestChain.Reader.request(
+      new BufferStreamReader(writer1.getBuffer())
+    );
+    assert(request1.blockHashes[0].equals(request2.blockHashes[0]));
+
+  });
+
   it('should handle response chain', () => {
     const request: NSResponseChain.IRequest = NSResponseChain.Reader.request(
       new BufferStreamReader(responseChainBuffer)
@@ -101,7 +126,7 @@ describe('test cryptonote protocol command', () => {
     assert(responseChainBuffer.equals(writer.getBuffer()));
   });
 
-  it('should handle response get objects', () => {
+  it('should handle request get objects', () => {
     const request: NSRequestGetObjects.IRequest = {
       txs: [randomBytes(32)],
     };
