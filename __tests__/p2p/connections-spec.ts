@@ -18,7 +18,7 @@ describe('test connections', () => {
     sendPeerListSize: p2p.P2P_DEFAULT_PEERS_IN_HANDSHAKE,
   };
 
-  it('should connect to peer', async () => {
+  it('should connect to peer with connection manager', async () => {
     const cm = new ConnectionManager();
     const host = '69.171.73.252';
     const port = 19800;
@@ -52,33 +52,47 @@ describe('test connections', () => {
       assert(cm.isPeerUsed(pe, randomBytes(32)));
       assert(cm.isPeerUsed(pe, id));
 
+      const peer1 = {
+        ip,
+        port: 1024,
+      };
       const pe1: IPeerEntry = {
         id: randomBytes(32),
         lastSeen: new Date(),
-        peer: {
-          ip,
-          port: 1024,
-        },
+        peer: peer1,
       };
 
+      assert(!cm.isPeerConnected(peer1));
+
       assert(!cm.isPeerUsed(pe1, id));
+
+      const peer2 = {
+        ip: IP.toNumber('127.0.0.1'),
+        port,
+      };
       const pe2: IPeerEntry = {
         id: randomBytes(32),
         lastSeen: new Date(),
-        peer: {
-          ip: IP.toNumber('127.0.0.1'),
-          port,
-        },
+        peer: peer2,
       };
 
       assert(!cm.isPeerUsed(pe2, id));
+      assert(!cm.isPeerConnected(peer2));
 
       assert(context.isIncoming === false);
 
-      // context.isIncoming = true;
+      context.isIncoming = true;
 
-      // assert(!cm.isPeerUsed(pe, id));
+      assert(!cm.isPeerConnected(peer));
 
+      assert(!cm.isPeerUsed(pe2, id));
+
+      pe2.id = context.peerId;
+      cm.getOutGoingConnectionCount();
+
+      assert(cm.isPeerUsed(pe2, id));
+
+      cm.remove(context);
       socket.destroy();
     } catch (e) {
       caught = true;
