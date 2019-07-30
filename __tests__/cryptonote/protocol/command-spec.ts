@@ -91,8 +91,7 @@ describe('test cryptonote protocol command', () => {
   });
 
   it('should handle request chain', () => {
-    const request: NSRequestChain.IRequest = {
-    };
+    const request: NSRequestChain.IRequest = {};
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     NSRequestChain.Writer.request(writer, request);
 
@@ -100,7 +99,7 @@ describe('test cryptonote protocol command', () => {
       new BufferStreamReader(writer.getBuffer())
     );
 
-    assert(!request.blockHashes)
+    assert(!request.blockHashes);
     assert(!request1.blockHashes);
     request1.blockHashes = [randomBytes(32)];
 
@@ -111,7 +110,6 @@ describe('test cryptonote protocol command', () => {
       new BufferStreamReader(writer1.getBuffer())
     );
     assert(request1.blockHashes[0].equals(request2.blockHashes[0]));
-
   });
 
   it('should handle response chain', () => {

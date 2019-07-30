@@ -18,7 +18,6 @@ export class Handler extends EventEmitter {
   public observedHeight: uint32 = 0;
 
   private blockchain: BlockChain;
-  // tslint:disable-next-line:variable-name
 
   constructor(blockchain: BlockChain) {
     super();
@@ -98,23 +97,6 @@ export class Handler extends EventEmitter {
     this.emit(PEERS_COUNT_UPDATED, count);
   }
 
-  // public notifyAdaptor(req: Buffer, context: P2pConnectionContext) {
-
-  // }
-
-  // int notifyAdaptor(const binary_array_t& reqBuf, CryptoNoteConnectionContext& ctx, Handler handler) {
-
-  //   typedef typename Command::request Request;
-  //   int command = Command::ID;
-
-  //   Request req = boost::value_initialized<Request>();
-  //   if (!LevinProtocol::decode(reqBuf, req)) {
-  //     throw std::runtime_error("Failed to load_from_binary in command " + std::to_string(command));
-  //   }
-
-  //   return handler(command, req, ctx);
-  // }
-
   public onCommand(
     cmd: Command,
     buffer: Buffer,
@@ -123,10 +105,10 @@ export class Handler extends EventEmitter {
     switch (cmd) {
       case Command.NOTIFY_NEW_BLOCK:
         logger.info('on Notify New Block');
-        // const request: NSNewBlock.IRequest = NSNewBlock.Reader.request(
-        // new BufferStreamReader(buffer)
-        // );
-        this.onNewBlock();
+        const request: NSNewBlock.IRequest = NSNewBlock.Reader.request(
+          new BufferStreamReader(buffer)
+        );
+        this.onNewBlock(request, context);
         break;
       case Command.NOTIFY_NEW_TRANSACTIONS:
         logger.info('on Notify New Transactions');
@@ -159,7 +141,12 @@ export class Handler extends EventEmitter {
     // TODO
   }
 
-  public onNewBlock() {}
+  public onNewBlock(
+    request: NSNewBlock.IRequest,
+    context: P2pConnectionContext
+  ) {
+    logger.info('NOTIFY_NEW_BLOCK (hop ' + request.hop + ')');
+  }
   public onNewTransactions() {}
 
   public onRequestObjects() {}

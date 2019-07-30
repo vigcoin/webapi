@@ -23,8 +23,8 @@ export namespace NSRequestChain {
       const json = readJSON(reader);
       if (json.block_ids) {
         return {
-          blockHashes: json.block_ids
-        }
+          blockHashes: json.block_ids,
+        };
       }
       return json;
     }

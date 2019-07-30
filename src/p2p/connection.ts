@@ -72,8 +72,8 @@ export class P2pConnectionContext extends ConnectionContext {
   ): Promise<Socket> {
     const host = IP.toString(peer.ip);
     const port = peer.port;
-    let timer: NodeJS.Timeout;
     return new Promise(async (resolve, reject) => {
+      let timer: NodeJS.Timeout;
       logger.info('start connecting: ' + host + ':' + port);
       const s = createConnection(port, host, () => {
         logger.info('Successfually connected to ' + host + ':' + port);
@@ -82,10 +82,12 @@ export class P2pConnectionContext extends ConnectionContext {
       });
       s.on('error', e => {
         logger.error('Connecting to ' + host + ':' + port + ' errored!');
+        clearTimeout(timer);
         s.destroy();
         reject(e);
       });
       timer = setTimeout(() => {
+        clearTimeout(timer);
         logger.error('Connecting to ' + host + ':' + port + ' time out!');
         const e = new Error('Time out!');
         s.destroy();
@@ -93,13 +95,12 @@ export class P2pConnectionContext extends ConnectionContext {
       }, network.conectionTimeout);
     });
   }
+
   public socket: Socket;
   public version: uint32;
 
   // tslint:disable-next-line:variable-name
   private _peerId: IPeerIDType;
-  private writeQueue: IMessage[];
-  private stopped: boolean = false;
 
   constructor(socket: Socket) {
     super();
