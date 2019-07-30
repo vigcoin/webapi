@@ -26,6 +26,7 @@ import { getDefaultAppDir } from '../util/fs';
 import { IP } from '../util/ip';
 import { P2PConfig } from './config';
 import { ConnectionState, P2pConnectionContext } from './connection';
+import { ConnectionManager } from './connection-manager';
 import { LevinProtocol } from './levin';
 import { PeerList, PeerManager } from './peer-manager';
 import { handshake, ping } from './protocol';
@@ -55,7 +56,7 @@ export class P2PServer extends EventEmitter {
   private server: Server;
   private peerId: IPeerIDType;
   // private hidePort: boolean = false;
-  private connections: Map<string, P2pConnectionContext>;
+  private connectionManager: ConnectionManager;
   private handler: Handler;
   private network: INetwork;
   private networkId: uint8[];
@@ -83,7 +84,7 @@ export class P2PServer extends EventEmitter {
     this.network = network;
     this.networkId = networkId;
     this.pm = pm;
-    this.connections = new Map();
+    this.connectionManager = new ConnectionManager();
     this.p2pConfig = new P2PConfig();
     this.peerId = randomBytes(8);
     this.p2pConfig.seedNodes = this.p2pConfig.seedNodes.concat(
@@ -91,7 +92,7 @@ export class P2PServer extends EventEmitter {
     );
     this.p2pConfig.seedNodes = Array.from(new Set(this.p2pConfig.seedNodes));
     this.handler.on(BLOCKCHAIN_SYNCHRONZIED, () => {
-      this.emit(BLOCKCHAIN_SYNCHRONZIED, this.getConnectionHeight());
+      this.emit(BLOCKCHAIN_SYNCHRONZIED, this.connectionManager.getHeight());
     });
   }
 
@@ -194,12 +195,7 @@ export class P2PServer extends EventEmitter {
   }
 
   public async stop() {
-    logger.info('Stopping connections...');
-    this.connections.forEach((context: P2pConnectionContext) => {
-      context.stop();
-    });
-    logger.info('Connections stopped!');
-
+    this.connectionManager.stop();
     if (this.server) {
       logger.info('P2P Server stopping...');
       await new Promise((resolve, reject) => {
@@ -233,7 +229,7 @@ export class P2PServer extends EventEmitter {
     context: P2pConnectionContext,
     levin: LevinProtocol
   ) {
-    this.connections.set(context.id.toString('hex'), context);
+    this.connectionManager.set(context);
     levin.on('state', (state: ConnectionState) => {
       logger.info(
         'Context state changed from ' + context.state + ' to ' + state
@@ -258,7 +254,7 @@ export class P2PServer extends EventEmitter {
       } catch (e) {
         logger.error('Error processing new data!');
         s.destroy();
-        this.connections.delete(context.id.toString('hex'));
+        this.connectionManager.remove(context);
       }
     });
     s.on('end', () => {
@@ -324,7 +320,7 @@ export class P2PServer extends EventEmitter {
     logger.info(
       'Expected white connections default percent : ' + expectedWhiteConPercent
     );
-    const connectionCount = this.getOutGoingConnectionCount();
+    const connectionCount = this.connectionManager.getOutGoingConnectionCount();
 
     logger.info('Current connection count : ' + connectionCount);
     if (connectionCount < expectedWhiteConPercent) {
@@ -366,81 +362,29 @@ export class P2PServer extends EventEmitter {
       peers = this.pm.white;
     }
     for (const peer of peers) {
-      if (!this.isConnected(peer.peer)) {
+      if (!this.connectionManager.isPeerConnected(peer.peer)) {
         try {
           await this.connect(peer.peer, false);
         } catch (e) {
           logger.error(e);
         }
-        currentCount = this.getOutGoingConnectionCount();
+        currentCount = this.connectionManager.getOutGoingConnectionCount();
         if (currentCount >= expectedCount) {
           break;
         }
       }
     }
-    currentCount = this.getOutGoingConnectionCount();
+    currentCount = this.connectionManager.getOutGoingConnectionCount();
     if (currentCount < expectedCount) {
       return false;
     }
     return true;
   }
 
-  protected getOutGoingConnectionCount(): number {
-    let count = 0;
-    this.connections.forEach((context: P2pConnectionContext) => {
-      if (!context.isIncoming) {
-        count++;
-      }
-    });
-    return count;
-  }
-
-  protected isPeerUsed(pe: IPeerEntry): boolean {
-    if (pe.id.equals(this.peerId)) {
-      return true;
-    }
-    let used = false;
-    this.connections.forEach((context: P2pConnectionContext) => {
-      if (context.peerId.equals(pe.id)) {
-        used = true;
-        return;
-      }
-      if (context.isIncoming) {
-        return;
-      }
-      if (pe.peer.ip !== context.ip) {
-        return;
-      }
-      if (pe.peer.port !== context.port) {
-        return;
-      }
-      used = true;
-    });
-    return used;
-  }
-
-  protected isConnected(peer: IPeer) {
-    let connected = false;
-    this.connections.forEach((context: P2pConnectionContext) => {
-      if (context.isIncoming) {
-        return;
-      }
-      if (peer.ip !== context.ip) {
-        return;
-      }
-
-      if (peer.port !== context.port) {
-        return;
-      }
-      connected = true;
-    });
-    return connected;
-  }
-
   protected async connectPeers(peers: IPeer[]) {
     logger.info('Connecting to peers!');
     for (const peer of peers) {
-      if (!this.isConnected(peer)) {
+      if (!this.connectionManager.isPeerConnected(peer)) {
         try {
           await this.connect(peer, true);
         } catch (e) {
@@ -556,7 +500,7 @@ export class P2PServer extends EventEmitter {
 
     context.remoteBlockchainHeight = data.currentHeight;
     if (isInitial) {
-      this.handler.notifyPeerCount(this.connections.size);
+      this.handler.notifyPeerCount(this.connectionManager.size);
     }
   }
 
@@ -605,16 +549,6 @@ export class P2PServer extends EventEmitter {
     };
   }
 
-  private getConnectionHeight() {
-    let height = 0;
-    this.connections.forEach((connection: P2pConnectionContext) => {
-      if (connection.remoteBlockchainHeight > height) {
-        height = connection.remoteBlockchainHeight;
-      }
-    });
-    return height;
-  }
-
   private getNewHeight(
     observedHeight: number,
     newHeight: number,
@@ -628,7 +562,7 @@ export class P2PServer extends EventEmitter {
     } else {
       if (newHeight !== context.remoteBlockchainHeight) {
         if (context.remoteBlockchainHeight === observedHeight) {
-          let currentPeerHeight = this.getConnectionHeight();
+          let currentPeerHeight = this.connectionManager.getHeight();
           const blockHeight = this.handler.height;
           if (currentPeerHeight < blockHeight) {
             currentPeerHeight = blockHeight;
