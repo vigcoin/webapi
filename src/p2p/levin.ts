@@ -228,7 +228,7 @@ export class LevinProtocol extends EventEmitter {
       this.onCommand(cmd, context, handler);
     } catch (e) {
       logger.error(e);
-      logger.info('Expection occur! Server shutting down...');
+      logger.info('Expection occur! Connection shutting down...');
       context.state = ConnectionState.SHUTDOWN;
     }
   }

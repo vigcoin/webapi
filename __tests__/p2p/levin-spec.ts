@@ -24,6 +24,7 @@ import { ConnectionContext, ConnectionState } from '../../src/p2p/connection';
 import { Handler } from '../../src/p2p/protocol/handler';
 import { getBlockFile } from '../../src/util/fs';
 import { IP } from '../../src/util/ip';
+import { randomBytes } from 'crypto';
 
 const dir = path.resolve(__dirname, '../vigcoin');
 const config: Configuration.ICurrency = {
@@ -297,7 +298,7 @@ describe('test levin protocol', () => {
   });
 
   it('should handle unkown cmd', done => {
-    let catched = false;
+    let caught = false;
     const server = createServer(socket => {
       const { levin, context } = p2pserver.initContext(socket);
       const cmd: ILevinCommand = {
@@ -310,9 +311,9 @@ describe('test levin protocol', () => {
       try {
         levin.onCommand(cmd, context, handler);
       } catch (e) {
-        catched = true;
+        caught = true;
       }
-      assert(!catched);
+      assert(!caught);
       client.destroy();
       server.close();
       done();
@@ -346,6 +347,76 @@ describe('test levin protocol', () => {
     server.listen(port);
     const client = createConnection({ port }, () => {
       // client.write(Buffer.from([1, 2, 3, 4]));
+    });
+  });
+
+  it('should handle wrong invoke data', done => {
+    const server = createServer(socket => {
+      socket.on('data', () => {
+        socket.write(randomBytes(138));
+      });
+    });
+    const port = Math.floor(Math.random() * 1000) + 1024;
+    server.listen(port);
+    const client = createConnection({ port }, async () => {
+      const { levin, context } = p2pserver.initContext(client);
+      const request: ping.IRequest = {};
+      const writer = new BufferStreamWriter(Buffer.alloc(0));
+      ping.Writer.request(writer, request);
+      let caught = false;
+      try {
+        await levin.invoke(timedsync, writer.getBuffer());
+      } catch (e) {
+        caught = true;
+      }
+      assert(caught);
+      client.destroy();
+      server.close();
+      done();
+    });
+  });
+
+  it('should handle wrong invoke data 2', done => {
+    const server = createServer(socket => {
+      socket.on('data', () => {
+        const response: timedsync.IResponse = {
+          localTime: new Date(),
+          payload: {
+            currentHeight: Math.floor(Math.random() * 10000),
+            hash: randomBytes(32),
+          },
+          // tslint:disable-next-line:object-literal-sort-keys
+          localPeerList: [],
+        };
+        const writer = new BufferStreamWriter(Buffer.alloc(0));
+        timedsync.Writer.response(writer, response);
+        const data = LevinProtocol.request(
+          timedsync.ID.ID,
+          writer.getBuffer(),
+          1,
+          false
+        );
+        socket.write(data);
+      });
+    });
+
+    const port = Math.floor(Math.random() * 1000) + 1024;
+    server.listen(port);
+    const client = createConnection({ port }, async () => {
+      const { levin, context } = p2pserver.initContext(client);
+      const request: ping.IRequest = {};
+      const writer = new BufferStreamWriter(Buffer.alloc(0));
+      ping.Writer.request(writer, request);
+      let caught = false;
+      try {
+        await levin.invoke(timedsync, writer.getBuffer());
+      } catch (e) {
+        caught = true;
+      }
+      assert(caught);
+      client.destroy();
+      server.close();
+      done();
     });
   });
 
