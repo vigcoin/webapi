@@ -3,6 +3,7 @@ import { IP } from '../../src/util/ip';
 
 describe('test ip', () => {
   test('Should to number/string', async () => {
+    assert(IP.toString(3159215739) === '123.206.77.188');
     assert(IP.toString(IP.toNumber('127.0.0.1')) === '127.0.0.1');
     assert(IP.toString(IP.toNumber('22.1.100.1')) === '22.1.100.1');
   });

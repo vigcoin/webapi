@@ -103,7 +103,7 @@ describe('test connections', () => {
   it('should connect to peer', async () => {
     // const host = '250.167.157.123';
     const host = '127.0.0.1';
-    const port = 19800;
+    const port = Math.floor(Math.random() * 1000) + 10000;
     const peer: IPeer = {
       port,
       // tslint:disable-next-line:object-literal-sort-keys

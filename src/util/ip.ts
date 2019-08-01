@@ -4,24 +4,24 @@ export class IP {
   public static isLoopback(ip: uint32) {
     // 127.0.0.0/8
     // tslint:disable-next-line:no-bitwise
-    return (ip & 0xff000000) === 0x7f000000;
+    return (ip & 0xff) === 0x7f;
   }
   public static isPrivate(ip: uint32) {
     // 10.0.0.0/8
     // tslint:disable-next-line:no-bitwise
-    if ((ip & 0xff000000) >>> 0 === 0x0a000000) {
+    if ((ip & 0xff) >>> 0 === 0x0a) {
       return true;
     }
 
     // 172.16.0.0/12
     // tslint:disable-next-line:no-bitwise
-    if ((ip & 0xfff00000) >>> 0 === 0xac100000) {
+    if ((ip & 0xf0ff) >>> 0 === 0x10ac) {
       return true;
     }
 
     // 192.168.0.0/16
     // tslint:disable-next-line:no-bitwise
-    if ((ip & 0xffff0000) >>> 0 === 0xc0a80000) {
+    if ((ip & 0xffff) >>> 0 === 0xa8c0) {
       return true;
     }
     return false;
@@ -41,12 +41,12 @@ export class IP {
     buffer.writeUInt8(parseInt(matches[2], 10), 1);
     buffer.writeUInt8(parseInt(matches[3], 10), 2);
     buffer.writeUInt8(parseInt(matches[4], 10), 3);
-    return buffer.readUInt32BE(0);
+    return buffer.readUInt32LE(0);
   }
 
   public static toString(ip: uint32): string {
     const buffer = Buffer.alloc(4);
-    buffer.writeUInt32BE(ip, 0);
+    buffer.writeUInt32LE(ip, 0);
     const slices = [];
     for (let i = 0; i < buffer.length; i++) {
       const v = buffer.readUInt8(i);
