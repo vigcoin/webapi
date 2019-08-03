@@ -490,13 +490,15 @@ export class P2PServer extends EventEmitter {
   ) {
     this.handler.processPayLoad(context, data, isInitial);
 
-    const newHeight = this.getNewHeight(
-      this.handler.observedHeight,
+    const newHeight = this.connectionManager.updateObservedHeight(
       data.currentHeight,
-      context
+      context,
+      this.handler
     );
 
-    this.handler.notifyNewHeight(newHeight);
+    if (newHeight !== 0) {
+      this.handler.notifyNewHeight(newHeight);
+    }
 
     context.remoteBlockchainHeight = data.currentHeight;
     if (isInitial) {
@@ -549,30 +551,30 @@ export class P2PServer extends EventEmitter {
     };
   }
 
-  private getNewHeight(
-    observedHeight: number,
-    newHeight: number,
-    context: P2pConnectionContext
-  ) {
-    const height = observedHeight;
-    if (newHeight > context.remoteBlockchainHeight) {
-      if (observedHeight < newHeight) {
-        observedHeight = newHeight;
-      }
-    } else {
-      if (newHeight !== context.remoteBlockchainHeight) {
-        if (context.remoteBlockchainHeight === observedHeight) {
-          let currentPeerHeight = this.connectionManager.getHeight();
-          const blockHeight = this.handler.height;
-          if (currentPeerHeight < blockHeight) {
-            currentPeerHeight = blockHeight;
-          }
-          if (currentPeerHeight !== height) {
-            observedHeight = currentPeerHeight;
-          }
-        }
-      }
-    }
-    return observedHeight;
-  }
+  // private getNewHeight(
+  //   observedHeight: number,
+  //   newHeight: number,
+  //   context: P2pConnectionContext
+  // ) {
+  //   const height = observedHeight;
+  //   if (newHeight > context.remoteBlockchainHeight) {
+  //     if (observedHeight < newHeight) {
+  //       observedHeight = newHeight;
+  //     }
+  //   } else {
+  //     if (newHeight !== context.remoteBlockchainHeight) {
+  //       if (context.remoteBlockchainHeight === observedHeight) {
+  //         let currentPeerHeight = this.connectionManager.getHeight();
+  //         const blockHeight = this.handler.height;
+  //         if (currentPeerHeight < blockHeight) {
+  //           currentPeerHeight = blockHeight;
+  //         }
+  //         if (currentPeerHeight !== height) {
+  //           observedHeight = currentPeerHeight;
+  //         }
+  //       }
+  //     }
+  //   }
+  //   return observedHeight;
+  // }
 }

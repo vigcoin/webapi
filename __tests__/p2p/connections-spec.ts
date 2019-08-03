@@ -1,11 +1,16 @@
 import * as assert from 'assert';
-import { p2p } from '../../src/config';
-import { INetwork, IPeer } from '../../src/p2p';
-import { P2pConnectionContext } from '../../src/p2p/connection';
-import { IP } from '../../src/util/ip';
-import { ConnectionManager } from '../../src/p2p/connection-manager';
-import { IPeerEntry } from '../../src/cryptonote/p2p';
 import { randomBytes } from 'crypto';
+import * as path from 'path';
+import { p2p } from '../../src/config';
+import { IPeerEntry } from '../../src/cryptonote/p2p';
+import { getConfigByType, getType } from '../../src/init/cryptonote';
+import { getHandler } from '../../src/init/p2p';
+import { INetwork, IPeer } from '../../src/p2p';
+import { P2PConfig } from '../../src/p2p/config';
+import { P2pConnectionContext } from '../../src/p2p/connection';
+import { ConnectionManager } from '../../src/p2p/connection-manager';
+import { getDefaultAppDir } from '../../src/util/fs';
+import { IP } from '../../src/util/ip';
 
 describe('test connections', () => {
   const network: INetwork = {
@@ -19,6 +24,9 @@ describe('test connections', () => {
   };
 
   it('should connect to peer with connection manager', async () => {
+    const p2pConfig = new P2PConfig();
+    const config = getConfigByType(getType(p2pConfig.testnet));
+
     const cm = new ConnectionManager();
     const host = '69.171.73.252';
     const port = 19800;
@@ -27,12 +35,25 @@ describe('test connections', () => {
       ip,
       port,
     };
+    const hostN = '39.108.160.252';
+    const ipN = IP.toNumber(host);
+    const peerN: IPeer = {
+      ip: ipN,
+      port,
+    };
     let caught = false;
     try {
       const socket = await P2pConnectionContext.createConnection(peer, network);
       const context = new P2pConnectionContext(socket);
+      // const socket1 = await P2pConnectionContext.createConnection(
+      //   peerN,
+      //   network
+      // );
+
+      // const context1 = new P2pConnectionContext(socket1);
 
       cm.set(context);
+      // cm.set(context1);
       const height = cm.getHeight();
       assert(height === 0);
       assert(cm.size === 1);
@@ -92,6 +113,27 @@ describe('test connections', () => {
 
       assert(cm.isPeerUsed(pe2, id));
 
+      p2pConfig.dataDir = path.resolve(__dirname, '../vigcoin');
+      const dir = p2pConfig.dataDir ? p2pConfig.dataDir : getDefaultAppDir();
+      const h = getHandler(dir, config);
+      const reHeight = cm.recalculateMaxObservedHeight(h);
+
+      assert(reHeight === 49);
+
+      context.remoteBlockchainHeight = 50;
+      const reHeight1 = cm.recalculateMaxObservedHeight(h);
+      assert(reHeight1 === 50);
+
+      h.observedHeight = 10;
+
+      assert(cm.updateObservedHeight(100, context, h) === 100);
+      assert(cm.updateObservedHeight(20, context, h) === 0);
+      h.observedHeight = 60;
+      assert(cm.updateObservedHeight(51, context, h) === 0);
+      h.observedHeight = 50;
+      assert(cm.updateObservedHeight(49, context, h) === 0);
+      // context1.remoteBlockchainHeight = 1000;
+      // assert(cm.updateObservedHeight(49, context, h) === 1000);
       cm.remove(context);
       socket.destroy();
     } catch (e) {

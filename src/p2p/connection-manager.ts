@@ -1,6 +1,7 @@
 import { IPeer, IPeerEntry } from '../cryptonote/p2p';
 import { logger } from '../logger';
 import { P2pConnectionContext } from './connection';
+import { Handler } from './protocol/handler';
 
 export class ConnectionManager {
   private connections: Map<string, P2pConnectionContext> = new Map();
@@ -81,6 +82,45 @@ export class ConnectionManager {
       }
     });
     return height;
+  }
+
+  public updateObservedHeight(
+    newHeight: number,
+    context: P2pConnectionContext,
+    handler: Handler
+  ): number {
+    let updated = false;
+    let observedHeight = handler.observedHeight;
+    const height = observedHeight;
+    if (newHeight > context.remoteBlockchainHeight) {
+      if (newHeight > observedHeight) {
+        observedHeight = newHeight;
+        updated = true;
+      }
+    } else {
+      // newHeight is less than remote height
+      if (newHeight !== context.remoteBlockchainHeight) {
+        if (context.remoteBlockchainHeight === observedHeight) {
+          // The client switched to alternative chain and had maximum observed height.
+          // Need to recalculate max height
+          observedHeight = this.recalculateMaxObservedHeight(handler);
+          if (height !== observedHeight) {
+            updated = true;
+          }
+        }
+      }
+    }
+
+    if (updated) {
+      return observedHeight;
+    }
+    return 0;
+  }
+
+  public recalculateMaxObservedHeight(handler: Handler): number {
+    const peerHeight = this.getHeight();
+    const blockHeight = handler.height;
+    return peerHeight > blockHeight ? peerHeight : blockHeight;
   }
 
   get size() {
