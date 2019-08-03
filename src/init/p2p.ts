@@ -3,9 +3,7 @@ import { Configuration } from '../config/types';
 import { INetwork, IServerConfig, P2PServer } from '../p2p/index';
 import { PeerList, PeerManager } from '../p2p/peer-manager';
 import { Handler } from '../p2p/protocol/handler';
-import { getBlockFile, getDefaultAppDir } from '../util/fs';
-import { IP } from '../util/ip';
-import { getBlockChain } from './blockchain';
+import { getBlockChainInitialized } from './blockchain';
 
 export const network: INetwork = {
   conectionTimeout: p2p.P2P_DEFAULT_CONNECTION_TIMEOUT,
@@ -33,21 +31,7 @@ export function getServerConfig(config: Configuration.IConfig): IServerConfig {
 }
 
 export function getHandler(dir: string, config: Configuration.IConfig) {
-  const files: Configuration.IBlockFile = getBlockFile(dir, config);
-  const currency: Configuration.ICurrency = {
-    block: {
-      genesisCoinbaseTxHex: config.block.genesisCoinbaseTxHex,
-      version: {
-        major: 1,
-        minor: 0,
-        patch: 0,
-      },
-    },
-    blockFiles: files,
-    hardfork: [],
-  };
-  const blc = getBlockChain(currency);
-  blc.init();
+  const blc = getBlockChainInitialized(dir, config);
   return new Handler(blc);
 }
 

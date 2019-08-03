@@ -5,29 +5,23 @@ import { BlockChain } from '../../src/cryptonote/block/blockchain';
 
 import { closeSync, existsSync, openSync, unlinkSync } from 'fs';
 import { Block } from '../../src/cryptonote/block/block';
-import { getBlockChain } from '../../src/init/blockchain';
+import {
+  getBlockChain,
+  getBlockChainInitialized,
+} from '../../src/init/blockchain';
+import { getConfigByType, getType } from '../../src/init/cryptonote';
 import { data } from '../../src/init/net-types/testnet';
+import { P2PConfig } from '../../src/p2p/config';
 import { getBlockFile } from '../../src/util/fs';
 
 describe('read from file', () => {
-  const config: Configuration.ICurrency = {
-    block: {
-      genesisCoinbaseTxHex: '111',
-      version: {
-        major: 1,
-        minor: 1,
-        patch: 1,
-      },
-    },
-    blockFiles: getBlockFile(path.resolve(__dirname, '../vigcoin'), data),
-    hardfork: [],
-  };
+  const p2pConfig = new P2PConfig();
+  const config = getConfigByType(getType(p2pConfig.testnet));
 
-  const blockChain: BlockChain = getBlockChain(config);
-
-  test('should init block chain', () => {
-    blockChain.init();
-  });
+  const blockChain: BlockChain = getBlockChainInitialized(
+    path.resolve(__dirname, '../vigcoin'),
+    config
+  );
 
   test('should get block entry by height', () => {
     let height = 0;
