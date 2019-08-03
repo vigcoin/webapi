@@ -55,11 +55,11 @@ export class BlockChain {
     return this.block.empty();
   }
 
-  public get(height: number): IBlockEntry {
+  public get(index: number): IBlockEntry {
     assert(this.initialized);
-    assert(height >= 0);
-    assert(height <= this.height);
-    return this.block.read(this.offsets[height], this.offsets[height + 1]);
+    assert(index >= 0);
+    assert(index < this.height);
+    return this.block.read(this.offsets[index], this.offsets[index + 1]);
   }
 
   get height(): uint64 {
