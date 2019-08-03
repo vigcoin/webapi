@@ -24,6 +24,7 @@ describe('test connections', () => {
   };
 
   it('should connect to peer with connection manager', async () => {
+    jest.setTimeout(10000);
     const p2pConfig = new P2PConfig();
     const config = getConfigByType(getType(p2pConfig.testnet));
 
@@ -35,7 +36,7 @@ describe('test connections', () => {
       ip,
       port,
     };
-    const hostN = '39.108.160.252';
+    const hostN = '144.202.10.183';
     const ipN = IP.toNumber(host);
     const peerN: IPeer = {
       ip: ipN,
@@ -45,15 +46,14 @@ describe('test connections', () => {
     try {
       const socket = await P2pConnectionContext.createConnection(peer, network);
       const context = new P2pConnectionContext(socket);
-      // const socket1 = await P2pConnectionContext.createConnection(
-      //   peerN,
-      //   network
-      // );
+      const socket1 = await P2pConnectionContext.createConnection(
+        peerN,
+        network
+      );
 
-      // const context1 = new P2pConnectionContext(socket1);
+      const context1 = new P2pConnectionContext(socket1);
 
       cm.set(context);
-      // cm.set(context1);
       const height = cm.getHeight();
       assert(height === 0);
       assert(cm.size === 1);
@@ -132,10 +132,15 @@ describe('test connections', () => {
       assert(cm.updateObservedHeight(51, context, h) === 0);
       h.observedHeight = 50;
       assert(cm.updateObservedHeight(49, context, h) === 0);
-      // context1.remoteBlockchainHeight = 1000;
-      // assert(cm.updateObservedHeight(49, context, h) === 1000);
+      assert(cm.updateObservedHeight(50, context, h) === 0);
+      cm.set(context1);
+
+      context1.remoteBlockchainHeight = 1000;
+      assert(cm.updateObservedHeight(49, context, h) === 1000);
       cm.remove(context);
+      cm.remove(context1);
       socket.destroy();
+      socket1.destroy();
     } catch (e) {
       caught = true;
     }

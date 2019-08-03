@@ -550,31 +550,4 @@ export class P2PServer extends EventEmitter {
       version: Version.CURRENT,
     };
   }
-
-  // private getNewHeight(
-  //   observedHeight: number,
-  //   newHeight: number,
-  //   context: P2pConnectionContext
-  // ) {
-  //   const height = observedHeight;
-  //   if (newHeight > context.remoteBlockchainHeight) {
-  //     if (observedHeight < newHeight) {
-  //       observedHeight = newHeight;
-  //     }
-  //   } else {
-  //     if (newHeight !== context.remoteBlockchainHeight) {
-  //       if (context.remoteBlockchainHeight === observedHeight) {
-  //         let currentPeerHeight = this.connectionManager.getHeight();
-  //         const blockHeight = this.handler.height;
-  //         if (currentPeerHeight < blockHeight) {
-  //           currentPeerHeight = blockHeight;
-  //         }
-  //         if (currentPeerHeight !== height) {
-  //           observedHeight = currentPeerHeight;
-  //         }
-  //       }
-  //     }
-  //   }
-  //   return observedHeight;
-  // }
 }
