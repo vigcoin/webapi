@@ -18,6 +18,14 @@ describe('test peer server', () => {
   let grayList;
   let peerId;
 
+  it('should getStore with a file', () => {
+    const whitePeerList = new PeerList(100);
+    const grayPeerList = new PeerList(100);
+    const pm = new PeerManager(whitePeerList, grayPeerList);
+    const store = P2PStore.getStore(p2pFile, server, pm);
+    assert(store);
+  });
+
   it('should read p2p state file 1', () => {
     const ps = new P2PStore(p2pFile);
     const whitePeerList = new PeerList(100);

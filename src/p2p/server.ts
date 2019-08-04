@@ -160,13 +160,7 @@ export class P2PServer extends EventEmitter {
       this.p2pConfig.filename
     );
     if (existsSync(this.serializeFile)) {
-      logger.info('Found P2PState File : ' + this.serializeFile);
-      logger.info('Reading P2PState from File : ' + this.serializeFile);
-      this.p2pStore = new P2PStore(this.serializeFile);
-      this.p2pStore.read(this, this.pm);
-      logger.info(
-        'Finished Reading P2PState from File : ' + this.serializeFile
-      );
+      this.p2pStore = P2PStore.getStore(this.serializeFile, this, this.pm);
     } else {
       this.id = randomBytes(8);
       logger.info(
