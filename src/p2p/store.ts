@@ -1,4 +1,10 @@
-import { readFileSync, writeFileSync } from 'fs';
+import {
+  existsSync,
+  readFileSync,
+  writeFileSync,
+  closeSync,
+  openSync,
+} from 'fs';
 import * as moment from 'moment';
 import { IPeerEntry } from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
@@ -10,31 +16,29 @@ import { PeerManager } from './peer-manager';
 import { P2PServer } from './server';
 
 export class P2PStore {
-  public static getStore(
-    file: string,
-    server: P2PServer,
-    peerManager: PeerManager,
-    read: boolean
-  ) {
+  public static getStore(server: P2PServer) {
+    const file = server.serializeFile;
+    const exists = existsSync(file);
     logger.info('Found P2PState File : ' + file);
     logger.info('Reading P2PState from File : ' + file);
-    const p2pStore = new P2PStore(file);
-    if (read) {
-      p2pStore.read(server, peerManager);
+    server.p2pStore = new P2PStore(file);
+    if (exists) {
+      server.p2pStore.read(server, server.pm);
       logger.info('Finished Reading P2PState from File : ' + file);
     }
-    return p2pStore;
+    return exists;
   }
 
-  public static saveStore(
-    file: string,
-    server: P2PServer,
-    peerManager: PeerManager
-  ) {
+  public static saveStore(server: P2PServer) {
+    const file = server.serializeFile;
+    if (!existsSync(file)) {
+      closeSync(openSync(file, 'w'));
+    }
     logger.info('Saveing P2PState file : ' + file);
-    server.p2pStore.write(server, peerManager);
+    server.p2pStore.write(server, server.pm);
     logger.info('Finished writing P2PState to File : ' + file);
   }
+
   private file: string;
   constructor(file: string) {
     this.file = file;

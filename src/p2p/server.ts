@@ -1,9 +1,7 @@
-import * as assert from 'assert';
 import { randomBytes } from 'crypto';
 import { EventEmitter } from 'events';
-import { closeSync, existsSync, openSync } from 'fs';
 import * as moment from 'moment';
-import { createConnection, createServer, Server, Socket } from 'net';
+import { createServer, Server, Socket } from 'net';
 import * as path from 'path';
 import { p2p } from '../config';
 import { BLOCKCHAIN_SYNCHRONZIED } from '../config/events';
@@ -50,10 +48,11 @@ export class P2PServer extends EventEmitter {
   }
   public p2pConfig: P2PConfig;
   public p2pStore: P2PStore;
+  public serializeFile: string;
+  public pm: PeerManager;
 
-  private config: IServerConfig;
+  private serverConfig: IServerConfig;
 
-  private pm: PeerManager;
   private clientList: Socket[] = [];
   private server: Server;
   private peerId: IPeerIDType;
@@ -69,17 +68,15 @@ export class P2PServer extends EventEmitter {
   private stopped = false;
   private isConnecting = false;
 
-  private serializeFile: string;
-
   constructor(
-    config: IServerConfig,
+    serverConfig: IServerConfig,
     network: INetwork,
     networkId: uint8[],
     handler: Handler,
     pm: PeerManager
   ) {
     super();
-    this.config = config;
+    this.serverConfig = serverConfig;
     this.handler = handler;
 
     this.network = network;
@@ -89,7 +86,7 @@ export class P2PServer extends EventEmitter {
     this.p2pConfig = new P2PConfig();
     this.peerId = randomBytes(8);
     this.p2pConfig.seedNodes = this.p2pConfig.seedNodes.concat(
-      this.config.seedNode
+      this.serverConfig.seedNode
     );
     this.p2pConfig.seedNodes = Array.from(new Set(this.p2pConfig.seedNodes));
     this.handler.on(BLOCKCHAIN_SYNCHRONZIED, () => {
@@ -107,7 +104,7 @@ export class P2PServer extends EventEmitter {
   public async onIdle() {
     const interval = setInterval(async () => {
       await this.startConnection();
-      P2PStore.saveStore(this.serializeFile, this, this.pm);
+      P2PStore.saveStore(this);
     }, this.network.handshakeInterval * 1000);
   }
 
@@ -127,10 +124,10 @@ export class P2PServer extends EventEmitter {
     this.pm.appendWhite(pe);
   }
 
-  public init(config: Configuration.IConfig) {
+  public init(globalConfig: Configuration.IConfig) {
     logger.info('P2P server initializing ... ');
     logger.info('Seed initializing...');
-    this.initSeeds(config);
+    this.initSeeds(globalConfig);
     logger.info('Seed initialized!');
 
     if (!this.p2pConfig.dataDir) {
@@ -139,7 +136,7 @@ export class P2PServer extends EventEmitter {
     logger.info('dataDir set to : ' + this.p2pConfig.dataDir);
 
     if (!this.p2pConfig.filename) {
-      this.p2pConfig.filename = config.extFiles.p2p;
+      this.p2pConfig.filename = globalConfig.extFiles.p2p;
     }
     logger.info('P2PState filename set to : ' + this.p2pConfig.filename);
 
@@ -148,23 +145,13 @@ export class P2PServer extends EventEmitter {
       this.p2pConfig.filename
     );
 
-    const exists = existsSync(this.serializeFile);
-
-    // create a random id if no store info exists
-    if (!exists) {
+    // create a random id if persistance file not existed
+    if (!P2PStore.getStore(this)) {
       this.id = randomBytes(8);
       logger.info(
         'Random P2PState Peer ID Created : ' + this.id.toString('hex')
       );
     }
-
-    // Make sure p2p store exist
-    this.p2pStore = P2PStore.getStore(
-      this.serializeFile,
-      this,
-      this.pm,
-      exists
-    );
 
     for (const peer of this.p2pConfig.peers) {
       logger.info(
@@ -181,8 +168,8 @@ export class P2PServer extends EventEmitter {
     }
   }
 
-  public initSeeds(config: Configuration.IConfig) {
-    this.p2pConfig.seedNodes.concat(config.seeds);
+  public initSeeds(globalConfig: Configuration.IConfig) {
+    this.p2pConfig.seedNodes.concat(globalConfig.seeds);
     this.p2pConfig.seedNodes = Array.from(new Set(this.p2pConfig.seedNodes));
   }
 
@@ -266,7 +253,7 @@ export class P2PServer extends EventEmitter {
       const server = createServer(s => {
         this.onIncomingConnection(s);
       });
-      const { port, host } = this.config;
+      const { port, host } = this.serverConfig;
       server.listen({ port, host }, e => {
         if (e) {
           this.server = null;

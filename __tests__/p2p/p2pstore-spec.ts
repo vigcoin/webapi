@@ -18,20 +18,20 @@ describe('test peer server', () => {
   let grayList;
   let peerId;
 
+  it('should getStore without a file', () => {
+    const store = P2PStore.getStore(server);
+    assert(!store);
+  });
+
   it('should getStore with a file', () => {
-    const whitePeerList = new PeerList(100);
-    const grayPeerList = new PeerList(100);
-    const pm = new PeerManager(whitePeerList, grayPeerList);
-    const store = P2PStore.getStore(p2pFile, server, pm, false);
+    server.serializeFile = p2pFile;
+    const store = P2PStore.getStore(server);
     assert(store);
   });
 
   it('should read p2p state file 1', () => {
-    const whitePeerList = new PeerList(100);
-    const grayPeerList = new PeerList(100);
-    const pm = new PeerManager(whitePeerList, grayPeerList);
-
-    const ps = P2PStore.getStore(p2pFile, server, pm, true);
+    const ps = server.p2pStore;
+    const pm = server.pm;
 
     assert(server.version === 1);
     assert(pm.version === 1);
@@ -101,11 +101,9 @@ describe('test peer server', () => {
   });
 
   it('should saveStore with a file', () => {
-    const whitePeerList = new PeerList(100);
-    const grayPeerList = new PeerList(100);
-    const pm = new PeerManager(whitePeerList, grayPeerList);
-    server.p2pStore = P2PStore.getStore(outFile, server, pm, false);
-    P2PStore.saveStore(outFile, server, pm);
+    server.serializeFile = outFile;
+    P2PStore.saveStore(server);
+    P2PStore.saveStore(server);
     unlinkSync(outFile);
   });
 });
