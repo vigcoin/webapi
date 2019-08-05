@@ -31,7 +31,7 @@ import { LevinProtocol } from './levin';
 import { PeerList, PeerManager } from './peer-manager';
 import { handshake, ping } from './protocol';
 import { Handler } from './protocol/handler';
-import { P2PStore } from './serializer';
+import { P2PStore } from './store';
 
 export class P2PServer extends EventEmitter {
   get version(): uint8 {

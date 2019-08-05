@@ -3,7 +3,7 @@ import { readFileSync, unlinkSync } from 'fs';
 import * as path from 'path';
 import { getP2PServer } from '../../src/init/p2p';
 import { PeerList, PeerManager } from '../../src/p2p/peer-manager';
-import { P2PStore } from '../../src/p2p/serializer';
+import { P2PStore } from '../../src/p2p/store';
 import { IP } from '../../src/util/ip';
 
 import { data } from '../../src/init/net-types/testnet';
