@@ -104,7 +104,8 @@ describe('test peer server', () => {
     const whitePeerList = new PeerList(100);
     const grayPeerList = new PeerList(100);
     const pm = new PeerManager(whitePeerList, grayPeerList);
-    server.p2pStore = P2PStore.getStore(p2pFile, server, pm, false);
-    P2PStore.saveStore(p2pFile, server, pm);
+    server.p2pStore = P2PStore.getStore(outFile, server, pm, false);
+    P2PStore.saveStore(outFile, server, pm);
+    unlinkSync(outFile);
   });
 });
