@@ -32,7 +32,7 @@ export class P2PStore {
   public static saveStore(server: P2PServer) {
     const file = server.serializeFile;
     if (!existsSync(file)) {
-      closeSync(openSync(file, 'w'));
+      closeSync(openSync(file, 'w+'));
     }
     logger.info('Saveing P2PState file : ' + file);
     server.p2pStore.write(server, server.pm);

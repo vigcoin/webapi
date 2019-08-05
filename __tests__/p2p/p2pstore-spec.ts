@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { readFileSync, unlinkSync } from 'fs';
+import { readFileSync, unlinkSync, existsSync } from 'fs';
 import * as path from 'path';
 import { getP2PServer } from '../../src/init/p2p';
 import { PeerList, PeerManager } from '../../src/p2p/peer-manager';
@@ -30,7 +30,6 @@ describe('test peer server', () => {
   });
 
   it('should read p2p state file 1', () => {
-    const ps = server.p2pStore;
     const pm = server.pm;
 
     assert(server.version === 1);
@@ -61,6 +60,7 @@ describe('test peer server', () => {
     whitePeerList.peers = whiteList;
     grayPeerList.peers = grayList;
     server.id = peerId;
+    server.serializeFile = outFile;
     ps.write(server, pm);
     ps.read(server, pm);
     assert(server.version === 1);
@@ -83,6 +83,7 @@ describe('test peer server', () => {
     const whitePeerList = new PeerList(100);
     const grayPeerList = new PeerList(100);
     const pm = new PeerManager(whitePeerList, grayPeerList);
+    server.serializeFile = p2pFile1;
     ps.read(server, pm);
     assert(server.version === 1);
     assert(pm.version === 1);
@@ -101,7 +102,12 @@ describe('test peer server', () => {
   });
 
   it('should saveStore with a file', () => {
+    const ps = new P2PStore(outFile);
+    server.p2pStore = ps;
     server.serializeFile = outFile;
+    if (existsSync(outFile)) {
+      unlinkSync(outFile);
+    }
     P2PStore.saveStore(server);
     P2PStore.saveStore(server);
     unlinkSync(outFile);
