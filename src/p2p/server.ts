@@ -81,9 +81,10 @@ export class P2PServer extends EventEmitter {
     this.network = network;
     this.networkId = networkId;
     this.pm = pm;
-    this.connectionManager = new ConnectionManager();
-    this.p2pConfig = new P2PConfig();
     this.peerId = randomBytes(8);
+    this.connectionManager = new ConnectionManager(this.peerId);
+
+    this.p2pConfig = new P2PConfig();
     this.p2pConfig.seedNodes = this.p2pConfig.seedNodes.concat(
       this.serverConfig.seedNode
     );
@@ -325,41 +326,6 @@ export class P2PServer extends EventEmitter {
       this.clientList.push(s);
     }
     this.connectionManager.initContext(this.handler, s, true);
-  }
-
-  private onHandshake(
-    data: handshake.IRequest,
-    context: P2pConnectionContext,
-    levin: LevinProtocol
-  ) {
-    if (!data.node.peerId.equals(this.peerId) && data.node.myPort !== 0) {
-      levin.tryPing(data.node, context);
-      levin.once('ping', (response: ping.IResponse) => {
-        this.onPing(response, data, context);
-      });
-    }
-  }
-
-  private onPing(
-    response: ping.IResponse,
-    data: handshake.IRequest,
-    context: P2pConnectionContext
-  ) {
-    if (
-      response.status === ping.PING_OK_RESPONSE_STATUS_TEXT &&
-      response.peerId.equals(data.node.peerId)
-    ) {
-      const pe: IPeerEntry = {
-        lastSeen: new Date(),
-        peer: {
-          ip: context.ip,
-          port: data.node.myPort,
-        },
-        // tslint:disable-next-line:object-literal-sort-keys
-        id: data.node.peerId,
-      };
-      this.pm.appendWhite(pe);
-    }
   }
 
   private async handshake(s: Socket, takePeerListOnly: boolean = false) {

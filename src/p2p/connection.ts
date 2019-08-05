@@ -1,19 +1,11 @@
-import * as assert from 'assert';
 import { randomBytes } from 'crypto';
 import { EventEmitter } from 'events';
 import { createConnection, Socket } from 'net';
 import { Hash } from '../crypto/types';
-import {
-  ICoreSyncData,
-  IMessage,
-  INetwork,
-  IPeer,
-  IPeerIDType,
-} from '../cryptonote/p2p';
+import { INetwork, IPeer, IPeerIDType } from '../cryptonote/p2p';
 import { uint32, uint8 } from '../cryptonote/types';
 import { logger } from '../logger';
 import { IP } from '../util/ip';
-import { Handler } from './protocol/handler';
 
 export enum ConnectionState {
   BEFORE_HANDSHAKE = 0,

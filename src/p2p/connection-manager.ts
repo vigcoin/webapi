@@ -1,14 +1,19 @@
 import { Socket } from 'net';
-import { IPeer, IPeerEntry } from '../cryptonote/p2p';
+import { IPeer, IPeerEntry, IPeerIDType } from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { logger } from '../logger';
 import { ConnectionState, P2pConnectionContext } from './connection';
 import { LevinProtocol } from './levin';
-import { handshake } from './protocol';
+import { handshake, ping } from './protocol';
 import { Handler } from './protocol/handler';
 
 export class ConnectionManager {
   private connections: Map<string, P2pConnectionContext> = new Map();
+  private peerId: IPeerIDType;
+
+  constructor(peerId: IPeerIDType) {
+    this.peerId = peerId;
+  }
 
   public stop() {
     logger.info('Stopping connections...');
@@ -158,7 +163,7 @@ export class ConnectionManager {
     });
     levin.on('handshake', (data: handshake.IRequest) => {
       logger.info('Receiving handshaking command!');
-      // this.onHandshake(data, context, levin);
+      this.onHandshake(data, context, levin);
     });
     s.on('data', buffer => {
       logger.info('Receiving new data!');
@@ -178,5 +183,39 @@ export class ConnectionManager {
       context,
       levin,
     };
+  }
+
+  private onHandshake(
+    data: handshake.IRequest,
+    context: P2pConnectionContext,
+    levin: LevinProtocol
+  ) {
+    if (!data.node.peerId.equals(this.peerId) && data.node.myPort !== 0) {
+      levin.tryPing(data.node, context);
+      levin.once('ping', (response: ping.IResponse) => {
+        this.onPing(response, data, context);
+      });
+    }
+  }
+  private onPing(
+    response: ping.IResponse,
+    data: handshake.IRequest,
+    context: P2pConnectionContext
+  ) {
+    if (
+      response.status === ping.PING_OK_RESPONSE_STATUS_TEXT &&
+      response.peerId.equals(data.node.peerId)
+    ) {
+      const pe: IPeerEntry = {
+        lastSeen: new Date(),
+        peer: {
+          ip: context.ip,
+          port: data.node.myPort,
+        },
+        // tslint:disable-next-line:object-literal-sort-keys
+        id: data.node.peerId,
+      };
+      // this.pm.appendWhite(pe);
+    }
   }
 }

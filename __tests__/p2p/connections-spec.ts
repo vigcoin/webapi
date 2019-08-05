@@ -32,12 +32,14 @@ describe('test connections', () => {
     sendPeerListSize: p2p.P2P_DEFAULT_PEERS_IN_HANDSHAKE,
   };
 
+  const peerId = randomBytes(8);
+
   it('should connect to peer with connection manager', async () => {
     jest.setTimeout(10000);
     const p2pConfig = new P2PConfig();
     const config = getConfigByType(getType(p2pConfig.testnet));
 
-    const cm = new ConnectionManager();
+    const cm = new ConnectionManager(peerId);
     const host = '69.171.73.252';
     const port = 19800;
     const ip = IP.toNumber(host);
@@ -209,7 +211,7 @@ describe('test connections', () => {
     bc.init();
 
     const handler = new Handler(bc);
-    const cm = new ConnectionManager();
+    const cm = new ConnectionManager(peerId);
 
     const server = createServer(socket => {
       const { levin, context } = cm.initContext(handler, socket);

@@ -46,7 +46,8 @@ bc.init();
 const handler = new Handler(bc);
 
 const p2pserver = getP2PServer(dir, mainnet);
-const connectionManager = new ConnectionManager();
+const peerId = randomBytes(8);
+const connectionManager = new ConnectionManager(peerId);
 
 describe('test levin protocol', () => {
   it('should read header', () => {
