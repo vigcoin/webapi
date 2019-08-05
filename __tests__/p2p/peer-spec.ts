@@ -106,5 +106,9 @@ describe('test peer', () => {
     gray.remove(pe[3]);
     gray.remove(pe[5]);
     white.remove(pe[5]);
+
+    pm.handleRemotePeerList(new Date(), []);
+    pm.handleRemotePeerList(new Date(), pe);
+    pm.handleRemotePeerList(new Date('1900'), pe);
   });
 });

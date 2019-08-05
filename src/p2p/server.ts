@@ -1,6 +1,5 @@
 import { randomBytes } from 'crypto';
 import { EventEmitter } from 'events';
-import * as moment from 'moment';
 import { createServer, Server, Socket } from 'net';
 import * as path from 'path';
 import { p2p } from '../config';
@@ -438,7 +437,7 @@ export class P2PServer extends EventEmitter {
       }
 
       if (
-        !this.handleRemotePeerList(
+        !this.pm.handleRemotePeerList(
           response.node.localTime,
           response.localPeerList
         )
@@ -483,41 +482,6 @@ export class P2PServer extends EventEmitter {
     if (isInitial) {
       this.handler.notifyPeerCount(this.connectionManager.size);
     }
-  }
-
-  private handleRemotePeerList(
-    localTime: Date,
-    peerEntries: IPeerEntry[]
-  ): boolean {
-    logger.info('Handle remote peer list!');
-    for (const pe of peerEntries) {
-      logger.info(
-        'Peer found: ' + IP.toString(pe.peer.ip) + ':' + pe.peer.port
-      );
-      logger.info(
-        'Last seen: ' + moment(pe.lastSeen).format('YYYY-MM-DD HH:mm:ss')
-      );
-    }
-    const now = Date.now();
-    const delta = now - localTime.getTime();
-    logger.info('Delta time is ' + delta);
-    for (const pe of peerEntries) {
-      if (pe.lastSeen.getTime() > localTime.getTime()) {
-        logger.error('Found FUTURE peer entry!');
-        logger.error(
-          'Last seen: ' + moment(pe.lastSeen).format('YYYY-MM-DD HH:mm:ss')
-        );
-        logger.error(
-          'Remote local time: ' +
-            moment(localTime).format('YYYY-MM-DD HH:mm:ss')
-        );
-        return false;
-      }
-      pe.lastSeen = new Date(pe.lastSeen.getTime() + delta);
-    }
-    logger.info('Entries Merged!');
-    this.pm.merge(peerEntries);
-    return true;
   }
 
   private getLocalPeerDate(): IPeerNodeData {

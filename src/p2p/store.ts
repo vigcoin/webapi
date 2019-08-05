@@ -1,9 +1,9 @@
 import {
+  closeSync,
   existsSync,
+  openSync,
   readFileSync,
   writeFileSync,
-  closeSync,
-  openSync,
 } from 'fs';
 import * as moment from 'moment';
 import { IPeerEntry } from '../cryptonote/p2p';
