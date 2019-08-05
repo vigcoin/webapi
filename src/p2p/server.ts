@@ -114,7 +114,11 @@ export class P2PServer extends EventEmitter {
       await this.handshake(s, handshakeOnly);
       return;
     }
-    const { context } = this.initContext(s, false);
+    const { context } = this.connectionManager.initContext(
+      this.handler,
+      s,
+      false
+    );
     const pe: IPeerEntry = {
       id: context.peerId,
       lastSeen: new Date(),
@@ -188,63 +192,6 @@ export class P2PServer extends EventEmitter {
         });
       });
     }
-  }
-
-  public initContext(s: Socket, inComing: boolean = true) {
-    if (inComing) {
-      logger.info('New incoming context creating');
-    } else {
-      logger.info('New outgoing context creating');
-    }
-    const context = new P2pConnectionContext(s);
-    context.isIncoming = inComing;
-    const levin = new LevinProtocol(s);
-    return this.initLevin(s, context, levin);
-  }
-
-  protected initLevin(
-    s: Socket,
-    context: P2pConnectionContext,
-    levin: LevinProtocol
-  ) {
-    this.connectionManager.set(context);
-    levin.on('state', (state: ConnectionState) => {
-      logger.info(
-        'Context state changed from ' + context.state + ' to ' + state
-      );
-      context.state = state;
-    });
-    levin.on('handshake', (data: handshake.IRequest) => {
-      logger.info('Receiving handshaking command!');
-      this.onHandshake(data, context, levin);
-    });
-    s.on('data', buffer => {
-      logger.info('Receiving new data!');
-      try {
-        levin.onIncomingData(
-          new BufferStreamReader(buffer),
-          context,
-          this.handler
-        );
-        if (context.state === ConnectionState.SHUTDOWN) {
-          s.destroy();
-        }
-      } catch (e) {
-        logger.error('Error processing new data!');
-        s.destroy();
-        this.connectionManager.remove(context);
-      }
-    });
-    s.on('end', () => {
-      logger.info(
-        'Connection ' + s.remoteAddress + ':' + s.remotePort + ' ended!'
-      );
-      s.destroy();
-    });
-    return {
-      context,
-      levin,
-    };
   }
 
   protected async startServer() {
@@ -377,7 +324,7 @@ export class P2PServer extends EventEmitter {
     if (this.clientList.indexOf(s) === -1) {
       this.clientList.push(s);
     }
-    this.initContext(s, true);
+    this.connectionManager.initContext(this.handler, s, true);
   }
 
   private onHandshake(
@@ -423,7 +370,11 @@ export class P2PServer extends EventEmitter {
     };
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     handshake.Writer.request(writer, request);
-    const { context, levin } = this.initContext(s, false);
+    const { context, levin } = this.connectionManager.initContext(
+      this.handler,
+      s,
+      false
+    );
     try {
       const response: any = await levin.invoke(handshake, writer.getBuffer());
       context.version = response.node.version;

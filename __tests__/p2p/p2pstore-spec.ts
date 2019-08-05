@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { readFileSync, unlinkSync, existsSync } from 'fs';
+import { existsSync, readFileSync, unlinkSync } from 'fs';
 import * as path from 'path';
 import { getP2PServer } from '../../src/init/p2p';
 import { PeerList, PeerManager } from '../../src/p2p/peer-manager';

@@ -14,6 +14,7 @@ import {
 
 import { data as mainnet } from '../../src/init/net-types/mainnet';
 
+import { randomBytes } from 'crypto';
 import * as path from 'path';
 import { cryptonote } from '../../src/config';
 import { Configuration } from '../../src/config/types';
@@ -24,7 +25,7 @@ import { ConnectionContext, ConnectionState } from '../../src/p2p/connection';
 import { Handler } from '../../src/p2p/protocol/handler';
 import { getBlockFile } from '../../src/util/fs';
 import { IP } from '../../src/util/ip';
-import { randomBytes } from 'crypto';
+import { ConnectionManager } from '../../src/p2p/connection-manager';
 
 const dir = path.resolve(__dirname, '../vigcoin');
 const config: Configuration.ICurrency = {
@@ -45,6 +46,7 @@ bc.init();
 const handler = new Handler(bc);
 
 const p2pserver = getP2PServer(dir, mainnet);
+const connectionManager = new ConnectionManager();
 
 describe('test levin protocol', () => {
   it('should read header', () => {
@@ -82,7 +84,7 @@ describe('test levin protocol', () => {
   it('should handle levin ping request protocol', done => {
     let processed = false;
     const server = createServer(socket => {
-      const { levin } = p2pserver.initContext(socket);
+      const { levin } = connectionManager.initContext(handler, socket);
       levin.on('processed', message => {
         assert(message === 'ping');
         processed = true;
@@ -93,7 +95,7 @@ describe('test levin protocol', () => {
     const client = createConnection({ port }, () => {
       // 'connect' listener
       client.write(Buffer.from(pingRequest));
-      const { levin } = p2pserver.initContext(client);
+      const { levin } = connectionManager.initContext(handler, client);
       levin.on('ping', (res: ping.IResponse) => {
         assert(String(res.status) === 'OK');
         assert(processed);
@@ -106,7 +108,7 @@ describe('test levin protocol', () => {
 
   it('should handle levin ping no response request', done => {
     const server = createServer(socket => {
-      const { levin } = p2pserver.initContext(socket);
+      const { levin } = connectionManager.initContext(handler, socket);
       levin.on('processed', message => {
         assert(message === 'ping');
         client.destroy();
@@ -134,7 +136,7 @@ describe('test levin protocol', () => {
   it('should handle levin timedsync protocol', done => {
     let processed = false;
     const server = createServer(socket => {
-      const { levin } = p2pserver.initContext(socket);
+      const { levin } = connectionManager.initContext(handler, socket);
       levin.on('processed', message => {
         assert(message === 'timedsync');
         processed = true;
@@ -144,7 +146,7 @@ describe('test levin protocol', () => {
     server.listen(port);
     const client = createConnection({ port }, () => {
       client.write(Buffer.from(timesyncRequest));
-      const { levin } = p2pserver.initContext(client);
+      const { levin } = connectionManager.initContext(handler, client);
       levin.on('timedsync', (res: timedsync.IResponse) => {
         assert(!!res.localTime);
         assert(processed);
@@ -192,7 +194,8 @@ describe('test levin protocol', () => {
   it('should try ping', done => {
     let processed = false;
     const server = createServer(socket => {
-      const { levin } = p2pserver.initContext(socket);
+      const { levin } = connectionManager.initContext(handler, socket);
+
       levin.on('processed', message => {
         assert(message === 'ping');
         processed = true;
@@ -201,7 +204,8 @@ describe('test levin protocol', () => {
     const port = Math.floor(Math.random() * 1000) + 1024;
     server.listen(port);
     const client = createConnection({ port }, () => {
-      const { levin, context } = p2pserver.initContext(client);
+      const { levin, context } = connectionManager.initContext(handler, client);
+
       const data: IPeerNodeData = {
         networkId: cryptonote.NETWORK_ID,
         version: 1,
@@ -225,7 +229,7 @@ describe('test levin protocol', () => {
   it('should try ping with zero port', done => {
     let processed = false;
     const server = createServer(socket => {
-      const { levin } = p2pserver.initContext(socket);
+      const { levin } = connectionManager.initContext(handler, socket);
       levin.on('processed', message => {
         assert(message === 'ping');
         processed = true;
@@ -234,7 +238,7 @@ describe('test levin protocol', () => {
     const port = Math.floor(Math.random() * 1000) + 1024;
     server.listen(port);
     const client = createConnection({ port }, () => {
-      const { levin, context } = p2pserver.initContext(client);
+      const { levin, context } = connectionManager.initContext(handler, client);
       const data: IPeerNodeData = {
         networkId: cryptonote.NETWORK_ID,
         version: 1,
@@ -254,7 +258,7 @@ describe('test levin protocol', () => {
   it('should try ping with disallowed ip', done => {
     let processed = false;
     const server = createServer(socket => {
-      const { levin } = p2pserver.initContext(socket);
+      const { levin } = connectionManager.initContext(handler, socket);
       levin.on('processed', message => {
         assert(message === 'ping');
         processed = true;
@@ -263,7 +267,11 @@ describe('test levin protocol', () => {
     const port = Math.floor(Math.random() * 1000) + 1024;
     server.listen(port);
     const client = createConnection({ port }, () => {
-      const { levin, context } = p2pserver.initContext(client, false);
+      const { levin, context } = connectionManager.initContext(
+        handler,
+        client,
+        false
+      );
       const data: IPeerNodeData = {
         networkId: cryptonote.NETWORK_ID,
         version: 1,
@@ -281,7 +289,8 @@ describe('test levin protocol', () => {
 
   it('should handle levin handshake protocol', done => {
     const server = createServer(socket => {
-      const { levin } = p2pserver.initContext(socket);
+      const { levin } = connectionManager.initContext(handler, socket);
+
       levin.on('processed', message => {
         assert(message === 'handshake');
         client.destroy();
@@ -293,14 +302,14 @@ describe('test levin protocol', () => {
     server.listen(port);
     const client = createConnection({ port }, () => {
       client.write(Buffer.from(handshakeRequest));
-      p2pserver.initContext(client, false);
+      connectionManager.initContext(handler, client, false);
     });
   });
 
   it('should handle unkown cmd', done => {
     let caught = false;
     const server = createServer(socket => {
-      const { levin, context } = p2pserver.initContext(socket);
+      const { levin, context } = connectionManager.initContext(handler, socket);
       const cmd: ILevinCommand = {
         buffer: Buffer.alloc(0),
         command: 1,
@@ -330,7 +339,7 @@ describe('test levin protocol', () => {
       context.state = state;
     }
     const server = createServer(socket => {
-      const { levin, context } = p2pserver.initContext(socket);
+      const { levin, context } = connectionManager.initContext(handler, socket);
       const bsr = new BufferStreamReader(Buffer.from([1, 2, 3, 4, 5]));
       changeState(context, ConnectionState.SYNC_REQURIED);
       levin.onIncomingData(bsr, context, handler);
@@ -359,7 +368,7 @@ describe('test levin protocol', () => {
     const port = Math.floor(Math.random() * 1000) + 1024;
     server.listen(port);
     const client = createConnection({ port }, async () => {
-      const { levin, context } = p2pserver.initContext(client);
+      const { levin } = connectionManager.initContext(handler, client);
       const request: ping.IRequest = {};
       const writer = new BufferStreamWriter(Buffer.alloc(0));
       ping.Writer.request(writer, request);
@@ -403,7 +412,7 @@ describe('test levin protocol', () => {
     const port = Math.floor(Math.random() * 1000) + 1024;
     server.listen(port);
     const client = createConnection({ port }, async () => {
-      const { levin, context } = p2pserver.initContext(client);
+      const { levin } = connectionManager.initContext(handler, client);
       const request: ping.IRequest = {};
       const writer = new BufferStreamWriter(Buffer.alloc(0));
       ping.Writer.request(writer, request);

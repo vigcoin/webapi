@@ -1,6 +1,10 @@
+import { Socket } from 'net';
 import { IPeer, IPeerEntry } from '../cryptonote/p2p';
+import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { logger } from '../logger';
-import { P2pConnectionContext } from './connection';
+import { ConnectionState, P2pConnectionContext } from './connection';
+import { LevinProtocol } from './levin';
+import { handshake } from './protocol';
 import { Handler } from './protocol/handler';
 
 export class ConnectionManager {
@@ -125,5 +129,59 @@ export class ConnectionManager {
 
   get size() {
     return this.connections.size;
+  }
+
+  public initContext(handler: Handler, s: Socket, inComing: boolean = true) {
+    if (inComing) {
+      logger.info('New incoming context creating');
+    } else {
+      logger.info('New outgoing context creating');
+    }
+    const context = new P2pConnectionContext(s);
+    context.isIncoming = inComing;
+    const levin = new LevinProtocol(s);
+    return this.initLevin(s, context, levin, handler);
+  }
+
+  protected initLevin(
+    s: Socket,
+    context: P2pConnectionContext,
+    levin: LevinProtocol,
+    handler: Handler
+  ) {
+    this.set(context);
+    levin.on('state', (state: ConnectionState) => {
+      logger.info(
+        'Context state changed from ' + context.state + ' to ' + state
+      );
+      context.state = state;
+    });
+    levin.on('handshake', (data: handshake.IRequest) => {
+      logger.info('Receiving handshaking command!');
+      // this.onHandshake(data, context, levin);
+    });
+    s.on('data', buffer => {
+      logger.info('Receiving new data!');
+      try {
+        levin.onIncomingData(new BufferStreamReader(buffer), context, handler);
+        if (context.state === ConnectionState.SHUTDOWN) {
+          s.destroy();
+        }
+      } catch (e) {
+        logger.error('Error processing new data!');
+        s.destroy();
+        this.remove(context);
+      }
+    });
+    s.on('end', () => {
+      logger.info(
+        'Connection ' + s.remoteAddress + ':' + s.remotePort + ' ended!'
+      );
+      s.destroy();
+    });
+    return {
+      context,
+      levin,
+    };
   }
 }
