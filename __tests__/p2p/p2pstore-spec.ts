@@ -22,17 +22,17 @@ describe('test peer server', () => {
     const whitePeerList = new PeerList(100);
     const grayPeerList = new PeerList(100);
     const pm = new PeerManager(whitePeerList, grayPeerList);
-    const store = P2PStore.getStore(p2pFile, server, pm);
+    const store = P2PStore.getStore(p2pFile, server, pm, false);
     assert(store);
   });
 
   it('should read p2p state file 1', () => {
-    const ps = new P2PStore(p2pFile);
     const whitePeerList = new PeerList(100);
     const grayPeerList = new PeerList(100);
     const pm = new PeerManager(whitePeerList, grayPeerList);
 
-    ps.read(server, pm);
+    const ps = P2PStore.getStore(p2pFile, server, pm, true);
+
     assert(server.version === 1);
     assert(pm.version === 1);
     const white = [];
@@ -98,5 +98,13 @@ describe('test peer server', () => {
       assert(item.peer.port === 19800);
       gray.push(IP.toString(item.peer.ip));
     }
+  });
+
+  it('should saveStore with a file', () => {
+    const whitePeerList = new PeerList(100);
+    const grayPeerList = new PeerList(100);
+    const pm = new PeerManager(whitePeerList, grayPeerList);
+    server.p2pStore = P2PStore.getStore(p2pFile, server, pm, false);
+    P2PStore.saveStore(p2pFile, server, pm);
   });
 });

@@ -49,6 +49,8 @@ export class P2PServer extends EventEmitter {
     this.peerId = id;
   }
   public p2pConfig: P2PConfig;
+  public p2pStore: P2PStore;
+
   private config: IServerConfig;
 
   private pm: PeerManager;
@@ -68,7 +70,6 @@ export class P2PServer extends EventEmitter {
   private isConnecting = false;
 
   private serializeFile: string;
-  private p2pStore: P2PStore;
 
   constructor(
     config: IServerConfig,
@@ -106,14 +107,8 @@ export class P2PServer extends EventEmitter {
   public async onIdle() {
     const interval = setInterval(async () => {
       await this.startConnection();
-      this.storeP2PState();
+      P2PStore.saveStore(this.serializeFile, this, this.pm);
     }, this.network.handshakeInterval * 1000);
-  }
-
-  public storeP2PState() {
-    logger.info('Saveing P2PState file : ' + this.serializeFile);
-    this.p2pStore.write(this, this.pm);
-    logger.info('Finished writing P2PState to File : ' + this.serializeFile);
   }
 
   // try_to_connect_and_handshake_with_new_peer

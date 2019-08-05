@@ -25,6 +25,16 @@ export class P2PStore {
     }
     return p2pStore;
   }
+
+  public static saveStore(
+    file: string,
+    server: P2PServer,
+    peerManager: PeerManager
+  ) {
+    logger.info('Saveing P2PState file : ' + file);
+    server.p2pStore.write(server, peerManager);
+    logger.info('Finished writing P2PState to File : ' + file);
+  }
   private file: string;
   constructor(file: string) {
     this.file = file;
