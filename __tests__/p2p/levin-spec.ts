@@ -22,10 +22,10 @@ import { IPeerNodeData } from '../../src/cryptonote/p2p';
 import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';
 import { getP2PServer } from '../../src/init/p2p';
 import { ConnectionContext, ConnectionState } from '../../src/p2p/connection';
+import { ConnectionManager } from '../../src/p2p/connection-manager';
 import { Handler } from '../../src/p2p/protocol/handler';
 import { getBlockFile } from '../../src/util/fs';
 import { IP } from '../../src/util/ip';
-import { ConnectionManager } from '../../src/p2p/connection-manager';
 
 const dir = path.resolve(__dirname, '../vigcoin');
 const config: Configuration.ICurrency = {

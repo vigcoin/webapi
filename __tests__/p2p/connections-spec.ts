@@ -1,15 +1,24 @@
 import * as assert from 'assert';
 import { randomBytes } from 'crypto';
+import { createConnection, createServer } from 'net';
 import * as path from 'path';
 import { p2p } from '../../src/config';
+import { Configuration } from '../../src/config/types';
+import { BlockChain } from '../../src/cryptonote/block/blockchain';
 import { IPeerEntry } from '../../src/cryptonote/p2p';
+import { getBlockChain } from '../../src/init/blockchain';
 import { getConfigByType, getType } from '../../src/init/cryptonote';
+import { data as mainnet } from '../../src/init/net-types/mainnet';
 import { getHandler } from '../../src/init/p2p';
 import { INetwork, IPeer } from '../../src/p2p';
 import { P2PConfig } from '../../src/p2p/config';
-import { P2pConnectionContext } from '../../src/p2p/connection';
+import {
+  ConnectionState,
+  P2pConnectionContext,
+} from '../../src/p2p/connection';
 import { ConnectionManager } from '../../src/p2p/connection-manager';
-import { getDefaultAppDir } from '../../src/util/fs';
+import { Handler } from '../../src/p2p/protocol/handler';
+import { getBlockFile, getDefaultAppDir } from '../../src/util/fs';
 import { IP } from '../../src/util/ip';
 
 describe('test connections', () => {
@@ -137,10 +146,9 @@ describe('test connections', () => {
 
       context1.remoteBlockchainHeight = 1000;
       assert(cm.updateObservedHeight(49, context, h) === 1000);
+      cm.stop();
       cm.remove(context);
       cm.remove(context1);
-      socket.destroy();
-      socket1.destroy();
     } catch (e) {
       caught = true;
     }
@@ -181,5 +189,43 @@ describe('test connections', () => {
       caught = true;
     }
     assert(caught);
+  });
+
+  it('should init context and emit state change', done => {
+    const dir = path.resolve(__dirname, '../vigcoin');
+    const config: Configuration.ICurrency = {
+      block: {
+        genesisCoinbaseTxHex: '111',
+        version: {
+          major: 1,
+          minor: 1,
+          patch: 1,
+        },
+      },
+      blockFiles: getBlockFile(dir, mainnet),
+      hardfork: [],
+    };
+    const bc: BlockChain = getBlockChain(config);
+    bc.init();
+
+    const handler = new Handler(bc);
+    const cm = new ConnectionManager();
+
+    const server = createServer(socket => {
+      const { levin, context } = cm.initContext(handler, socket);
+      levin.on('state', () => {
+        assert(context.state === ConnectionState.BEFORE_HANDSHAKE);
+        client.destroy();
+        server.close();
+        done();
+      });
+      levin.emit('state', ConnectionState.BEFORE_HANDSHAKE);
+    });
+    const port = Math.floor(Math.random() * 1000) + 10000;
+    server.listen(port);
+    const client = createConnection({ port }, () => {
+      cm.initContext(handler, client, false);
+      client.write(Buffer.from([0, 1, 2, 3]));
+    });
   });
 });

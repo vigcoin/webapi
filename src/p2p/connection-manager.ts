@@ -162,14 +162,9 @@ export class ConnectionManager {
     });
     s.on('data', buffer => {
       logger.info('Receiving new data!');
-      try {
-        levin.onIncomingData(new BufferStreamReader(buffer), context, handler);
-        if (context.state === ConnectionState.SHUTDOWN) {
-          s.destroy();
-        }
-      } catch (e) {
-        logger.error('Error processing new data!');
-        s.destroy();
+      levin.onIncomingData(new BufferStreamReader(buffer), context, handler);
+      if (context.state === ConnectionState.SHUTDOWN) {
+        context.stop();
         this.remove(context);
       }
     });
