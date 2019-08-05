@@ -13,13 +13,16 @@ export class P2PStore {
   public static getStore(
     file: string,
     server: P2PServer,
-    peerManager: PeerManager
+    peerManager: PeerManager,
+    read: boolean
   ) {
     logger.info('Found P2PState File : ' + file);
     logger.info('Reading P2PState from File : ' + file);
     const p2pStore = new P2PStore(file);
-    p2pStore.read(server, peerManager);
-    logger.info('Finished Reading P2PState from File : ' + file);
+    if (read) {
+      p2pStore.read(server, peerManager);
+      logger.info('Finished Reading P2PState from File : ' + file);
+    }
     return p2pStore;
   }
   private file: string;

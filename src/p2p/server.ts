@@ -111,13 +111,6 @@ export class P2PServer extends EventEmitter {
   }
 
   public storeP2PState() {
-    if (!this.serializeFile) {
-      return;
-    }
-    if (!existsSync(this.serializeFile)) {
-      closeSync(openSync(this.serializeFile, 'w'));
-      this.p2pStore = new P2PStore(this.serializeFile);
-    }
     logger.info('Saveing P2PState file : ' + this.serializeFile);
     this.p2pStore.write(this, this.pm);
     logger.info('Finished writing P2PState to File : ' + this.serializeFile);
@@ -159,14 +152,24 @@ export class P2PServer extends EventEmitter {
       this.p2pConfig.dataDir,
       this.p2pConfig.filename
     );
-    if (existsSync(this.serializeFile)) {
-      this.p2pStore = P2PStore.getStore(this.serializeFile, this, this.pm);
-    } else {
+
+    const exists = existsSync(this.serializeFile);
+
+    // create a random id if no store info exists
+    if (!exists) {
       this.id = randomBytes(8);
       logger.info(
         'Random P2PState Peer ID Created : ' + this.id.toString('hex')
       );
     }
+
+    // Make sure p2p store exist
+    this.p2pStore = P2PStore.getStore(
+      this.serializeFile,
+      this,
+      this.pm,
+      exists
+    );
 
     for (const peer of this.p2pConfig.peers) {
       logger.info(
