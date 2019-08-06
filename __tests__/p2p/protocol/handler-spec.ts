@@ -30,13 +30,4 @@ describe('test p2p protocol handler', () => {
     const payLoad = h.getPayLoad();
     assert(payLoad.currentHeight === 49);
   });
-
-  // it('should process payload with blockchain', () => {
-  //   const dir = path.resolve(__dirname, '../../vigcoin');
-  //   const h = getHandler(dir, config);
-  //   const payLoad = h.getPayLoad();
-  //   console.log(payLoad);
-  //   assert(payLoad.currentHeight >= 0);
-  //   assert(payLoad.hash);
-  // });
 });

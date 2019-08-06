@@ -161,24 +161,15 @@ export class ConnectionManager extends EventEmitter {
   ) {
     logger.info('Sending handshaking request ...');
     const request: handshake.IRequest = {
-      node: this.getLocalPeerDate(),
+      node: this.getLocalPeerData(),
       payload: handler.getPayLoad(),
     };
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     handshake.Writer.request(writer, request);
-    const { context, levin } = this.initContext(handler, s, false);
+    const { context, levin } = this.initContext(pm, handler, s, false);
     try {
       const response: any = await levin.invoke(handshake, writer.getBuffer());
       context.version = response.node.version;
-      if (
-        !Buffer.from(this.networkId).equals(
-          Buffer.from(response.node.networkId)
-        )
-      ) {
-        logger.error('Handshaking failed! Network id is mismatched!');
-        return false;
-      }
-
       if (
         !pm.handleRemotePeerList(
           response.node.localTime,
@@ -204,7 +195,12 @@ export class ConnectionManager extends EventEmitter {
     }
   }
 
-  public initContext(handler: Handler, s: Socket, inComing: boolean = true) {
+  public initContext(
+    pm: PeerManager,
+    handler: Handler,
+    s: Socket,
+    inComing: boolean = true
+  ) {
     if (inComing) {
       logger.info('New incoming context creating');
     } else {
@@ -213,14 +209,15 @@ export class ConnectionManager extends EventEmitter {
     const context = new P2pConnectionContext(s);
     context.isIncoming = inComing;
     const levin = new LevinProtocol(s);
-    return this.initLevin(s, context, levin, handler);
+    return this.initLevin(s, context, levin, handler, pm);
   }
 
   protected initLevin(
     s: Socket,
     context: P2pConnectionContext,
     levin: LevinProtocol,
-    handler: Handler
+    handler: Handler,
+    pm: PeerManager
   ) {
     this.set(context);
     levin.on('state', (state: ConnectionState) => {
@@ -231,11 +228,16 @@ export class ConnectionManager extends EventEmitter {
     });
     levin.on('handshake', (data: handshake.IRequest) => {
       logger.info('Receiving handshaking command!');
-      this.onHandshake(data, context, levin);
+      this.onHandshake(pm, handler, data, context, levin);
+    });
+    s.on('error', e => {
+      logger.info('Connection corrupted!');
+      logger.error(e);
     });
     s.on('data', buffer => {
       logger.info('Receiving new data!');
       levin.onIncomingData(new BufferStreamReader(buffer), context, handler);
+      logger.info('Data processed!');
       if (context.state === ConnectionState.SHUTDOWN) {
         context.stop();
         this.remove(context);
@@ -254,17 +256,28 @@ export class ConnectionManager extends EventEmitter {
   }
 
   private onHandshake(
+    pm: PeerManager,
+    handler: Handler,
     data: handshake.IRequest,
     context: P2pConnectionContext,
     levin: LevinProtocol
   ) {
     if (!data.node.peerId.equals(this.peerId) && data.node.myPort !== 0) {
       levin.tryPing(data.node, context);
-      levin.once('ping', (response: ping.IResponse) => {
-        this.onPing(response, data, context);
-      });
+      // levin.once('ping', (response: ping.IResponse) => {
+      //   this.onPing(response, data, context);
+      // });
     }
+    const response: handshake.IResponse = {
+      localPeerList: pm.getLocalPeerList(),
+      node: this.getLocalPeerData(),
+      payload: handler.getPayLoad(),
+    };
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    handshake.Writer.response(writer, response);
+    levin.writeResponse(handshake.ID.ID, writer.getBuffer(), true);
   }
+
   private onPing(
     response: ping.IResponse,
     data: handshake.IRequest,
@@ -311,7 +324,7 @@ export class ConnectionManager extends EventEmitter {
     }
   }
 
-  private getLocalPeerDate(): IPeerNodeData {
+  private getLocalPeerData(): IPeerNodeData {
     return {
       localTime: new Date(),
       myPort: this.p2pConfig.getMyPort(),

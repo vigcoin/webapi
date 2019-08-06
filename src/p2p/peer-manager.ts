@@ -129,6 +129,12 @@ export class PeerManager {
     }
   }
 
+  public getLocalPeerList(): IPeerEntry[] {
+    return this.gray.sort((a: IPeerEntry, b: IPeerEntry) => {
+      return b.lastSeen.getTime() - a.lastSeen.getTime();
+    });
+  }
+
   public handleRemotePeerList(
     localTime: Date,
     peerEntries: IPeerEntry[]

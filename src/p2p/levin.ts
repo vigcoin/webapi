@@ -177,6 +177,9 @@ export class LevinProtocol extends EventEmitter {
     return new Promise((resovle, reject) => {
       const request = LevinProtocol.request(t.ID.ID, outgoing, 0, true);
       logger.info('Invoking Levin request : ' + t.ID.ID);
+      // this.socket.on('error', e => {
+      //   reject(e);
+      // });
       this.socket.on('data', buffer => {
         logger.info('Receiving Levin response data!');
         try {
@@ -221,6 +224,7 @@ export class LevinProtocol extends EventEmitter {
     }
 
     try {
+      logger.info('Start reading command...');
       const cmd = LevinProtocol.readCommand(reader);
       logger.info('Command ID: ' + cmd.command);
       logger.info('Is Response: ' + cmd.isResponse);
@@ -241,6 +245,7 @@ export class LevinProtocol extends EventEmitter {
     logger.info('On command : ' + cmd.command);
     switch (cmd.command) {
       case handshake.ID.ID:
+        logger.info('Inside on hand shaking');
         this.onHandshake(cmd, context, handler);
         break;
       case timedsync.ID.ID:
@@ -269,9 +274,9 @@ export class LevinProtocol extends EventEmitter {
     context: P2pConnectionContext,
     handler: Handler
   ) {
+    logger.info('Inside on hand shake');
     const reader = new BufferStreamReader(cmd.buffer);
     const request: handshake.IRequest = handshake.Reader.request(reader);
-
     assert(
       Buffer.from(request.node.networkId).equals(
         Buffer.from(LevinProtocol.networkId)
@@ -279,13 +284,10 @@ export class LevinProtocol extends EventEmitter {
     );
 
     // assert(context.isIncoming);
-
     assert(!context.peerId.length);
-
     assert(handler.processPayLoad(context, request.payload, true));
 
     context.peerId = request.node.peerId;
-
     this.emit('handshake', request);
     this.emit('processed', 'handshake');
   }
@@ -311,6 +313,11 @@ export class LevinProtocol extends EventEmitter {
       this.socket.write(data);
     }
     this.emit('processed', 'timedsync');
+  }
+
+  public writeResponse(cmd: number, buffer: Buffer, response: boolean) {
+    const data = LevinProtocol.response(cmd, buffer, 0, response);
+    this.socket.write(data);
   }
 
   public onPing(cmd: ILevinCommand, context: P2pConnectionContext) {

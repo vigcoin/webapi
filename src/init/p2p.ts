@@ -15,10 +15,14 @@ export const network: INetwork = {
   sendPeerListSize: p2p.P2P_DEFAULT_PEERS_IN_HANDSHAKE,
 };
 
-const white = new PeerList(p2p.P2P_LOCAL_WHITE_PEERLIST_LIMIT);
-const gray = new PeerList(p2p.P2P_LOCAL_GRAY_PEERLIST_LIMIT);
-
-export const pm = new PeerManager(white, gray);
+export function getDefaultPeerManager(
+  whiteLimit: number = p2p.P2P_LOCAL_WHITE_PEERLIST_LIMIT,
+  grayLimit: number = p2p.P2P_LOCAL_GRAY_PEERLIST_LIMIT
+) {
+  const white = new PeerList(whiteLimit);
+  const gray = new PeerList(grayLimit);
+  return new PeerManager(white, gray);
+}
 
 export function getServerConfig(config: Configuration.IConfig): IServerConfig {
   return {
@@ -41,5 +45,6 @@ export function getP2PServer(
 ): P2PServer {
   const h = getHandler(dir, config);
   const serverConfig = getServerConfig(config);
+  const pm = getDefaultPeerManager();
   return new P2PServer(serverConfig, network, cryptonote.NETWORK_ID, h, pm);
 }

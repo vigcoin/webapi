@@ -20,7 +20,8 @@ import { cryptonote } from '../../src/config';
 import { Configuration } from '../../src/config/types';
 import { IPeerNodeData } from '../../src/cryptonote/p2p';
 import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';
-import { getP2PServer } from '../../src/init/p2p';
+import { getDefaultPeerManager, getP2PServer } from '../../src/init/p2p';
+import { P2PConfig } from '../../src/p2p/config';
 import { ConnectionContext, ConnectionState } from '../../src/p2p/connection';
 import { ConnectionManager } from '../../src/p2p/connection-manager';
 import { Handler } from '../../src/p2p/protocol/handler';
@@ -47,7 +48,10 @@ const handler = new Handler(bc);
 
 const p2pserver = getP2PServer(dir, mainnet);
 const peerId = randomBytes(8);
-const connectionManager = new ConnectionManager(peerId);
+const networkId = cryptonote.NETWORK_ID;
+const p2pConfig = new P2PConfig();
+const connectionManager = new ConnectionManager(peerId, networkId, p2pConfig);
+const pm = getDefaultPeerManager();
 
 describe('test levin protocol', () => {
   it('should read header', () => {
@@ -85,7 +89,7 @@ describe('test levin protocol', () => {
   it('should handle levin ping request protocol', done => {
     let processed = false;
     const server = createServer(socket => {
-      const { levin } = connectionManager.initContext(handler, socket);
+      const { levin } = connectionManager.initContext(pm, handler, socket);
       levin.on('processed', message => {
         assert(message === 'ping');
         processed = true;
@@ -96,7 +100,7 @@ describe('test levin protocol', () => {
     const client = createConnection({ port }, () => {
       // 'connect' listener
       client.write(Buffer.from(pingRequest));
-      const { levin } = connectionManager.initContext(handler, client);
+      const { levin } = connectionManager.initContext(pm, handler, client);
       levin.on('ping', (res: ping.IResponse) => {
         assert(String(res.status) === 'OK');
         assert(processed);
@@ -109,7 +113,7 @@ describe('test levin protocol', () => {
 
   it('should handle levin ping no response request', done => {
     const server = createServer(socket => {
-      const { levin } = connectionManager.initContext(handler, socket);
+      const { levin } = connectionManager.initContext(pm, handler, socket);
       levin.on('processed', message => {
         assert(message === 'ping');
         client.destroy();
@@ -137,7 +141,7 @@ describe('test levin protocol', () => {
   it('should handle levin timedsync protocol', done => {
     let processed = false;
     const server = createServer(socket => {
-      const { levin } = connectionManager.initContext(handler, socket);
+      const { levin } = connectionManager.initContext(pm, handler, socket);
       levin.on('processed', message => {
         assert(message === 'timedsync');
         processed = true;
@@ -147,7 +151,7 @@ describe('test levin protocol', () => {
     server.listen(port);
     const client = createConnection({ port }, () => {
       client.write(Buffer.from(timesyncRequest));
-      const { levin } = connectionManager.initContext(handler, client);
+      const { levin } = connectionManager.initContext(pm, handler, client);
       levin.on('timedsync', (res: timedsync.IResponse) => {
         assert(!!res.localTime);
         assert(processed);
@@ -161,7 +165,6 @@ describe('test levin protocol', () => {
   // it('should handle levin timesync no response request', done => {
   //   const server = createServer(socket => {
   //     const { levin } = p2pserver.initContext(socket);
-  //     console.log('connected');
   //     levin.on('processed', message => {
   //       assert(message === 'timedsync');
   //       client.destroy();
@@ -187,7 +190,6 @@ describe('test levin protocol', () => {
   //       false
   //     );
   //     // 'connect' listener
-  //     console.log('send');
   //     client.write(buffer);
   //   });
   // });
@@ -195,7 +197,7 @@ describe('test levin protocol', () => {
   it('should try ping', done => {
     let processed = false;
     const server = createServer(socket => {
-      const { levin } = connectionManager.initContext(handler, socket);
+      const { levin } = connectionManager.initContext(pm, handler, socket);
 
       levin.on('processed', message => {
         assert(message === 'ping');
@@ -205,7 +207,11 @@ describe('test levin protocol', () => {
     const port = Math.floor(Math.random() * 1000) + 1024;
     server.listen(port);
     const client = createConnection({ port }, () => {
-      const { levin, context } = connectionManager.initContext(handler, client);
+      const { levin, context } = connectionManager.initContext(
+        pm,
+        handler,
+        client
+      );
 
       const data: IPeerNodeData = {
         networkId: cryptonote.NETWORK_ID,
@@ -230,7 +236,7 @@ describe('test levin protocol', () => {
   it('should try ping with zero port', done => {
     let processed = false;
     const server = createServer(socket => {
-      const { levin } = connectionManager.initContext(handler, socket);
+      const { levin } = connectionManager.initContext(pm, handler, socket);
       levin.on('processed', message => {
         assert(message === 'ping');
         processed = true;
@@ -239,7 +245,11 @@ describe('test levin protocol', () => {
     const port = Math.floor(Math.random() * 1000) + 1024;
     server.listen(port);
     const client = createConnection({ port }, () => {
-      const { levin, context } = connectionManager.initContext(handler, client);
+      const { levin, context } = connectionManager.initContext(
+        pm,
+        handler,
+        client
+      );
       const data: IPeerNodeData = {
         networkId: cryptonote.NETWORK_ID,
         version: 1,
@@ -259,7 +269,7 @@ describe('test levin protocol', () => {
   it('should try ping with disallowed ip', done => {
     let processed = false;
     const server = createServer(socket => {
-      const { levin } = connectionManager.initContext(handler, socket);
+      const { levin } = connectionManager.initContext(pm, handler, socket);
       levin.on('processed', message => {
         assert(message === 'ping');
         processed = true;
@@ -269,6 +279,7 @@ describe('test levin protocol', () => {
     server.listen(port);
     const client = createConnection({ port }, () => {
       const { levin, context } = connectionManager.initContext(
+        pm,
         handler,
         client,
         false
@@ -290,7 +301,7 @@ describe('test levin protocol', () => {
 
   it('should handle levin handshake protocol', done => {
     const server = createServer(socket => {
-      const { levin } = connectionManager.initContext(handler, socket);
+      const { levin } = connectionManager.initContext(pm, handler, socket);
 
       levin.on('processed', message => {
         assert(message === 'handshake');
@@ -303,14 +314,18 @@ describe('test levin protocol', () => {
     server.listen(port);
     const client = createConnection({ port }, () => {
       client.write(Buffer.from(handshakeRequest));
-      connectionManager.initContext(handler, client, false);
+      connectionManager.initContext(pm, handler, client, false);
     });
   });
 
   it('should handle unkown cmd', done => {
     let caught = false;
     const server = createServer(socket => {
-      const { levin, context } = connectionManager.initContext(handler, socket);
+      const { levin, context } = connectionManager.initContext(
+        pm,
+        handler,
+        socket
+      );
       const cmd: ILevinCommand = {
         buffer: Buffer.alloc(0),
         command: 1,
@@ -340,7 +355,11 @@ describe('test levin protocol', () => {
       context.state = state;
     }
     const server = createServer(socket => {
-      const { levin, context } = connectionManager.initContext(handler, socket);
+      const { levin, context } = connectionManager.initContext(
+        pm,
+        handler,
+        socket
+      );
       const bsr = new BufferStreamReader(Buffer.from([1, 2, 3, 4, 5]));
       changeState(context, ConnectionState.SYNC_REQURIED);
       levin.onIncomingData(bsr, context, handler);
@@ -369,7 +388,7 @@ describe('test levin protocol', () => {
     const port = Math.floor(Math.random() * 1000) + 1024;
     server.listen(port);
     const client = createConnection({ port }, async () => {
-      const { levin } = connectionManager.initContext(handler, client);
+      const { levin } = connectionManager.initContext(pm, handler, client);
       const request: ping.IRequest = {};
       const writer = new BufferStreamWriter(Buffer.alloc(0));
       ping.Writer.request(writer, request);
@@ -413,7 +432,7 @@ describe('test levin protocol', () => {
     const port = Math.floor(Math.random() * 1000) + 1024;
     server.listen(port);
     const client = createConnection({ port }, async () => {
-      const { levin } = connectionManager.initContext(handler, client);
+      const { levin } = connectionManager.initContext(pm, handler, client);
       const request: ping.IRequest = {};
       const writer = new BufferStreamWriter(Buffer.alloc(0));
       ping.Writer.request(writer, request);

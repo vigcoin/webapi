@@ -119,6 +119,7 @@ export class P2PServer extends EventEmitter {
       return;
     }
     const { context } = this.connectionManager.initContext(
+      this.pm,
       this.handler,
       s,
       false
@@ -328,56 +329,6 @@ export class P2PServer extends EventEmitter {
     if (this.clientList.indexOf(s) === -1) {
       this.clientList.push(s);
     }
-    this.connectionManager.initContext(this.handler, s, true);
+    this.connectionManager.initContext(this.pm, this.handler, s, true);
   }
-
-  // private async handshake(s: Socket, takePeerListOnly: boolean = false) {
-  //   logger.info('Sending handshaking request ...');
-  //   const request: handshake.IRequest = {
-  //     node: this.getLocalPeerDate(),
-  //     payload: this.handler.getPayLoad(),
-  //   };
-  //   const writer = new BufferStreamWriter(Buffer.alloc(0));
-  //   handshake.Writer.request(writer, request);
-  //   const { context, levin } = this.connectionManager.initContext(
-  //     this.handler,
-  //     s,
-  //     false
-  //   );
-  //   try {
-  //     const response: any = await levin.invoke(handshake, writer.getBuffer());
-  //     context.version = response.node.version;
-  //     if (
-  //       !Buffer.from(this.networkId).equals(
-  //         Buffer.from(response.node.networkId)
-  //       )
-  //     ) {
-  //       logger.error('Handshaking failed! Network id is mismatched!');
-  //       return false;
-  //     }
-
-  //     if (
-  //       !this.pm.handleRemotePeerList(
-  //         response.node.localTime,
-  //         response.localPeerList
-  //       )
-  //     ) {
-  //       logger.error('Fail to handle remote local peer list!');
-  //       return false;
-  //     }
-
-  //     if (takePeerListOnly) {
-  //       logger.info('Handshake take peer list only!');
-  //       return true;
-  //     }
-
-  //     this.processPayLoad(context, response.payload, true);
-
-  //     return true;
-  //   } catch (e) {
-  //     logger.error('Fail to handshake with peer!');
-  //     logger.error(e);
-  //     return false;
-  //   }
-  // }
 }
