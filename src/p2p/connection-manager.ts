@@ -1,18 +1,35 @@
+import { EventEmitter } from 'events';
 import { Socket } from 'net';
-import { IPeer, IPeerEntry, IPeerIDType } from '../cryptonote/p2p';
+import {
+  ICoreSyncData,
+  IPeer,
+  IPeerEntry,
+  IPeerIDType,
+  IPeerNodeData,
+  Version,
+} from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
+import { BufferStreamWriter } from '../cryptonote/serialize/writer';
+import { uint8 } from '../cryptonote/types';
 import { logger } from '../logger';
+import { P2PConfig } from './config';
 import { ConnectionState, P2pConnectionContext } from './connection';
 import { LevinProtocol } from './levin';
+import { PeerManager } from './peer-manager';
 import { handshake, ping } from './protocol';
 import { Handler } from './protocol/handler';
 
-export class ConnectionManager {
+export class ConnectionManager extends EventEmitter {
   private connections: Map<string, P2pConnectionContext> = new Map();
   private peerId: IPeerIDType;
+  private networkId: uint8[];
+  private p2pConfig: P2PConfig;
 
-  constructor(peerId: IPeerIDType) {
+  constructor(peerId: IPeerIDType, networkId: uint8[], p2pConfig: P2PConfig) {
+    super();
     this.peerId = peerId;
+    this.networkId = networkId;
+    this.p2pConfig = p2pConfig;
   }
 
   public stop() {
@@ -136,6 +153,57 @@ export class ConnectionManager {
     return this.connections.size;
   }
 
+  public async handshake(
+    handler: Handler,
+    pm: PeerManager,
+    s: Socket,
+    takePeerListOnly: boolean = false
+  ) {
+    logger.info('Sending handshaking request ...');
+    const request: handshake.IRequest = {
+      node: this.getLocalPeerDate(),
+      payload: handler.getPayLoad(),
+    };
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    handshake.Writer.request(writer, request);
+    const { context, levin } = this.initContext(handler, s, false);
+    try {
+      const response: any = await levin.invoke(handshake, writer.getBuffer());
+      context.version = response.node.version;
+      if (
+        !Buffer.from(this.networkId).equals(
+          Buffer.from(response.node.networkId)
+        )
+      ) {
+        logger.error('Handshaking failed! Network id is mismatched!');
+        return false;
+      }
+
+      if (
+        !pm.handleRemotePeerList(
+          response.node.localTime,
+          response.localPeerList
+        )
+      ) {
+        logger.error('Fail to handle remote local peer list!');
+        return false;
+      }
+
+      if (takePeerListOnly) {
+        logger.info('Handshake take peer list only!');
+        return true;
+      }
+
+      this.processPayLoad(handler, context, response.payload, true);
+
+      return true;
+    } catch (e) {
+      logger.error('Fail to handshake with peer!');
+      logger.error(e);
+      return false;
+    }
+  }
+
   public initContext(handler: Handler, s: Socket, inComing: boolean = true) {
     if (inComing) {
       logger.info('New incoming context creating');
@@ -217,5 +285,39 @@ export class ConnectionManager {
       };
       // this.pm.appendWhite(pe);
     }
+  }
+
+  private processPayLoad(
+    handler: Handler,
+    context: P2pConnectionContext,
+    data: ICoreSyncData,
+    isInitial: boolean
+  ) {
+    handler.processPayLoad(context, data, isInitial);
+
+    const newHeight = this.updateObservedHeight(
+      data.currentHeight,
+      context,
+      handler
+    );
+
+    if (newHeight !== 0) {
+      handler.notifyNewHeight(newHeight);
+    }
+
+    context.remoteBlockchainHeight = data.currentHeight;
+    if (isInitial) {
+      handler.notifyPeerCount(this.size);
+    }
+  }
+
+  private getLocalPeerDate(): IPeerNodeData {
+    return {
+      localTime: new Date(),
+      myPort: this.p2pConfig.getMyPort(),
+      networkId: this.networkId,
+      peerId: this.peerId,
+      version: Version.CURRENT,
+    };
   }
 }

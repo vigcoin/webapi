@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import { randomBytes } from 'crypto';
 import { createConnection, createServer } from 'net';
 import * as path from 'path';
-import { p2p } from '../../src/config';
+import { cryptonote, p2p } from '../../src/config';
 import { Configuration } from '../../src/config/types';
 import { BlockChain } from '../../src/cryptonote/block/blockchain';
 import { IPeerEntry } from '../../src/cryptonote/p2p';
@@ -33,13 +33,14 @@ describe('test connections', () => {
   };
 
   const peerId = randomBytes(8);
+  const networkId = cryptonote.NETWORK_ID;
+  const p2pConfig = new P2PConfig();
 
   it('should connect to peer with connection manager', async () => {
     jest.setTimeout(10000);
-    const p2pConfig = new P2PConfig();
     const config = getConfigByType(getType(p2pConfig.testnet));
 
-    const cm = new ConnectionManager(peerId);
+    const cm = new ConnectionManager(peerId, networkId, p2pConfig);
     const host = '69.171.73.252';
     const port = 19800;
     const ip = IP.toNumber(host);
@@ -211,7 +212,7 @@ describe('test connections', () => {
     bc.init();
 
     const handler = new Handler(bc);
-    const cm = new ConnectionManager(peerId);
+    const cm = new ConnectionManager(peerId, networkId, p2pConfig);
 
     const server = createServer(socket => {
       const { levin, context } = cm.initContext(handler, socket);

@@ -80,7 +80,6 @@ export class P2PStore {
   private writePeerEntry(writer: BufferStreamWriter, pe: IPeerEntry) {
     writer.writeVarint(pe.peer.ip);
     writer.writeVarint(pe.peer.port);
-    // tslint:disable-next-line:no-bitwise
     writer.writeVarintBuffer(pe.id);
     writer.writeVarint(Math.floor(pe.lastSeen.getTime() / 1000));
   }

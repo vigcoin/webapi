@@ -6,27 +6,19 @@ import { p2p } from '../config';
 import { BLOCKCHAIN_SYNCHRONZIED } from '../config/events';
 import { Configuration } from '../config/types';
 import {
-  ICoreSyncData,
   INetwork,
   IPeer,
   IPeerEntry,
   IPeerIDType,
-  IPeerNodeData,
   IServerConfig,
-  Version,
 } from '../cryptonote/p2p';
-import { BufferStreamReader } from '../cryptonote/serialize/reader';
-import { BufferStreamWriter } from '../cryptonote/serialize/writer';
 import { uint8 } from '../cryptonote/types';
 import { logger } from '../logger';
 import { getDefaultAppDir } from '../util/fs';
-import { IP } from '../util/ip';
 import { P2PConfig } from './config';
-import { ConnectionState, P2pConnectionContext } from './connection';
+import { P2pConnectionContext } from './connection';
 import { ConnectionManager } from './connection-manager';
-import { LevinProtocol } from './levin';
-import { PeerList, PeerManager } from './peer-manager';
-import { handshake, ping } from './protocol';
+import { PeerManager } from './peer-manager';
 import { Handler } from './protocol/handler';
 import { P2PStore } from './store';
 
@@ -82,13 +74,19 @@ export class P2PServer extends EventEmitter {
     this.networkId = networkId;
     this.pm = pm;
     this.peerId = randomBytes(8);
-    this.connectionManager = new ConnectionManager(this.peerId);
 
     this.p2pConfig = new P2PConfig();
     this.p2pConfig.seedNodes = this.p2pConfig.seedNodes.concat(
       this.serverConfig.seedNode
     );
     this.p2pConfig.seedNodes = Array.from(new Set(this.p2pConfig.seedNodes));
+
+    this.connectionManager = new ConnectionManager(
+      this.peerId,
+      networkId,
+      this.p2pConfig
+    );
+
     this.handler.on(BLOCKCHAIN_SYNCHRONZIED, () => {
       this.emit(BLOCKCHAIN_SYNCHRONZIED, this.connectionManager.getHeight());
     });
@@ -112,7 +110,12 @@ export class P2PServer extends EventEmitter {
   public async connect(peer: IPeer, handshakeOnly: boolean) {
     const s = await P2pConnectionContext.createConnection(peer, this.network);
     if (handshakeOnly) {
-      await this.handshake(s, handshakeOnly);
+      await this.connectionManager.handshake(
+        this.handler,
+        this.pm,
+        s,
+        handshakeOnly
+      );
       return;
     }
     const { context } = this.connectionManager.initContext(
@@ -328,86 +331,53 @@ export class P2PServer extends EventEmitter {
     this.connectionManager.initContext(this.handler, s, true);
   }
 
-  private async handshake(s: Socket, takePeerListOnly: boolean = false) {
-    logger.info('Sending handshaking request ...');
-    const request: handshake.IRequest = {
-      node: this.getLocalPeerDate(),
-      payload: this.handler.getPayLoad(),
-    };
-    const writer = new BufferStreamWriter(Buffer.alloc(0));
-    handshake.Writer.request(writer, request);
-    const { context, levin } = this.connectionManager.initContext(
-      this.handler,
-      s,
-      false
-    );
-    try {
-      const response: any = await levin.invoke(handshake, writer.getBuffer());
-      context.version = response.node.version;
-      if (
-        !Buffer.from(this.networkId).equals(
-          Buffer.from(response.node.networkId)
-        )
-      ) {
-        logger.error('Handshaking failed! Network id is mismatched!');
-        return false;
-      }
+  // private async handshake(s: Socket, takePeerListOnly: boolean = false) {
+  //   logger.info('Sending handshaking request ...');
+  //   const request: handshake.IRequest = {
+  //     node: this.getLocalPeerDate(),
+  //     payload: this.handler.getPayLoad(),
+  //   };
+  //   const writer = new BufferStreamWriter(Buffer.alloc(0));
+  //   handshake.Writer.request(writer, request);
+  //   const { context, levin } = this.connectionManager.initContext(
+  //     this.handler,
+  //     s,
+  //     false
+  //   );
+  //   try {
+  //     const response: any = await levin.invoke(handshake, writer.getBuffer());
+  //     context.version = response.node.version;
+  //     if (
+  //       !Buffer.from(this.networkId).equals(
+  //         Buffer.from(response.node.networkId)
+  //       )
+  //     ) {
+  //       logger.error('Handshaking failed! Network id is mismatched!');
+  //       return false;
+  //     }
 
-      if (
-        !this.pm.handleRemotePeerList(
-          response.node.localTime,
-          response.localPeerList
-        )
-      ) {
-        logger.error('Fail to handle remote local peer list!');
-        return false;
-      }
+  //     if (
+  //       !this.pm.handleRemotePeerList(
+  //         response.node.localTime,
+  //         response.localPeerList
+  //       )
+  //     ) {
+  //       logger.error('Fail to handle remote local peer list!');
+  //       return false;
+  //     }
 
-      if (takePeerListOnly) {
-        logger.info('Handshake take peer list only!');
-        return true;
-      }
+  //     if (takePeerListOnly) {
+  //       logger.info('Handshake take peer list only!');
+  //       return true;
+  //     }
 
-      this.processPayLoad(context, response.payload, true);
+  //     this.processPayLoad(context, response.payload, true);
 
-      return true;
-    } catch (e) {
-      logger.error('Fail to handshake with peer!');
-      logger.error(e);
-      return false;
-    }
-  }
-
-  private processPayLoad(
-    context: P2pConnectionContext,
-    data: ICoreSyncData,
-    isInitial: boolean
-  ) {
-    this.handler.processPayLoad(context, data, isInitial);
-
-    const newHeight = this.connectionManager.updateObservedHeight(
-      data.currentHeight,
-      context,
-      this.handler
-    );
-
-    if (newHeight !== 0) {
-      this.handler.notifyNewHeight(newHeight);
-    }
-
-    context.remoteBlockchainHeight = data.currentHeight;
-    if (isInitial) {
-      this.handler.notifyPeerCount(this.connectionManager.size);
-    }
-  }
-
-  private getLocalPeerDate(): IPeerNodeData {
-    return {
-      localTime: new Date(),
-      myPort: this.p2pConfig.getMyPort(),
-      networkId: this.networkId,
-      peerId: this.peerId,
-      version: Version.CURRENT,
-    };
-  }
+  //     return true;
+  //   } catch (e) {
+  //     logger.error('Fail to handshake with peer!');
+  //     logger.error(e);
+  //     return false;
+  //   }
+  // }
 }
