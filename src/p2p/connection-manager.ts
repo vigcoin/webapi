@@ -170,15 +170,7 @@ export class ConnectionManager extends EventEmitter {
     try {
       const response: any = await levin.invoke(handshake, writer.getBuffer());
       context.version = response.node.version;
-      if (
-        !pm.handleRemotePeerList(
-          response.node.localTime,
-          response.localPeerList
-        )
-      ) {
-        logger.error('Fail to handle remote local peer list!');
-        return false;
-      }
+      pm.handleRemotePeerList(response.node.localTime, response.localPeerList);
 
       if (takePeerListOnly) {
         logger.info('Handshake take peer list only!');
@@ -264,9 +256,9 @@ export class ConnectionManager extends EventEmitter {
   ) {
     if (!data.node.peerId.equals(this.peerId) && data.node.myPort !== 0) {
       levin.tryPing(data.node, context);
-      // levin.once('ping', (response: ping.IResponse) => {
-      //   this.onPing(response, data, context);
-      // });
+      levin.once('ping', (resp: ping.IResponse) => {
+        this.onPing(resp, data, context, pm);
+      });
     }
     const response: handshake.IResponse = {
       localPeerList: pm.getLocalPeerList(),
@@ -281,7 +273,8 @@ export class ConnectionManager extends EventEmitter {
   private onPing(
     response: ping.IResponse,
     data: handshake.IRequest,
-    context: P2pConnectionContext
+    context: P2pConnectionContext,
+    pm: PeerManager
   ) {
     if (
       response.status === ping.PING_OK_RESPONSE_STATUS_TEXT &&
@@ -296,7 +289,7 @@ export class ConnectionManager extends EventEmitter {
         // tslint:disable-next-line:object-literal-sort-keys
         id: data.node.peerId,
       };
-      // this.pm.appendWhite(pe);
+      pm.appendWhite(pe);
     }
   }
 

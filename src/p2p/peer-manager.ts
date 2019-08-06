@@ -135,10 +135,7 @@ export class PeerManager {
     });
   }
 
-  public handleRemotePeerList(
-    localTime: Date,
-    peerEntries: IPeerEntry[]
-  ): boolean {
+  public handleRemotePeerList(localTime: Date, peerEntries: IPeerEntry[]) {
     logger.info('Handle remote peer list!');
     for (const pe of peerEntries) {
       logger.info(
@@ -167,6 +164,5 @@ export class PeerManager {
     }
     logger.info('Entries Merged!');
     this.merge(peerEntries);
-    return true;
   }
 }
