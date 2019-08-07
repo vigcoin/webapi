@@ -2,6 +2,7 @@ import { EventEmitter } from 'events';
 import { Socket } from 'net';
 import {
   ICoreSyncData,
+  INetwork,
   IPeer,
   IPeerEntry,
   IPeerIDType,
@@ -151,6 +152,28 @@ export class ConnectionManager extends EventEmitter {
 
   get size() {
     return this.connections.size;
+  }
+
+  // try_to_connect_and_handshake_with_new_peer
+  public async connect(
+    network: INetwork,
+    handler: Handler,
+    pm: PeerManager,
+    peer: IPeer,
+    handshakeOnly: boolean
+  ) {
+    const s = await P2pConnectionContext.createConnection(peer, network);
+    if (handshakeOnly) {
+      await this.handshake(handler, pm, s, handshakeOnly);
+      return;
+    }
+    const { context } = this.initContext(pm, handler, s, false);
+    const pe: IPeerEntry = {
+      id: context.peerId,
+      lastSeen: new Date(),
+      peer,
+    };
+    pm.appendWhite(pe);
   }
 
   public async handshake(

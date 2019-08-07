@@ -9,7 +9,7 @@ import { IPeerEntry } from '../../src/cryptonote/p2p';
 import { getBlockChain } from '../../src/init/blockchain';
 import { getConfigByType, getType } from '../../src/init/cryptonote';
 import { data as mainnet } from '../../src/init/net-types/mainnet';
-import { getDefaultPeerManager, getHandler } from '../../src/init/p2p';
+import { getDefaultPeerManager, getHandler, network } from '../../src/init/p2p';
 import { INetwork, IPeer } from '../../src/p2p';
 import { P2PConfig } from '../../src/p2p/config';
 import {
@@ -20,6 +20,7 @@ import { ConnectionManager } from '../../src/p2p/connection-manager';
 import { Handler } from '../../src/p2p/protocol/handler';
 import { getBlockFile, getDefaultAppDir } from '../../src/util/fs';
 import { IP } from '../../src/util/ip';
+import { chmod } from 'fs';
 
 describe('test connections', () => {
   const network: INetwork = {
@@ -230,5 +231,71 @@ describe('test connections', () => {
       cm.initContext(pm, handler, client, false);
       client.write(Buffer.from([0, 1, 2, 3]));
     });
+  });
+
+  it('should init connect with handshake only', async () => {
+    jest.setTimeout(10000);
+    const dir = path.resolve(__dirname, '../vigcoin');
+    const config: Configuration.ICurrency = {
+      block: {
+        genesisCoinbaseTxHex: mainnet.block.genesisCoinbaseTxHex,
+        version: {
+          major: 1,
+          minor: 1,
+          patch: 1,
+        },
+      },
+      blockFiles: getBlockFile(dir, mainnet),
+      hardfork: [],
+    };
+    const bc: BlockChain = getBlockChain(config);
+    bc.init();
+
+    const handler = new Handler(bc);
+    const cm = new ConnectionManager(peerId, networkId, p2pConfig);
+    const host = '69.171.73.252';
+    const port = 19800;
+    const peer: IPeer = {
+      port,
+      // tslint:disable-next-line:object-literal-sort-keys
+      ip: IP.toNumber(host),
+    };
+    const pm = getDefaultPeerManager();
+    await cm.connect(network, handler, pm, peer, true);
+    await cm.stop();
+    assert(pm.white.length === 0);
+  });
+
+  it('should init connect not only handshake', async () => {
+    jest.setTimeout(10000);
+    const dir = path.resolve(__dirname, '../vigcoin');
+    const config: Configuration.ICurrency = {
+      block: {
+        genesisCoinbaseTxHex: mainnet.block.genesisCoinbaseTxHex,
+        version: {
+          major: 1,
+          minor: 1,
+          patch: 1,
+        },
+      },
+      blockFiles: getBlockFile(dir, mainnet),
+      hardfork: [],
+    };
+    const bc: BlockChain = getBlockChain(config);
+    bc.init();
+
+    const handler = new Handler(bc);
+    const cm = new ConnectionManager(peerId, networkId, p2pConfig);
+    const host = '69.171.73.252';
+    const port = 19800;
+    const peer: IPeer = {
+      port,
+      // tslint:disable-next-line:object-literal-sort-keys
+      ip: IP.toNumber(host),
+    };
+    const pm = getDefaultPeerManager();
+    await cm.connect(network, handler, pm, peer, false);
+    await cm.stop();
+    assert(pm.white.length > 0);
   });
 });

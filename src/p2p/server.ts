@@ -106,32 +106,6 @@ export class P2PServer extends EventEmitter {
     }, this.network.handshakeInterval * 1000);
   }
 
-  // try_to_connect_and_handshake_with_new_peer
-  public async connect(peer: IPeer, handshakeOnly: boolean) {
-    const s = await P2pConnectionContext.createConnection(peer, this.network);
-    if (handshakeOnly) {
-      await this.connectionManager.handshake(
-        this.handler,
-        this.pm,
-        s,
-        handshakeOnly
-      );
-      return;
-    }
-    const { context } = this.connectionManager.initContext(
-      this.pm,
-      this.handler,
-      s,
-      false
-    );
-    const pe: IPeerEntry = {
-      id: context.peerId,
-      lastSeen: new Date(),
-      peer,
-    };
-    this.pm.appendWhite(pe);
-  }
-
   public init(globalConfig: Configuration.IConfig) {
     logger.info('P2P server initializing ... ');
     logger.info('Seed initializing...');
@@ -294,7 +268,13 @@ export class P2PServer extends EventEmitter {
     for (const peer of peers) {
       if (!this.connectionManager.isPeerConnected(peer.peer)) {
         try {
-          await this.connect(peer.peer, false);
+          await this.connectionManager.connect(
+            this.network,
+            this.handler,
+            this.pm,
+            peer.peer,
+            false
+          );
         } catch (e) {
           logger.error(e);
         }
@@ -316,7 +296,13 @@ export class P2PServer extends EventEmitter {
     for (const peer of peers) {
       if (!this.connectionManager.isPeerConnected(peer)) {
         try {
-          await this.connect(peer, true);
+          await this.connectionManager.connect(
+            this.network,
+            this.handler,
+            this.pm,
+            peer,
+            true
+          );
         } catch (e) {
           logger.error(e);
         }

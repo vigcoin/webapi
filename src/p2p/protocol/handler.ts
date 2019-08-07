@@ -51,7 +51,6 @@ export class Handler extends EventEmitter {
     if (context.state === ConnectionState.BEFORE_HANDSHAKE && !isInitial) {
       return false;
     }
-
     if (context.state !== ConnectionState.SYNCHRONIZING) {
       if (this.haveBlock(data.hash)) {
         if (isInitial) {

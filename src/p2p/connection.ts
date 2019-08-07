@@ -80,8 +80,9 @@ export class P2pConnectionContext extends ConnectionContext {
       });
       timer = setTimeout(() => {
         clearTimeout(timer);
-        logger.error('Connecting to ' + host + ':' + port + ' time out!');
-        const e = new Error('Time out!');
+        const message = 'Connecting to ' + host + ':' + port + ' time out!';
+        logger.error(message);
+        const e = new Error(message);
         s.destroy();
         reject(e);
       }, network.conectionTimeout);
