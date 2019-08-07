@@ -298,4 +298,38 @@ describe('test connections', () => {
     await cm.stop();
     assert(pm.white.length > 0);
   });
+
+  it('should send timed sync request', async () => {
+    jest.setTimeout(10000);
+    const dir = path.resolve(__dirname, '../vigcoin');
+    const config: Configuration.ICurrency = {
+      block: {
+        genesisCoinbaseTxHex: mainnet.block.genesisCoinbaseTxHex,
+        version: {
+          major: 1,
+          minor: 1,
+          patch: 1,
+        },
+      },
+      blockFiles: getBlockFile(dir, mainnet),
+      hardfork: [],
+    };
+    const bc: BlockChain = getBlockChain(config);
+    bc.init();
+
+    const handler = new Handler(bc);
+    const cm = new ConnectionManager(peerId, networkId, p2pConfig);
+    const host = '69.171.73.252';
+    const port = 19800;
+    const peer: IPeer = {
+      port,
+      // tslint:disable-next-line:object-literal-sort-keys
+      ip: IP.toNumber(host),
+    };
+    const pm = getDefaultPeerManager();
+    const {levin, context } = await cm.connect(network, handler, pm, peer, false);
+    cm.timedsync(handler);
+    await cm.stop();
+    assert(pm.white.length > 0);
+  });
 });

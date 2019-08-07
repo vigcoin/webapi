@@ -17,8 +17,9 @@ import { P2PConfig } from './config';
 import { ConnectionState, P2pConnectionContext } from './connection';
 import { LevinProtocol } from './levin';
 import { PeerManager } from './peer-manager';
-import { handshake, ping } from './protocol';
+import { handshake, ping, timedsync } from './protocol';
 import { Handler } from './protocol/handler';
+import { timesyncRequest } from '../../__tests__/p2p/data';
 
 export class ConnectionManager extends EventEmitter {
   private connections: Map<string, P2pConnectionContext> = new Map();
@@ -164,16 +165,19 @@ export class ConnectionManager extends EventEmitter {
   ) {
     const s = await P2pConnectionContext.createConnection(peer, network);
     if (handshakeOnly) {
-      await this.handshake(handler, pm, s, handshakeOnly);
-      return;
+      return this.handshake(handler, pm, s, handshakeOnly);
     }
-    const { context } = this.initContext(pm, handler, s, false);
+    const { levin, context } = this.initContext(pm, handler, s, false);
     const pe: IPeerEntry = {
       id: context.peerId,
       lastSeen: new Date(),
       peer,
     };
     pm.appendWhite(pe);
+    return {
+      context,
+      levin,
+    };
   }
 
   public async handshake(
@@ -190,24 +194,41 @@ export class ConnectionManager extends EventEmitter {
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     handshake.Writer.request(writer, request);
     const { context, levin } = this.initContext(pm, handler, s, false);
-    try {
-      const response: any = await levin.invoke(handshake, writer.getBuffer());
-      context.version = response.node.version;
-      pm.handleRemotePeerList(response.node.localTime, response.localPeerList);
-
-      if (takePeerListOnly) {
-        logger.info('Handshake take peer list only!');
-        return true;
-      }
-
-      this.processPayLoad(handler, context, response.payload, true);
-
-      return true;
-    } catch (e) {
-      logger.error('Fail to handshake with peer!');
-      logger.error(e);
-      return false;
+    const response: any = await levin.invoke(handshake, writer.getBuffer());
+    context.version = response.node.version;
+    pm.handleRemotePeerList(response.node.localTime, response.localPeerList);
+    if (takePeerListOnly) {
+      logger.info('Handshake take peer list only!');
+      return { context, levin };
     }
+
+    this.processPayLoad(handler, context, response.payload, true);
+
+    return { context, levin };
+  }
+
+  public async timedsync(handler: Handler) {
+    const request: timedsync.IRequest = {
+      payload: handler.getPayLoad(),
+    };
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    timedsync.Writer.request(writer, request);
+    const buffer = LevinProtocol.request(
+      timedsync.ID.ID,
+      writer.getBuffer(),
+      0,
+      false
+    );
+    this.connections.forEach((context: P2pConnectionContext) => {
+      if (context.peerId) {
+        switch (context.state) {
+          case ConnectionState.NORMAL:
+          case ConnectionState.IDLE:
+            context.socket.write(buffer);
+            break;
+        }
+      }
+    });
   }
 
   public initContext(
