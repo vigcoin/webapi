@@ -327,7 +327,13 @@ describe('test connections', () => {
       ip: IP.toNumber(host),
     };
     const pm = getDefaultPeerManager();
-    const {levin, context } = await cm.connect(network, handler, pm, peer, false);
+    const { levin, context } = await cm.connect(
+      network,
+      handler,
+      pm,
+      peer,
+      false
+    );
     cm.timedsync(handler);
     await cm.stop();
     assert(pm.white.length > 0);

@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import {
-  BLOCK_HIEGHT_UPDATED,
+  BLOCK_HEIGHT_UPDATED,
   BLOCKCHAIN_SYNCHRONZIED,
   PEERS_COUNT_UPDATED,
 } from '../../config/events';
@@ -85,7 +85,7 @@ export class Handler extends EventEmitter {
   public notifyNewHeight(current: number) {
     if (this.observedHeight < current) {
       this.observedHeight = current;
-      this.emit(BLOCK_HIEGHT_UPDATED, this.observedHeight);
+      this.emit(BLOCK_HEIGHT_UPDATED, this.observedHeight);
     }
   }
 

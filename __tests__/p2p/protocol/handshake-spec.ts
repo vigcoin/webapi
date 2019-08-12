@@ -3,6 +3,10 @@ import { randomBytes } from 'crypto';
 import { createConnection, createServer } from 'net';
 import * as path from 'path';
 import { cryptonote } from '../../../src/config';
+import {
+  BLOCK_HEIGHT_UPDATED,
+  PEERS_COUNT_UPDATED,
+} from '../../../src/config/events';
 import { Configuration } from '../../../src/config/types';
 import { BlockChain } from '../../../src/cryptonote/block/blockchain';
 import { getBlockChain } from '../../../src/init/blockchain';
@@ -61,20 +65,37 @@ describe('test p2p handshake', () => {
       }
     );
   });
-  it('should handshake to just take peerlist', done => {
+  it('should handshake with not just peerlist', done => {
     const pm1 = getDefaultPeerManager();
     jest.setTimeout(10000);
     assert(pm1.gray.length === 0);
     assert(pm1.white.length === 0);
     const { ip, port } = mainnet.seeds[0];
+    let blockHeightUpdated = false;
+    let peersCountUpdated = false;
+    function close() {
+      client.destroy();
+      done();
+    }
     const client = createConnection(
       { host: IP.toString(ip), port },
       async () => {
+        handler.on(BLOCK_HEIGHT_UPDATED, height => {
+          assert(height > 30000);
+          blockHeightUpdated = true;
+          if (peersCountUpdated) {
+            close();
+          }
+        });
+        handler.on(PEERS_COUNT_UPDATED, count => {
+          peersCountUpdated = true;
+          if (blockHeightUpdated) {
+            close();
+          }
+        });
         assert(await cm.handshake(handler, pm1, client, false));
         assert(pm1.gray.length > 0);
         assert(pm1.white.length === 0);
-        client.destroy();
-        done();
       }
     );
   });
