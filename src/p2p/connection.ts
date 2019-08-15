@@ -24,6 +24,25 @@ export class ConnectionContext extends EventEmitter {
     return randomBytes(ConnectionContext.UUID_LENGTH);
   }
 
+  public static state2String(state: ConnectionState) {
+    switch (state) {
+      case ConnectionState.BEFORE_HANDSHAKE:
+        return 'BEFORE_HANDSHAKE';
+      case ConnectionState.SYNCHRONIZING:
+        return 'SYNCHRONIZING';
+      case ConnectionState.IDLE:
+        return 'IDLE';
+      case ConnectionState.NORMAL:
+        return 'NORMAL';
+      case ConnectionState.SYNC_REQURIED:
+        return 'SYNC_REQURIED';
+      case ConnectionState.POOL_SYNC_REQUIRED:
+        return 'POOL_SYNC_REQUIRED';
+      case ConnectionState.SHUTDOWN:
+        return 'SHUTDOWN';
+    }
+  }
+
   public remoteBlockchainHeight: uint32 = 0; // uint32;
   public id: Buffer; // boost::uuids::uuid, uint8[16]
   public ip: uint32 = 0; // uint32

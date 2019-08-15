@@ -20,6 +20,7 @@ import { Handler } from '../../../src/p2p/protocol/handler';
 import { P2PStore } from '../../../src/p2p/store';
 import { getBlockFile, getDefaultAppDir } from '../../../src/util/fs';
 import { IP } from '../../../src/util/ip';
+import { IPeer } from '../../../src/cryptonote/p2p';
 
 const peerId = randomBytes(8);
 const networkId = cryptonote.NETWORK_ID;
@@ -53,11 +54,12 @@ describe('test p2p handshake', () => {
     jest.setTimeout(10000);
     assert(pm.gray.length === 0);
     assert(pm.white.length === 0);
-    const { ip, port } = mainnet.seeds[0];
+    const peer: IPeer = mainnet.seeds[0];
+    const { ip, port } = peer;
     const client = createConnection(
       { host: IP.toString(ip), port },
       async () => {
-        assert(await cm.handshake(handler, pm, client, true));
+        assert(await cm.handshake(peer, handler, pm, client, true));
         assert(pm.gray.length > 0);
         assert(pm.white.length === 0);
         client.destroy();
@@ -70,7 +72,8 @@ describe('test p2p handshake', () => {
     jest.setTimeout(10000);
     assert(pm1.gray.length === 0);
     assert(pm1.white.length === 0);
-    const { ip, port } = mainnet.seeds[0];
+    const peer: IPeer = mainnet.seeds[0];
+    const { ip, port } = peer;
     let blockHeightUpdated = false;
     let peersCountUpdated = false;
     function close() {
@@ -93,9 +96,9 @@ describe('test p2p handshake', () => {
             close();
           }
         });
-        assert(await cm.handshake(handler, pm1, client, false));
+        assert(await cm.handshake(peer, handler, pm1, client, false));
         assert(pm1.gray.length > 0);
-        assert(pm1.white.length === 0);
+        assert(pm1.white.length === 1);
       }
     );
   });
@@ -121,7 +124,8 @@ describe('test p2p handshake', () => {
     const port = Math.floor(Math.random() * 1000) + 10240;
     server.listen(port);
     const client = createConnection({ port }, async () => {
-      assert(await cm.handshake(handler, pm2, client, true));
+      const peer = { port, ip: IP.toNumber('127.0.0.1') };
+      assert(await cm.handshake(peer, handler, pm2, client, true));
       assert(processed);
       assert(pm2.gray.length >= 0);
       client.destroy();
@@ -153,7 +157,8 @@ describe('test p2p handshake', () => {
     const port = Math.floor(Math.random() * 1000) + 10240;
     server.listen(port);
     const client = createConnection({ port }, async () => {
-      assert(await cm.handshake(handler, pm2, client));
+      const peer = { port, ip: IP.toNumber('127.0.0.1') };
+      assert(await cm.handshake(peer, handler, pm2, client));
       assert(processed);
       assert(pm2.gray.length >= 0);
       client.destroy();

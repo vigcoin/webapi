@@ -44,7 +44,6 @@ export class P2PServer extends EventEmitter {
 
   private serverConfig: IServerConfig;
 
-  private clientList: Socket[] = [];
   private server: Server;
   private peerId: IPeerIDType;
   // private hidePort: boolean = false;
@@ -97,13 +96,29 @@ export class P2PServer extends EventEmitter {
     logger.info('P2P server bootstraping...');
     await this.startServer();
     this.onIdle();
+    this.timedSyncLooping();
   }
 
   public async onIdle() {
-    const interval = setInterval(async () => {
+    logger.info('Start idle');
+    const timer = setTimeout(async () => {
       await this.startConnection();
-      P2PStore.saveStore(this);
-    }, this.network.handshakeInterval * 1000);
+      clearTimeout(timer);
+      const interval = setInterval(async () => {
+        // await this.startConnection();
+        P2PStore.saveStore(this);
+      }, 60 * 30 * 1000);
+    }, 0);
+  }
+
+  public timedSyncLooping() {
+    logger.info('Starting timed sync looping');
+    const timer = setTimeout(async () => {
+      clearTimeout(timer);
+      setInterval(() => {
+        this.connectionManager.timedsync(this.handler);
+      }, this.network.handshakeInterval);
+    }, 0);
   }
 
   public init(globalConfig: Configuration.IConfig) {
@@ -191,7 +206,9 @@ export class P2PServer extends EventEmitter {
   }
 
   protected async startConnection() {
+    logger.info('Starting connecting peers!');
     if (this.isConnecting) {
+      logger.warn('In connecting!');
       return;
     }
     this.isConnecting = true;
@@ -312,9 +329,6 @@ export class P2PServer extends EventEmitter {
 
   // acceptLoop of the original code
   protected onIncomingConnection(s: Socket) {
-    if (this.clientList.indexOf(s) === -1) {
-      this.clientList.push(s);
-    }
     this.connectionManager.initContext(this.pm, this.handler, s, true);
   }
 }

@@ -19,7 +19,6 @@ import { LevinProtocol } from './levin';
 import { PeerManager } from './peer-manager';
 import { handshake, ping, timedsync } from './protocol';
 import { Handler } from './protocol/handler';
-import { timesyncRequest } from '../../__tests__/p2p/data';
 
 export class ConnectionManager extends EventEmitter {
   private connections: Map<string, P2pConnectionContext> = new Map();
@@ -161,26 +160,30 @@ export class ConnectionManager extends EventEmitter {
     handler: Handler,
     pm: PeerManager,
     peer: IPeer,
-    handshakeOnly: boolean
+    takePeerListOnly: boolean
   ) {
     const s = await P2pConnectionContext.createConnection(peer, network);
-    if (handshakeOnly) {
-      return this.handshake(handler, pm, s, handshakeOnly);
-    }
-    const { levin, context } = this.initContext(pm, handler, s, false);
-    const pe: IPeerEntry = {
-      id: context.peerId,
-      lastSeen: new Date(),
+    const { levin, context } = await this.handshake(
       peer,
-    };
-    pm.appendWhite(pe);
+      handler,
+      pm,
+      s,
+      takePeerListOnly
+    );
+    // this.initContext(pm, handler, s, false);
+
     return {
       context,
       levin,
     };
   }
 
+  // Commands
+
+  // HANDSHAKE
+  // request
   public async handshake(
+    peer: IPeer,
     handler: Handler,
     pm: PeerManager,
     s: Socket,
@@ -196,17 +199,52 @@ export class ConnectionManager extends EventEmitter {
     const { context, levin } = this.initContext(pm, handler, s, false);
     const response: any = await levin.invoke(handshake, writer.getBuffer());
     context.version = response.node.version;
+    logger.info('Handling peer list');
     pm.handleRemotePeerList(response.node.localTime, response.localPeerList);
     if (takePeerListOnly) {
       logger.info('Handshake take peer list only!');
       return { context, levin };
     }
-
+    logger.info('Processing pay load!');
     this.processPayLoad(handler, context, response.payload, true);
-
+    logger.info('Pay load processed!');
+    context.peerId = response.node.peerId;
+    const pe: IPeerEntry = {
+      id: context.peerId,
+      lastSeen: new Date(),
+      peer,
+    };
+    pm.appendWhite(pe);
     return { context, levin };
   }
 
+  // response
+  public onHandshake(
+    pm: PeerManager,
+    handler: Handler,
+    data: handshake.IRequest,
+    context: P2pConnectionContext,
+    levin: LevinProtocol
+  ) {
+    logger.info('on connection manager handshake!');
+    if (!data.node.peerId.equals(this.peerId) && data.node.myPort !== 0) {
+      levin.tryPing(data.node, context);
+      levin.once('ping', (resp: ping.IResponse) => {
+        this.onPing(resp, data, context, pm);
+      });
+    }
+    const response: handshake.IResponse = {
+      localPeerList: pm.getLocalPeerList(),
+      node: this.getLocalPeerData(),
+      payload: handler.getPayLoad(),
+    };
+    const writer = new BufferStreamWriter(Buffer.alloc(0));
+    handshake.Writer.response(writer, response);
+    levin.writeResponse(handshake.ID.ID, writer.getBuffer(), true);
+  }
+
+  // TIMEDSYNC
+  // request
   public async timedsync(handler: Handler) {
     const request: timedsync.IRequest = {
       payload: handler.getPayLoad(),
@@ -219,11 +257,21 @@ export class ConnectionManager extends EventEmitter {
       0,
       false
     );
+    logger.info('Getting connections timedsync');
     this.connections.forEach((context: P2pConnectionContext) => {
-      if (context.peerId) {
+      if (context.peerId.length) {
+        logger.info('Context peerId found: ' + context.peerId.toString('hex'));
+      } else {
+        logger.info('Context peerId not initialized!');
+      }
+      if (context.peerId.length) {
+        logger.info(
+          'Context state: ' + P2pConnectionContext.state2String(context.state)
+        );
         switch (context.state) {
           case ConnectionState.NORMAL:
           case ConnectionState.IDLE:
+            logger.info('timesync request sent');
             context.socket.write(buffer);
             break;
         }
@@ -291,29 +339,6 @@ export class ConnectionManager extends EventEmitter {
     };
   }
 
-  private onHandshake(
-    pm: PeerManager,
-    handler: Handler,
-    data: handshake.IRequest,
-    context: P2pConnectionContext,
-    levin: LevinProtocol
-  ) {
-    if (!data.node.peerId.equals(this.peerId) && data.node.myPort !== 0) {
-      levin.tryPing(data.node, context);
-      levin.once('ping', (resp: ping.IResponse) => {
-        this.onPing(resp, data, context, pm);
-      });
-    }
-    const response: handshake.IResponse = {
-      localPeerList: pm.getLocalPeerList(),
-      node: this.getLocalPeerData(),
-      payload: handler.getPayLoad(),
-    };
-    const writer = new BufferStreamWriter(Buffer.alloc(0));
-    handshake.Writer.response(writer, response);
-    levin.writeResponse(handshake.ID.ID, writer.getBuffer(), true);
-  }
-
   private onPing(
     response: ping.IResponse,
     data: handshake.IRequest,
@@ -344,7 +369,6 @@ export class ConnectionManager extends EventEmitter {
     isInitial: boolean
   ) {
     handler.processPayLoad(context, data, isInitial);
-
     const newHeight = this.updateObservedHeight(
       data.currentHeight,
       context,

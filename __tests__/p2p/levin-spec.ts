@@ -95,7 +95,7 @@ describe('test levin protocol', () => {
         processed = true;
       });
     });
-    const port = Math.floor(Math.random() * 1000) + 1024;
+    const port = Math.floor(Math.random() * 1000) + 10240;
     server.listen(port);
     const client = createConnection({ port }, () => {
       // 'connect' listener
