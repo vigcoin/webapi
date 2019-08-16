@@ -64,6 +64,7 @@ export class ConnectionContext extends EventEmitter {
 
   set state(state: ConnectionState) {
     this._state = state;
+    this.emit('state', state);
   }
 
   get isIncoming() {

@@ -74,12 +74,29 @@ export class BlockChain {
     return be.generatedCoins;
   }
 
-  public have(hash: Buffer): IBlockEntry {
+  public have(hash: Hash): IBlockEntry {
     for (let i = this.height - 1; i > 0; i--) {
       const be = this.get(i);
       if (be.block.header.preHash.equals(hash)) {
         return this.get(i - 1);
       }
+    }
+  }
+
+  public buildSparseChain() {
+    const sparseChain: Hash[] = [];
+    const height = this.height;
+    let last = -1;
+
+    for (let i = 1; i <= height; i *= 2) {
+      last = height - i;
+      const be = this.get(last);
+      sparseChain.push(be.block.header.preHash);
+    }
+
+    if (last > 0) {
+      const be = this.get(0);
+      sparseChain.push(be.block.header.preHash);
     }
   }
 }

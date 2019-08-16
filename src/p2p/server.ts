@@ -117,7 +117,7 @@ export class P2PServer extends EventEmitter {
       clearTimeout(timer);
       setInterval(() => {
         this.connectionManager.timedsync(this.handler);
-      }, this.network.handshakeInterval);
+      }, this.network.handshakeInterval * 1000);
     }, 0);
   }
 
@@ -191,7 +191,7 @@ export class P2PServer extends EventEmitter {
   protected async startServer() {
     return new Promise((resolve, reject) => {
       const server = createServer(s => {
-        this.onIncomingConnection(s);
+        this.connectionManager.initContext(this.pm, this.handler, s, true);
       });
       const { port, host } = this.serverConfig;
       server.listen({ port, host }, e => {
@@ -325,10 +325,5 @@ export class P2PServer extends EventEmitter {
         }
       }
     }
-  }
-
-  // acceptLoop of the original code
-  protected onIncomingConnection(s: Socket) {
-    this.connectionManager.initContext(this.pm, this.handler, s, true);
   }
 }

@@ -154,4 +154,6 @@ export class Handler extends EventEmitter {
   public onResponseChain() {}
 
   public onRequestPool() {}
+
+  public startSync(context: P2pConnectionContext) {}
 }

@@ -19,6 +19,7 @@ import { LevinProtocol } from './levin';
 import { PeerManager } from './peer-manager';
 import { handshake, ping, timedsync } from './protocol';
 import { Handler } from './protocol/handler';
+import * as assert from 'assert';
 
 export class ConnectionManager extends EventEmitter {
   private connections: Map<string, P2pConnectionContext> = new Map();
@@ -163,19 +164,7 @@ export class ConnectionManager extends EventEmitter {
     takePeerListOnly: boolean
   ) {
     const s = await P2pConnectionContext.createConnection(peer, network);
-    const { levin, context } = await this.handshake(
-      peer,
-      handler,
-      pm,
-      s,
-      takePeerListOnly
-    );
-    // this.initContext(pm, handler, s, false);
-
-    return {
-      context,
-      levin,
-    };
+    return this.handshake(peer, handler, pm, s, takePeerListOnly);
   }
 
   // Commands
@@ -215,6 +204,11 @@ export class ConnectionManager extends EventEmitter {
       peer,
     };
     pm.appendWhite(pe);
+    if (context.peerId.equals(this.peerId)) {
+      logger.info('Connection to self detected, dropping connection!');
+      s.destroy();
+      this.remove(context);
+    }
     return { context, levin };
   }
 
@@ -304,6 +298,13 @@ export class ConnectionManager extends EventEmitter {
     pm: PeerManager
   ) {
     this.set(context);
+    context.on('state', (state: ConnectionState) => {
+      switch (state) {
+        case ConnectionState.SYNC_REQURIED:
+          handler.startSync(context);
+          break;
+      }
+    });
     levin.on('state', (state: ConnectionState) => {
       logger.info(
         'Context state changed from ' + context.state + ' to ' + state
