@@ -12,6 +12,9 @@ import { uint32 } from '../../cryptonote/types';
 import { logger } from '../../logger';
 import { ConnectionState, P2pConnectionContext } from '../connection';
 import { Command } from './command';
+import { NSRequestChain } from '../../cryptonote/protocol/commands/request-chain';
+import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
+import * as assert from 'assert';
 
 export class Handler extends EventEmitter {
   public peers: uint32 = 0;
@@ -155,5 +158,19 @@ export class Handler extends EventEmitter {
 
   public onRequestPool() {}
 
-  public startSync(context: P2pConnectionContext) {}
+  public startSync(context: P2pConnectionContext) {
+    if (context.state === ConnectionState.SYNCHRONIZING) {
+      const blocks = this.blockchain.buildSparseChain();
+      assert(blocks.length);
+      const request: NSRequestChain.IRequest = {
+        blockHashes: blocks,
+      };
+      const writer = new BufferStreamWriter(Buffer.alloc(0));
+      NSRequestChain.Writer.request(writer, request);
+      logger.info(
+        '-->>NOTIFY_REQUEST_CHAIN: size ' + request.blockHashes.length
+      );
+      context.socket.write(writer.getBuffer());
+    }
+  }
 }
