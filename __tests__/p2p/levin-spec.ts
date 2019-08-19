@@ -121,7 +121,7 @@ describe('test levin protocol', () => {
         done();
       });
     });
-    const port = Math.floor(Math.random() * 1000) + 1024;
+    const port = Math.floor(Math.random() * 1000) + 10240;
     server.listen(port);
     const client = createConnection({ port }, () => {
       const request: ping.IRequest = {};
@@ -147,7 +147,7 @@ describe('test levin protocol', () => {
         processed = true;
       });
     });
-    const port = Math.floor(Math.random() * 1000) + 1024;
+    const port = Math.floor(Math.random() * 1000) + 10240;
     server.listen(port);
     const client = createConnection({ port }, () => {
       client.write(Buffer.from(timesyncRequest));
@@ -204,9 +204,9 @@ describe('test levin protocol', () => {
         processed = true;
       });
     });
-    const port = Math.floor(Math.random() * 1000) + 1024;
+    const port = Math.floor(Math.random() * 1000) + 10240;
     server.listen(port);
-    const client = createConnection({ port }, () => {
+    const client = createConnection({ port }, async () => {
       const { levin, context } = connectionManager.initContext(
         pm,
         handler,
@@ -222,7 +222,6 @@ describe('test levin protocol', () => {
         peerId: Buffer.from([0x12, 0x75, 0x23, 0x65, 0x0f, 0x9b, 0x42, 0x3b]),
       };
       context.ip = IP.toNumber('183.14.133.114');
-      levin.tryPing(data, context);
       levin.on('ping', message => {
         processed = true;
         assert(processed);
@@ -230,6 +229,7 @@ describe('test levin protocol', () => {
         server.close();
         done();
       });
+      assert(await levin.tryPing(data, context));
     });
   });
 
@@ -242,9 +242,9 @@ describe('test levin protocol', () => {
         processed = true;
       });
     });
-    const port = Math.floor(Math.random() * 1000) + 1024;
+    const port = Math.floor(Math.random() * 1000) + 10240;
     server.listen(port);
-    const client = createConnection({ port }, () => {
+    const client = createConnection({ port }, async () => {
       const { levin, context } = connectionManager.initContext(
         pm,
         handler,
@@ -259,7 +259,7 @@ describe('test levin protocol', () => {
         peerId: Buffer.from([0x12, 0x75, 0x23, 0x65, 0x0f, 0x9b, 0x42, 0x3b]),
       };
       context.ip = IP.toNumber('183.14.133.114');
-      assert(!levin.tryPing(data, context));
+      assert(!(await levin.tryPing(data, context)));
       client.destroy();
       server.close();
       done();
@@ -275,9 +275,9 @@ describe('test levin protocol', () => {
         processed = true;
       });
     });
-    const port = Math.floor(Math.random() * 1000) + 1024;
+    const port = Math.floor(Math.random() * 1000) + 10240;
     server.listen(port);
-    const client = createConnection({ port }, () => {
+    const client = createConnection({ port }, async () => {
       const { levin, context } = connectionManager.initContext(
         pm,
         handler,
@@ -292,7 +292,7 @@ describe('test levin protocol', () => {
         myPort: 19800,
         peerId: Buffer.from([0x12, 0x75, 0x23, 0x65, 0x0f, 0x9b, 0x42, 0x3b]),
       };
-      assert(!levin.tryPing(data, context));
+      assert(!(await levin.tryPing(data, context)));
       client.destroy();
       server.close();
       done();

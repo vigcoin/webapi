@@ -58,6 +58,11 @@ const LEVIN_PACKET_RESPONSE = 0x00000002;
 const LEVIN_DEFAULT_MAX_PACKET_SIZE = 100000000; // 100MB by default
 const LEVIN_PROTOCOL_VER_1 = 1;
 
+export enum LevinState {
+  NORMAL = 0,
+  INVOKING = 1,
+}
+
 export class LevinProtocol extends EventEmitter {
   public static networkId: number[] = cryptonote.NETWORK_ID;
   public static readHeader(reader: BufferStreamReader): ILevinHeader {
@@ -153,12 +158,13 @@ export class LevinProtocol extends EventEmitter {
   }
 
   private socket: Socket;
+  private state: LevinState = LevinState.NORMAL;
   constructor(socket: Socket) {
     super();
     this.socket = socket;
   }
 
-  public tryPing(data: IPeerNodeData, context: P2pConnectionContext): boolean {
+  public async tryPing(data: IPeerNodeData, context: P2pConnectionContext) {
     if (data.myPort === 0) {
       return false;
     }
@@ -169,7 +175,8 @@ export class LevinProtocol extends EventEmitter {
     const request: ping.IRequest = {};
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     ping.Writer.request(writer, request);
-    this.invoke(ping, writer.getBuffer());
+    const response = await this.invoke(ping, writer.getBuffer());
+    this.emit('ping', response);
     return true;
   }
 
@@ -183,9 +190,11 @@ export class LevinProtocol extends EventEmitter {
       logger.error(e);
     });
     s.on('data', buffer => {
-      logger.info('Receiving new data!');
-      this.onIncomingData(new BufferStreamReader(buffer), context, handler);
-      logger.info('Data processed!');
+      if (this.state === LevinState.NORMAL) {
+        logger.info('Receiving new data!');
+        this.onIncomingData(new BufferStreamReader(buffer), context, handler);
+        logger.info('Data processed!');
+      }
     });
     s.on('end', () => {
       logger.info(
@@ -199,29 +208,34 @@ export class LevinProtocol extends EventEmitter {
     return new Promise((resovle, reject) => {
       const request = LevinProtocol.request(t.ID.ID, outgoing, 0, true);
       logger.info('Invoking Levin request : ' + t.ID.ID);
-      // this.socket.on('error', e => {
-      //   reject(e);
-      // });
-      this.socket.on('data', buffer => {
-        logger.info('Receiving Levin response data!');
-        try {
-          const reader = new BufferStreamReader(buffer);
-          const cmd = LevinProtocol.readCommand(reader);
-          if (!cmd.isResponse) {
-            reject(new Error('None Response'));
-            return;
+      this.state = LevinState.INVOKING;
+      const onData = buffer => {
+        if (this.state === LevinState.INVOKING) {
+          logger.info('Receiving Levin response data!');
+          try {
+            const reader = new BufferStreamReader(buffer);
+            const cmd = LevinProtocol.readCommand(reader);
+            if (!cmd.isResponse) {
+              reject(new Error('None Response'));
+              return;
+            }
+            const response = t.Reader.response(
+              new BufferStreamReader(cmd.buffer)
+            );
+            logger.info('Successfuly processed Levin invocation!');
+            this.state = LevinState.NORMAL;
+            this.socket.removeListener('data', onData);
+            resovle(response);
+          } catch (e) {
+            logger.error('Error processing handshake response data!');
+            this.socket.destroy();
+            this.state = LevinState.NORMAL;
+            this.socket.removeListener('data', onData);
+            reject(e);
           }
-          const response = t.Reader.response(
-            new BufferStreamReader(cmd.buffer)
-          );
-          resovle(response);
-          logger.info('Successfuly processed Levin invocation!');
-        } catch (e) {
-          logger.error('Error processing handshake response data!');
-          this.socket.destroy();
-          reject(e);
         }
-      });
+      };
+      this.socket.on('data', onData);
       this.socket.write(request);
     });
   }
