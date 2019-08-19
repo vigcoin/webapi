@@ -173,6 +173,28 @@ export class LevinProtocol extends EventEmitter {
     return true;
   }
 
+  public async initIncoming(
+    s: Socket,
+    context: P2pConnectionContext,
+    handler: Handler
+  ) {
+    s.on('error', e => {
+      logger.info('Connection corrupted!');
+      logger.error(e);
+    });
+    s.on('data', buffer => {
+      logger.info('Receiving new data!');
+      this.onIncomingData(new BufferStreamReader(buffer), context, handler);
+      logger.info('Data processed!');
+    });
+    s.on('end', () => {
+      logger.info(
+        'Connection ' + s.remoteAddress + ':' + s.remotePort + ' ended!'
+      );
+      s.destroy();
+    });
+  }
+
   public async invoke(t: any, outgoing: Buffer) {
     return new Promise((resovle, reject) => {
       const request = LevinProtocol.request(t.ID.ID, outgoing, 0, true);

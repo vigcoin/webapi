@@ -301,6 +301,8 @@ export class ConnectionManager extends EventEmitter {
     context.on('state', (state: ConnectionState) => {
       switch (state) {
         case ConnectionState.SYNC_REQURIED:
+          break;
+        case ConnectionState.SYNCHRONIZING:
           handler.startSync(context);
           break;
       }
@@ -310,30 +312,17 @@ export class ConnectionManager extends EventEmitter {
         'Context state changed from ' + context.state + ' to ' + state
       );
       context.state = state;
-    });
-    levin.on('handshake', (data: handshake.IRequest) => {
-      logger.info('Receiving handshaking command!');
-      this.onHandshake(pm, handler, data, context, levin);
-    });
-    s.on('error', e => {
-      logger.info('Connection corrupted!');
-      logger.error(e);
-    });
-    s.on('data', buffer => {
-      logger.info('Receiving new data!');
-      levin.onIncomingData(new BufferStreamReader(buffer), context, handler);
-      logger.info('Data processed!');
       if (context.state === ConnectionState.SHUTDOWN) {
         context.stop();
         this.remove(context);
       }
     });
-    s.on('end', () => {
-      logger.info(
-        'Connection ' + s.remoteAddress + ':' + s.remotePort + ' ended!'
-      );
-      s.destroy();
+    levin.on('handshake', (data: handshake.IRequest) => {
+      logger.info('Receiving handshaking command!');
+      this.onHandshake(pm, handler, data, context, levin);
     });
+    levin.initIncoming(s, context, handler);
+
     return {
       context,
       levin,
