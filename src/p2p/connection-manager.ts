@@ -9,7 +9,6 @@ import {
   IPeerNodeData,
   Version,
 } from '../cryptonote/p2p';
-import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../cryptonote/serialize/writer';
 import { uint8 } from '../cryptonote/types';
 import { logger } from '../logger';
@@ -19,7 +18,6 @@ import { LevinProtocol } from './levin';
 import { PeerManager } from './peer-manager';
 import { handshake, ping, timedsync } from './protocol';
 import { Handler } from './protocol/handler';
-import * as assert from 'assert';
 
 export class ConnectionManager extends EventEmitter {
   private connections: Map<string, P2pConnectionContext> = new Map();

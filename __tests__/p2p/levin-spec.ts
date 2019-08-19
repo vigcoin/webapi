@@ -172,7 +172,7 @@ describe('test levin protocol', () => {
   //       done();
   //     });
   //   });
-  //   const port = Math.floor(Math.random() * 1000) + 1024;
+  //   const port = Math.floor(Math.random() * 1000) + 10240;
   //   server.listen(port);
   //   const client = createConnection({ port }, () => {
   //     const request: timedsync.IRequest = {
@@ -222,7 +222,8 @@ describe('test levin protocol', () => {
         peerId: Buffer.from([0x12, 0x75, 0x23, 0x65, 0x0f, 0x9b, 0x42, 0x3b]),
       };
       context.ip = IP.toNumber('183.14.133.114');
-      levin.on('ping', message => {
+      levin.on('ping', (message: ping.IResponse) => {
+        assert(String(message.status) === ping.PING_OK_RESPONSE_STATUS_TEXT);
         processed = true;
         assert(processed);
         client.destroy();
@@ -310,7 +311,7 @@ describe('test levin protocol', () => {
         done();
       });
     });
-    const port = Math.floor(Math.random() * 1000) + 1024;
+    const port = Math.floor(Math.random() * 1000) + 10240;
     server.listen(port);
     const client = createConnection({ port }, () => {
       client.write(Buffer.from(handshakeRequest));
@@ -343,7 +344,7 @@ describe('test levin protocol', () => {
       server.close();
       done();
     });
-    const port = Math.floor(Math.random() * 1000) + 1024;
+    const port = Math.floor(Math.random() * 1000) + 10240;
     server.listen(port);
     const client = createConnection({ port }, () => {
       // client.write(Buffer.from([]));
@@ -372,7 +373,7 @@ describe('test levin protocol', () => {
       client.destroy();
       done();
     });
-    const port = Math.floor(Math.random() * 1000) + 1024;
+    const port = Math.floor(Math.random() * 1000) + 10240;
     server.listen(port);
     const client = createConnection({ port }, () => {
       // client.write(Buffer.from([1, 2, 3, 4]));
@@ -385,7 +386,7 @@ describe('test levin protocol', () => {
         socket.write(randomBytes(138));
       });
     });
-    const port = Math.floor(Math.random() * 1000) + 1024;
+    const port = Math.floor(Math.random() * 1000) + 10240;
     server.listen(port);
     const client = createConnection({ port }, async () => {
       const { levin } = connectionManager.initContext(pm, handler, client);
@@ -429,7 +430,7 @@ describe('test levin protocol', () => {
       });
     });
 
-    const port = Math.floor(Math.random() * 1000) + 1024;
+    const port = Math.floor(Math.random() * 1000) + 10240;
     server.listen(port);
     const client = createConnection({ port }, async () => {
       const { levin } = connectionManager.initContext(pm, handler, client);

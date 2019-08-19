@@ -1,3 +1,4 @@
+import * as assert from 'assert';
 import { EventEmitter } from 'events';
 import {
   BLOCK_HEIGHT_UPDATED,
@@ -7,14 +8,13 @@ import {
 import { BlockChain } from '../../cryptonote/block/blockchain';
 import { ICoreSyncData } from '../../cryptonote/p2p';
 import { NSNewBlock } from '../../cryptonote/protocol/commands/new-block';
+import { NSRequestChain } from '../../cryptonote/protocol/commands/request-chain';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
+import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 import { uint32 } from '../../cryptonote/types';
 import { logger } from '../../logger';
 import { ConnectionState, P2pConnectionContext } from '../connection';
 import { Command } from './command';
-import { NSRequestChain } from '../../cryptonote/protocol/commands/request-chain';
-import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
-import * as assert from 'assert';
 
 export class Handler extends EventEmitter {
   public peers: uint32 = 0;
