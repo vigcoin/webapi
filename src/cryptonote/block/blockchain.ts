@@ -98,5 +98,9 @@ export class BlockChain {
       const be = this.get(0);
       sparseChain.push(be.block.header.preHash);
     }
+    if (!sparseChain.length) {
+      sparseChain.push(this.genesis().block.header.preHash);
+    }
+    return sparseChain;
   }
 }
