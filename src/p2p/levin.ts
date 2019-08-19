@@ -166,18 +166,17 @@ export class LevinProtocol extends EventEmitter {
 
   public async tryPing(data: IPeerNodeData, context: P2pConnectionContext) {
     if (data.myPort === 0) {
-      return false;
+      return { success: false };
     }
     if (!IP.isAllowed(context.ip)) {
-      return false;
+      return { success: false };
     }
 
     const request: ping.IRequest = {};
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     ping.Writer.request(writer, request);
     const response = await this.invoke(ping, writer.getBuffer());
-    this.emit('ping', response);
-    return true;
+    return { success: true, response };
   }
 
   public async initIncoming(

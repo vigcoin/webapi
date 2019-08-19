@@ -211,7 +211,7 @@ export class ConnectionManager extends EventEmitter {
   }
 
   // response
-  public onHandshake(
+  public async onHandshake(
     pm: PeerManager,
     handler: Handler,
     data: handshake.IRequest,
@@ -220,10 +220,14 @@ export class ConnectionManager extends EventEmitter {
   ) {
     logger.info('on connection manager handshake!');
     if (!data.node.peerId.equals(this.peerId) && data.node.myPort !== 0) {
-      levin.tryPing(data.node, context);
-      levin.once('ping', (resp: ping.IResponse) => {
-        this.onPing(resp, data, context, pm);
-      });
+
+      const { success, response: res } = await levin.tryPing(
+        data.node,
+        context
+      );
+      if (success) {
+        this.onPing(res as ping.IResponse, data, context, pm);
+      }
     }
     const response: handshake.IResponse = {
       localPeerList: pm.getLocalPeerList(),
@@ -315,9 +319,9 @@ export class ConnectionManager extends EventEmitter {
         this.remove(context);
       }
     });
-    levin.on('handshake', (data: handshake.IRequest) => {
+    levin.on('handshake', async (data: handshake.IRequest) => {
       logger.info('Receiving handshaking command!');
-      this.onHandshake(pm, handler, data, context, levin);
+      await this.onHandshake(pm, handler, data, context, levin);
     });
     levin.initIncoming(s, context, handler);
 
