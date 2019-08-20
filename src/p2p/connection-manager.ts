@@ -220,7 +220,6 @@ export class ConnectionManager extends EventEmitter {
   ) {
     logger.info('on connection manager handshake!');
     if (!data.node.peerId.equals(this.peerId) && data.node.myPort !== 0) {
-
       const { success, response: res } = await levin.tryPing(
         data.node,
         context

@@ -9,6 +9,7 @@ import { BlockChain } from '../../cryptonote/block/blockchain';
 import { ICoreSyncData } from '../../cryptonote/p2p';
 import { NSNewBlock } from '../../cryptonote/protocol/commands/new-block';
 import { NSRequestChain } from '../../cryptonote/protocol/commands/request-chain';
+import { NSRequestTXPool } from '../../cryptonote/protocol/commands/request-tx-pool';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 import { uint32 } from '../../cryptonote/types';
@@ -129,6 +130,7 @@ export class Handler extends EventEmitter {
         break;
       case Command.NOTIFY_REQUEST_TX_POOL:
         logger.info('on Notify Request TX Pool');
+        this.onRequestPool(buffer, context);
         break;
       default:
         logger.info('Unknown Command!');
@@ -156,7 +158,11 @@ export class Handler extends EventEmitter {
 
   public onResponseChain() {}
 
-  public onRequestPool() {}
+  public onRequestPool(buffer: Buffer, context: P2pConnectionContext) {
+    const request: NSRequestTXPool.IRequest = NSRequestTXPool.Reader.request(
+      new BufferStreamReader(buffer)
+    );
+  }
 
   public startSync(context: P2pConnectionContext) {
     if (context.state === ConnectionState.SYNCHRONIZING) {
