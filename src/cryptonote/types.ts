@@ -1,4 +1,5 @@
 import { Hash, KeyImage, PublicKey, Signature } from '../crypto/types';
+import { ITransactionPrefixInfo } from './protocol/defines';
 
 export type uint64 = number;
 export type uint32 = number;
@@ -9,6 +10,7 @@ export type int64 = number;
 export type int32 = number;
 export type int16 = number;
 export type int8 = number;
+export type usize = number;
 
 export type UINT64 = Buffer;
 export type INT64 = Buffer;
@@ -67,6 +69,8 @@ export interface ITransaction {
   prefix: ITransactionPrefix;
   signatures: Signature[][];
 }
+
+// Block / Blockchain
 
 export interface IVersion {
   major: uint8;
@@ -130,3 +134,27 @@ export interface ISerializer<T> {
   serialize(data: T): boolean;
   unserialize(data: T): boolean;
 }
+
+// Memory Pool
+
+export interface IBlockInfo {
+  height: uint32;
+  id: Hash;
+}
+
+export interface ITransactionCheckInfo {
+  maxUsedBlock: IBlockInfo;
+  lastFailedBlock: IBlockInfo;
+}
+
+export interface ITransactionDetails {
+  checkInfo: ITransactionCheckInfo;
+  id: Hash;
+  tx: ITransaction;
+  blobSize: usize;
+  fee: uint64;
+  keptByBlock: boolean;
+  receiveTime: Date;
+}
+
+export type IGlobalOut = Map<uint64, uint64>;

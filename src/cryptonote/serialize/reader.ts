@@ -165,4 +165,8 @@ export class BufferStreamReader {
     this.index += i;
     return buffer;
   }
+
+  public readBoolean(): boolean {
+    return this.buffer.readUInt8(this.index++) !== 0;
+  }
 }

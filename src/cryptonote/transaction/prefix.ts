@@ -26,14 +26,14 @@ export class TransactionPrefix {
       // IInputKey
       case 0x02:
         {
-          const amount = reader.readUInt32();
-          // read extra bytes for amount is uint64
-          reader.readUInt32();
+          const amount = reader.readVarint();
           const size = reader.readVarint();
           const outputs: number[] = [];
           for (let i = 0; i < size; i++) {
-            outputs.push(reader.readUInt32());
+            const v = reader.readVarint();
+            outputs.push(v);
           }
+
           const keyImage: Buffer = reader.readHash();
 
           target = {
@@ -57,7 +57,7 @@ export class TransactionPrefix {
         }
         break;
       default:
-        throw new Error('Unknown input variant tag');
+        throw new Error('Unknown input variant tag： ' + tag);
     }
     return { tag, target };
   }

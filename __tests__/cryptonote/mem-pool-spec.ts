@@ -7,7 +7,7 @@ describe('test memory pool', () => {
   it('should init without file', () => {
     const filename = path.resolve(
       __dirname,
-      '../vigcoin/' + data.extFiles.pool + '.ext'
+      '../vigcoin/' + data.extFiles.pool + '.null'
     );
     const memPool = new MemoryPool(filename);
     memPool.init();
@@ -18,6 +18,15 @@ describe('test memory pool', () => {
     const filename = path.resolve(
       __dirname,
       '../vigcoin/' + data.extFiles.pool
+    );
+    const memPool = new MemoryPool(filename);
+    memPool.init();
+  });
+
+  it('should init with riched data', () => {
+    const filename = path.resolve(
+      __dirname,
+      '../vigcoin/' + data.extFiles.pool + '.full'
     );
     const memPool = new MemoryPool(filename);
     memPool.init();
