@@ -1,6 +1,6 @@
 import { getFastHash } from '@vigcoin/neon';
 import assert = require('assert');
-import { Hash, Signature } from '../../crypto/types';
+import { IHash, ISignature } from '../../crypto/types';
 import { BufferStreamReader } from '../serialize/reader';
 import { BufferStreamWriter } from '../serialize/writer';
 import { TransactionPrefix } from '../transaction/prefix';
@@ -13,13 +13,13 @@ import {
 
 // tslint:disable-next-line: max-classes-per-file
 export class Transaction {
-  public static readSubSignature(reader: BufferStreamReader): Signature {
+  public static readSubSignature(reader: BufferStreamReader): ISignature {
     return reader.read(64);
   }
 
   public static writeSubSignature(
     writer: BufferStreamWriter,
-    signature: Signature
+    signature: ISignature
   ) {
     writer.write(signature);
   }
@@ -45,7 +45,7 @@ export class Transaction {
     for (let i = 0; i < size; i++) {
       const count = Transaction.readSignatureCount(prefix.inputs[i]);
 
-      const subSig: Signature[] = [];
+      const subSig: ISignature[] = [];
       for (let j = 0; j < count; j++) {
         subSig.push(Transaction.readSubSignature(reader));
       }
@@ -111,7 +111,7 @@ export class Transaction {
     this.writeSignatures(writer, transaction.prefix, transaction.signatures);
   }
 
-  public static hash(transaction: ITransaction): Hash {
+  public static hash(transaction: ITransaction): IHash {
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     Transaction.write(writer, transaction);
     const buffer = writer.getBuffer();

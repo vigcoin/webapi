@@ -1,5 +1,5 @@
 import assert = require('assert');
-import { Hash, HASH_LENGTH } from '../../crypto/types';
+import { HASH_LENGTH, IHash } from '../../crypto/types';
 import { INT64, UINT64 } from '../types';
 import { PurgeZeroByte } from './common';
 
@@ -141,7 +141,7 @@ export class BufferStreamWriter {
     this.buffer.writeUInt8(value & 0xff, this.index++);
   }
 
-  public writeHash(hash: Hash) {
+  public writeHash(hash: IHash) {
     assert(hash.length === HASH_LENGTH);
     this.write(hash);
   }

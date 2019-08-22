@@ -1,7 +1,7 @@
 import { randomBytes } from 'crypto';
 import { EventEmitter } from 'events';
 import { createConnection, Socket } from 'net';
-import { Hash } from '../crypto/types';
+import { IHash } from '../crypto/types';
 import { INetwork, IPeer, IPeerIDType } from '../cryptonote/p2p';
 import { uint32, uint8 } from '../cryptonote/types';
 import { logger } from '../logger';
@@ -54,8 +54,8 @@ export class ConnectionContext extends EventEmitter {
   // tslint:disable-next-line:variable-name
   protected _state: ConnectionState = ConnectionState.BEFORE_HANDSHAKE;
   protected startTime: Date;
-  protected neededObjects: Hash[];
-  protected requestedObjects: Hash[];
+  protected neededObjects: IHash[];
+  protected requestedObjects: IHash[];
   protected lastResponseHeight: uint32 = 0; // unit32;
 
   get state() {

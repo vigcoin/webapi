@@ -1,4 +1,4 @@
-import { Hash } from '../../../crypto/types';
+import { IHash } from '../../../crypto/types';
 import {
   BIN_KV_SERIALIZE_TYPE_STRING,
   BIN_KV_SERIALIZE_TYPE_UINT32,
@@ -19,7 +19,7 @@ export namespace NSResponseChain {
     ID = CN_COMMANDS_POOL_BASE + 7,
   }
   export interface IRequest {
-    blockHashes: Hash[];
+    blockHashes: IHash[];
     startHeight: uint32;
     totalHeight: uint32;
   }

@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { Hash } from '../../../crypto/types';
+import { IHash } from '../../../crypto/types';
 import {
   BIN_KV_SERIALIZE_TYPE_STRING,
   readJSON,
@@ -18,7 +18,7 @@ export namespace NSRequestTXPool {
     ID = CN_COMMANDS_POOL_BASE + 8,
   }
   export interface IRequest {
-    txs?: Hash[];
+    txs?: IHash[];
   }
 
   export class Reader {

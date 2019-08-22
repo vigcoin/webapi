@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { Hash } from '../../crypto/types';
+import { IHash } from '../../crypto/types';
 
 export enum SyncState {
   IDLE = 0,
@@ -8,9 +8,9 @@ export enum SyncState {
   STOPPED = 3,
 }
 export class Synchronizer extends EventEmitter {
-  private genesis: Hash;
+  private genesis: IHash;
   private state: SyncState;
-  constructor(genesis: Hash) {
+  constructor(genesis: IHash) {
     super();
     this.genesis = genesis;
     this.state = SyncState.STOPPED;

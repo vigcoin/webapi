@@ -1,8 +1,9 @@
 import * as assert from 'assert';
 import { closeSync, existsSync, openSync, readFileSync } from 'fs';
-import { Hash, KeyImage } from '../crypto/types';
+import { IHash, IKeyImage } from '../crypto/types';
 import { BufferStreamReader } from './serialize/reader';
 import { TransactionDetails } from './transaction/detail';
+import { Payment } from './transaction/payment';
 import { IGlobalOut, ITransactionDetails, uint64, uint8 } from './types';
 
 const CURRENT_MEMPOOL_ARCHIVE_VER = 1;
@@ -13,12 +14,17 @@ export class MemoryPool {
   private version: uint8 = 0;
 
   private transactions: ITransactionDetails[] = [];
-  private spendKeyImages: Map<Hash, KeyImage[]> = new Map<Hash, KeyImage[]>();
-  private recentDeletedTransactions: Map<Hash, uint64> = new Map<
-    Hash,
+  private spendKeyImages: Map<IHash, IKeyImage[]> = new Map<
+    IHash,
+    IKeyImage[]
+  >();
+  private recentDeletedTransactions: Map<IHash, uint64> = new Map<
+    IHash,
     uint64
   >();
   private spendOutputs: Set<IGlobalOut> = new Set<IGlobalOut>();
+
+  private payments: Payment;
 
   // private transactionDetails:
   constructor(filename: string) {
@@ -94,4 +100,6 @@ export class MemoryPool {
       this.recentDeletedTransactions.set(key, value);
     }
   }
+
+  public buildIndices() {}
 }

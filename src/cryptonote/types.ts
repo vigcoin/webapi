@@ -1,5 +1,4 @@
-import { Hash, KeyImage, PublicKey, Signature } from '../crypto/types';
-import { ITransactionPrefixInfo } from './protocol/defines';
+import { IHash, IKeyImage, IPublicKey, ISignature } from '../crypto/types';
 
 export type uint64 = number;
 export type uint32 = number;
@@ -23,7 +22,7 @@ export interface IInputBase {
 export interface IInputKey {
   amount: uint64;
   outputIndexes: uint32[];
-  keyImage: KeyImage;
+  keyImage: IKeyImage;
 }
 
 export interface IInputSignature {
@@ -35,11 +34,11 @@ export interface IInputSignature {
 // Output Transactions
 
 export interface IOutputKey {
-  key: PublicKey;
+  key: IPublicKey;
 }
 
 export interface IOutputSignature {
-  keys: PublicKey[];
+  keys: IPublicKey[];
   count: uint8;
 }
 
@@ -67,7 +66,7 @@ export interface ITransactionPrefix {
 
 export interface ITransaction {
   prefix: ITransactionPrefix;
-  signatures: Signature[][];
+  signatures: ISignature[][];
 }
 
 // Block / Blockchain
@@ -82,13 +81,13 @@ export interface IBlockHeader {
   version: IVersion;
   nonce: number;
   timestamp: number;
-  preHash: Hash;
+  preHash: IHash;
 }
 
 export interface IBlock {
   header: IBlockHeader;
   transaction: ITransaction;
-  transactionHashes: Hash[];
+  transactionHashes: IHash[];
 }
 
 export type IDifficulty = number;
@@ -139,7 +138,7 @@ export interface ISerializer<T> {
 
 export interface IBlockInfo {
   height: uint32;
-  id: Hash;
+  id: IHash;
 }
 
 export interface ITransactionCheckInfo {
@@ -149,7 +148,7 @@ export interface ITransactionCheckInfo {
 
 export interface ITransactionDetails {
   checkInfo: ITransactionCheckInfo;
-  id: Hash;
+  id: IHash;
   tx: ITransaction;
   blobSize: usize;
   fee: uint64;

@@ -1,4 +1,4 @@
-import { Hash } from '../../../crypto/types';
+import { IHash } from '../../../crypto/types';
 import {
   BIN_KV_SERIALIZE_FLAG_ARRAY,
   BIN_KV_SERIALIZE_TYPE_OBJECT,
@@ -22,9 +22,9 @@ export namespace NSResponseGetObjects {
     ID = CN_COMMANDS_POOL_BASE + 4,
   }
   export interface IRequest {
-    txs?: Hash[];
+    txs?: IHash[];
     blocks?: IBlockCompletEntry[];
-    missedHashes?: Hash[];
+    missedHashes?: IHash[];
     currentBlockchainHeight: uint32;
   }
 

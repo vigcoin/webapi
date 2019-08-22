@@ -1,4 +1,4 @@
-import { Hash } from '../../../crypto/types';
+import { IHash } from '../../../crypto/types';
 import {
   readJSON,
   writeJSONVarint,
@@ -15,7 +15,7 @@ export namespace NSRequestChain {
     ID = CN_COMMANDS_POOL_BASE + 6,
   }
   export interface IRequest {
-    blockHashes?: Hash[];
+    blockHashes?: IHash[];
   }
 
   export class Reader {

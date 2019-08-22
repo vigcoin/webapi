@@ -1,4 +1,4 @@
-import { Hash } from '../crypto/types';
+import { IHash } from '../crypto/types';
 import {
   IBlock as IBlockTypes,
   uint16,
@@ -71,7 +71,7 @@ export namespace Configuration {
 
   export interface IGenesis {
     block: IBlockTypes;
-    hash: Hash;
+    hash: IHash;
   }
 
   export interface IConfig {

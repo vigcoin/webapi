@@ -1,4 +1,4 @@
-import { Hash } from '../../crypto/types';
+import { IHash } from '../../crypto/types';
 import { ITransactionPrefix } from '../types';
 export const CN_COMMANDS_POOL_BASE = 2000;
 
@@ -10,16 +10,16 @@ export interface IBlockCompletEntry {
 export interface IBlockFullInfo {
   block: Buffer;
   txs: Buffer[];
-  hash: Hash;
+  hash: IHash;
 }
 
 export interface ITransactionPrefixInfo {
-  txHash: Hash;
+  txHash: IHash;
   txPrefix: ITransactionPrefix;
 }
 
 export interface IBlockShortInfo {
-  hash: Hash;
+  hash: IHash;
   block: Buffer;
   txPrefixes: ITransactionPrefixInfo[];
 }

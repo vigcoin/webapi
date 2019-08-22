@@ -9,7 +9,7 @@ import {
   writeSync,
 } from 'fs';
 import { Configuration } from '../../config/types';
-import { Hash, HASH_LENGTH } from '../../crypto/types';
+import { HASH_LENGTH, IHash } from '../../crypto/types';
 import { BufferStreamReader } from '../serialize/reader';
 import { BufferStreamWriter } from '../serialize/writer';
 import { Transaction } from '../transaction';
@@ -46,7 +46,7 @@ export class Block {
     };
   }
 
-  public static merkleHash(hashes: Hash[], start: number, end: number) {
+  public static merkleHash(hashes: IHash[], start: number, end: number) {
     if (hashes.length === 1) {
       return hashes[0];
     }

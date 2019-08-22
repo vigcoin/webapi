@@ -1,5 +1,5 @@
 import assert = require('assert');
-import { HASH_LENGTH } from '../../crypto/types';
+import { HASH_LENGTH, IHash } from '../../crypto/types';
 import { INT64, UINT64 } from '../types';
 import { PurgeZeroByte } from './common';
 
@@ -155,7 +155,7 @@ export class BufferStreamReader {
     return value;
   }
 
-  public readHash(): Buffer {
+  public readHash(): IHash {
     return this.read(HASH_LENGTH);
   }
 

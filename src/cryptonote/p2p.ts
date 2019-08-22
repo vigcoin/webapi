@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { Hash } from '../crypto/types';
+import { IHash } from '../crypto/types';
 import { int32, uint32, uint64, UINT64, uint8 } from './types';
 
 export type IPeerIDType = UINT64; // uint64
@@ -50,7 +50,7 @@ export interface INodeData {
 
 export interface ICoreSyncData {
   currentHeight: uint32;
-  hash: Hash;
+  hash: IHash;
 }
 
 export interface IServerConfig {

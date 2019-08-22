@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import { Configuration } from '../../config/types';
-import { Hash } from '../../crypto/types';
+import { IHash } from '../../crypto/types';
 import { IBlock, IBlockEntry, uint64 } from '../types';
 import { Block } from './block';
 import { BlockIndex } from './block-index';
@@ -74,7 +74,7 @@ export class BlockChain {
     return be.generatedCoins;
   }
 
-  public have(hash: Hash): IBlockEntry {
+  public have(hash: IHash): IBlockEntry {
     for (let i = this.height - 1; i > 0; i--) {
       const be = this.get(i);
       if (be.block.header.preHash.equals(hash)) {
@@ -84,7 +84,7 @@ export class BlockChain {
   }
 
   public buildSparseChain() {
-    const sparseChain: Hash[] = [];
+    const sparseChain: IHash[] = [];
     const height = this.height;
     let last = -1;
 
