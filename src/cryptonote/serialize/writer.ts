@@ -128,17 +128,20 @@ export class BufferStreamWriter {
     this.buffer.writeUInt8(value[0], this.index++);
   }
 
+  // TODO: enable uint64
   public writeVarint(value: number) {
+    let bit = 0;
     while (value >= 0x80) {
       this.checkBuffer(1);
       // tslint:disable-next-line: no-bitwise
-      this.buffer.writeUInt8((value | 0x80) & 0xff, this.index++);
-      // tslint:disable-next-line: no-bitwise
-      value >>>= 7;
+      bit = (value | 0x80) & 0xff;
+      this.buffer.writeUInt8(bit, this.index++);
+      value /= 128;
     }
     this.checkBuffer(1);
     // tslint:disable-next-line: no-bitwise
-    this.buffer.writeUInt8(value & 0xff, this.index++);
+    bit = value & 0xff;
+    this.buffer.writeUInt8(bit, this.index++);
   }
 
   public writeHash(hash: IHash) {

@@ -79,13 +79,11 @@ export class TransactionPrefix {
       case 0x02:
         target = input.target as IInputKey;
 
-        writer.writeUInt32(target.amount);
-        // writer extra bytes for amount is uint64
-        writer.writeUInt32(0);
+        writer.writeVarint(target.amount);
         writer.writeVarint(target.outputIndexes.length);
         const size = target.outputIndexes.length;
         for (let i = 0; i < size; i++) {
-          writer.writeUInt32(target.outputIndexes[i]);
+          writer.writeVarint(target.outputIndexes[i]);
         }
         writer.writeHash(target.keyImage);
         break;
