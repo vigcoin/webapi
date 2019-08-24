@@ -3,6 +3,7 @@ import { randomBytes } from 'crypto';
 import { EventEmitter } from 'events';
 import { Socket } from 'net';
 import { cryptonote } from '../config';
+import { HANDSHAKE, PING, PROCESSED, TIMED_SYNC } from '../config/events';
 import { IPeerNodeData } from '../cryptonote/p2p';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../cryptonote/serialize/writer';
@@ -301,7 +302,7 @@ export class LevinProtocol extends EventEmitter {
     const response: timedsync.IResponse = timedsync.Reader.response(
       new BufferStreamReader(cmd.buffer)
     );
-    this.emit('timedsync', response);
+    this.emit(TIMED_SYNC, response);
   }
 
   public onHandshake(
@@ -323,8 +324,8 @@ export class LevinProtocol extends EventEmitter {
     assert(handler.processPayLoad(context, request.payload, true));
 
     context.peerId = request.node.peerId;
-    this.emit('handshake', request);
-    this.emit('processed', 'handshake');
+    this.emit(HANDSHAKE, request);
+    this.emit(PROCESSED, 'handshake');
   }
 
   public onTimedSync(cmd: ILevinCommand, context: P2pConnectionContext) {
@@ -347,7 +348,7 @@ export class LevinProtocol extends EventEmitter {
       const data = LevinProtocol.response(cmd.command, writer.getBuffer(), 0);
       this.socket.write(data);
     }
-    this.emit('processed', 'timedsync');
+    this.emit(PROCESSED, 'timedsync');
   }
 
   public writeResponse(cmd: number, buffer: Buffer, response: boolean) {
@@ -360,7 +361,7 @@ export class LevinProtocol extends EventEmitter {
     if (cmd.isResponse) {
       const response: ping.IResponse = ping.Reader.response(reader);
       assert(String(response.status) === ping.PING_OK_RESPONSE_STATUS_TEXT);
-      this.emit('ping', response);
+      this.emit(PING, response);
       return;
     } else {
       ping.Reader.request(reader);
@@ -377,7 +378,7 @@ export class LevinProtocol extends EventEmitter {
       const data = LevinProtocol.response(cmd.command, writer.getBuffer(), 1);
       this.socket.write(data);
     }
-    this.emit('processed', 'ping');
+    this.emit(PROCESSED, 'ping');
   }
 
   private isReply(cmd: ILevinCommand) {

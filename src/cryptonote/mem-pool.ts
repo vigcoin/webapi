@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import { EventEmitter } from 'events';
 import { closeSync, existsSync, openSync, readFileSync } from 'fs';
+import { TX_REMOVED_FROM_POOL } from '../config/events';
 import { IHash, IKeyImage } from '../crypto/types';
 import { getLiveTime, isForgetable } from '../init/mem-pool';
 import { logger } from '../logger';
@@ -59,6 +60,7 @@ export class MemoryPool extends EventEmitter {
       this.readRecentDeletedTransaction(reader);
     }
     this.buildIndices();
+    this.removeExpiredTransactions();
   }
 
   public readTransaction(reader: BufferStreamReader) {
@@ -143,7 +145,7 @@ export class MemoryPool extends EventEmitter {
         this.timestamp.remove(td.receiveTime, td.id);
         this.transactions.splice(i, 1);
         i--;
-        this.emit('txRemovedFromPool', td);
+        this.emit(TX_REMOVED_FROM_POOL, td);
       }
     }
   }
