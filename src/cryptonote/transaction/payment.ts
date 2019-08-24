@@ -8,32 +8,38 @@ import { ITransactionExtraNonce, TransactionExtra } from './extra';
 import { Transaction } from './index';
 
 export class Payment {
-  private index: MultiMap<IHash, IHash>;
-  // constructor() {}
-  public add(tx: ITransaction) {
-    const writer = new BufferStreamWriter(Buffer.alloc(0));
-    Transaction.write(writer, tx);
-    const buffer = writer.getBuffer();
-    const hash = Hash.from(buffer);
-    const extras = TransactionExtra.parse(tx.prefix.extra);
-    let nonce = null;
-    for (const extra of extras) {
-      const temp = extra as ITransactionExtraNonce;
-      if (temp.nonce && temp.nonce.length) {
-        nonce = temp;
-        break;
-      }
-    }
-    if (!nonce) {
-      return;
-    }
-    // const paymentId =
+  private map: MultiMap<IHash, IHash> = new MultiMap();
+  public toPayment(tx: ITransaction) {
+    const hash = Transaction.hash(tx);
+    const paymentId = TransactionExtra.getPaymentId(tx);
+    return {
+      hash,
+      paymentId,
+    };
   }
-  public remove(tx: ITransaction) {}
+  public add(tx: ITransaction) {
+    const { hash, paymentId } = this.toPayment(tx);
+    if (paymentId) {
+      this.map.set(paymentId, hash);
+    }
+  }
+  public remove(tx: ITransaction) {
+    const { hash, paymentId } = this.toPayment(tx);
+    if (paymentId) {
+      this.map.remove(paymentId, item => {
+        return !item.equals(hash);
+      });
+    }
+  }
 
-  // public find(paymentId: IHash): IHash[] {}
+  // public find(paymentId: IHash, hash: IHash): IHash {
+  //   const hashes = this.map.get(paymentId);
+  //   if(hashes.indexOf(hash) !== -1) {
+
+  //   }
+  // }
 
   public clear() {
-    this.index.clear();
+    this.map.clear();
   }
 }
