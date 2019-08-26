@@ -1,4 +1,3 @@
-import { getFastHash } from '@vigcoin/neon';
 import * as assert from 'assert';
 import {
   closeSync,
@@ -9,7 +8,7 @@ import {
   writeSync,
 } from 'fs';
 import { Configuration } from '../../config/types';
-import { HASH_LENGTH, IHash } from '../../crypto/types';
+import { CNFashHash, HASH_LENGTH, IHash } from '../../crypto/types';
 import { BufferStreamReader } from '../serialize/reader';
 import { BufferStreamWriter } from '../serialize/writer';
 import { Transaction } from '../transaction';
@@ -55,18 +54,18 @@ export class Block {
     switch (gap) {
       case 0:
         return Buffer.from(
-          getFastHash(Buffer.concat([hashes[start], hashes[start]])),
+          CNFashHash(Buffer.concat([hashes[start], hashes[start]])),
           'hex'
         );
       case 1:
         return Buffer.from(
-          getFastHash(Buffer.concat([hashes[start], hashes[start + 1]])),
+          CNFashHash(Buffer.concat([hashes[start], hashes[start + 1]])),
           'hex'
         );
       default:
         const mid = gap / 2;
         return Buffer.from(
-          getFastHash(
+          CNFashHash(
             Buffer.concat([
               Block.merkleHash(hashes, start, mid),
               Block.merkleHash(hashes, mid + 1, end),
@@ -94,7 +93,7 @@ export class Block {
     const finalWriter = new BufferStreamWriter(Buffer.alloc(0));
     finalWriter.writeVarint(writer.getBuffer().length);
     finalWriter.write(writer.getBuffer());
-    return Buffer.from(getFastHash(finalWriter.getBuffer()), 'hex');
+    return Buffer.from(CNFashHash(finalWriter.getBuffer()), 'hex');
   }
 
   // Generate genesis block

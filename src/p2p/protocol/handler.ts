@@ -5,28 +5,33 @@ import {
   BLOCKCHAIN_SYNCHRONZIED,
   PEERS_COUNT_UPDATED,
 } from '../../config/events';
+import { CNFashHash, IHash } from '../../crypto/types';
+import { Block } from '../../cryptonote/block/block';
 import { BlockChain } from '../../cryptonote/block/blockchain';
 import { ICoreSyncData } from '../../cryptonote/p2p';
 import { NSNewBlock } from '../../cryptonote/protocol/commands/new-block';
 import { NSRequestChain } from '../../cryptonote/protocol/commands/request-chain';
+import { NSRequestGetObjects } from '../../cryptonote/protocol/commands/request-get-objects';
 import { NSRequestTXPool } from '../../cryptonote/protocol/commands/request-tx-pool';
+import { NSResponseChain } from '../../cryptonote/protocol/commands/response-chain';
+import { NSResponseGetObjects } from '../../cryptonote/protocol/commands/response-get-objects';
+import { IBlockCompletEntry } from '../../cryptonote/protocol/defines';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
-import { uint32 } from '../../cryptonote/types';
+import { Transaction } from '../../cryptonote/transaction/index';
+import { IBlock, uint32 } from '../../cryptonote/types';
 import { logger } from '../../logger';
 import { ConnectionState, P2pConnectionContext } from '../connection';
 import { Command } from './command';
 
 export class Handler extends EventEmitter {
   public peers: uint32 = 0;
-  public observedHeight: uint32 = 0;
 
   private blockchain: BlockChain;
 
   constructor(blockchain: BlockChain) {
     super();
     this.blockchain = blockchain;
-    this.observedHeight = 0;
   }
 
   public getPayLoad(): ICoreSyncData {
@@ -86,12 +91,12 @@ export class Handler extends EventEmitter {
     return this.blockchain.height;
   }
 
-  public notifyNewHeight(current: number) {
-    if (this.observedHeight < current) {
-      this.observedHeight = current;
-      this.emit(BLOCK_HEIGHT_UPDATED, this.observedHeight);
-    }
-  }
+  // public notifyNewHeight(current: number) {
+  //   if (this.observedHeight < current) {
+  //     this.observedHeight = current;
+  //     this.emit(BLOCK_HEIGHT_UPDATED, this.observedHeight);
+  //   }
+  // }
 
   public notifyPeerCount(count: number) {
     this.emit(PEERS_COUNT_UPDATED, count);
@@ -105,10 +110,7 @@ export class Handler extends EventEmitter {
     switch (cmd) {
       case Command.NOTIFY_NEW_BLOCK:
         logger.info('on Notify New Block');
-        const request: NSNewBlock.IRequest = NSNewBlock.Reader.request(
-          new BufferStreamReader(buffer)
-        );
-        this.onNewBlock(request, context);
+        this.onNewBlock(buffer, context);
         break;
       case Command.NOTIFY_NEW_TRANSACTIONS:
         logger.info('on Notify New Transactions');
@@ -120,13 +122,14 @@ export class Handler extends EventEmitter {
 
       case Command.NOTIFY_RESPONSE_GET_OBJECTS:
         logger.info('on Notify Response Objects');
-
+        this.onResponseObjects(buffer, context);
         break;
       case Command.NOTIFY_REQUEST_CHAIN:
         logger.info('on Notify Request Chain');
         break;
       case Command.NOTIFY_RESPONSE_CHAIN_ENTRY:
         logger.info('on Notify Response Chain Entry');
+        this.onResponseChain(buffer, context);
         break;
       case Command.NOTIFY_REQUEST_TX_POOL:
         logger.info('on Notify Request TX Pool');
@@ -142,21 +145,112 @@ export class Handler extends EventEmitter {
     // TODO
   }
 
-  public onNewBlock(
-    request: NSNewBlock.IRequest,
-    context: P2pConnectionContext
-  ) {
-    logger.info('NOTIFY_NEW_BLOCK (hop ' + request.hop + ')');
+  public onNewBlock(buffer: Buffer, context: P2pConnectionContext) {
+    const request: NSNewBlock.IRequest = NSNewBlock.Reader.request(
+      new BufferStreamReader(buffer)
+    );
+    logger.info('-->>NOTIFY_NEW_BLOCK<<--');
+    logger.info('hop : ' + request.hop);
+    this.emit(BLOCK_HEIGHT_UPDATED, request.currentBlockHeight, context);
+    context.remoteBlockchainHeight = request.currentBlockHeight;
+    if (context.state !== ConnectionState.NORMAL) {
+      return;
+    }
+    for (const tx of request.blockCompleteEntry.txs) {
+    }
   }
   public onNewTransactions() {}
 
   public onRequestObjects() {}
 
-  public onResponseObjects() {}
+  public onResponseObjects(buffer: Buffer, context: P2pConnectionContext) {
+    const response = NSResponseGetObjects.Reader.request(
+      new BufferStreamReader(buffer)
+    );
+
+    logger.info('-->>NOTIFY_RESPONSE_GET_OBJECTS<<--');
+    if (context.lastResponseHeight > response.currentBlockchainHeight) {
+      logger.error('received wrong OBJECTS!');
+      logger.error(
+        'received current blockchain height: ' +
+          response.currentBlockchainHeight
+      );
+      logger.error(
+        'recorded last response height: ' + context.lastResponseHeight
+      );
+      logger.error('dropping connection');
+      context.state = ConnectionState.SHUTDOWN;
+      return;
+    }
+    this.emit(BLOCK_HEIGHT_UPDATED, response.currentBlockchainHeight, context);
+    context.remoteBlockchainHeight = response.currentBlockchainHeight;
+
+    for (const be of response.blocks) {
+      try {
+        const block: IBlock = Block.readBlock(new BufferStreamReader(be.block));
+        const hash = Block.hash(block);
+
+        // if (block.transactionHashes.length === be.txs.length) {
+        // }
+      } catch (e) {
+        logger.error('recevied wrong block!');
+        logger.error(
+          'failed to parse and validate block: ' + be.block.toString('hex')
+        );
+        logger.error('dropping connection');
+        context.state = ConnectionState.SHUTDOWN;
+        return;
+      }
+    }
+  }
 
   public onRequestChain() {}
 
-  public onResponseChain() {}
+  public onResponseChain(buffer: Buffer, context: P2pConnectionContext) {
+    const request: NSResponseChain.IRequest = NSResponseChain.Reader.request(
+      new BufferStreamReader(buffer)
+    );
+
+    logger.info('NOTIFY_RESPONSE_CHAIN_ENTRY : ');
+    logger.info('block size : ' + request.blockHashes.length);
+    logger.info('start height : ' + request.startHeight);
+    logger.info('total height : ' + request.totalHeight);
+
+    if (!request.blockHashes.length) {
+      logger.info('recevied empty block ids, dropping connection');
+      context.state = ConnectionState.SHUTDOWN;
+      return;
+    }
+    if (!this.blockchain.have(request.blockHashes[0])) {
+      logger.info(
+        'received block ids starting from unknown id: ' + request.blockHashes[0]
+      );
+      logger.info('dropping connection');
+      context.state = ConnectionState.SHUTDOWN;
+      return;
+    }
+
+    context.remoteBlockchainHeight = request.totalHeight;
+    context.lastResponseHeight =
+      request.startHeight + request.blockHashes.length;
+    if (context.lastResponseHeight > context.remoteBlockchainHeight) {
+      logger.info('sent wrong NOTIFY_RESPONSE_CHAIN_ENTRY');
+      logger.info('total height : ' + request.blockHashes.length);
+      logger.info('block ids size: ' + request.blockHashes.length);
+      logger.info('block ids size: ' + request.blockHashes.length);
+      context.state = ConnectionState.SHUTDOWN;
+    }
+
+    const missed = [];
+
+    for (const block of request.blockHashes) {
+      if (!this.blockchain.have(block)) {
+        missed.push(block);
+      }
+    }
+
+    this.requestMissingObjects(missed, context);
+  }
 
   public onRequestPool(buffer: Buffer, context: P2pConnectionContext) {
     const request: NSRequestTXPool.IRequest = NSRequestTXPool.Reader.request(
@@ -173,10 +267,47 @@ export class Handler extends EventEmitter {
       };
       const writer = new BufferStreamWriter(Buffer.alloc(0));
       NSRequestChain.Writer.request(writer, request);
-      logger.info(
-        '-->>NOTIFY_REQUEST_CHAIN: size ' + request.blockHashes.length
-      );
+      logger.info('-->>NOTIFY_REQUEST_CHAIN<<--');
+      logger.info('size ' + request.blockHashes.length);
       context.socket.write(writer.getBuffer());
+    }
+  }
+
+  // Requests
+
+  public requestMissingObjects(blocks: IHash[], context: P2pConnectionContext) {
+    if (blocks.length) {
+      const request: NSRequestGetObjects.IRequest = {
+        blocks,
+      };
+      logger.info('-->>NOTIFY_REQUEST_GET_OBJECTS<<--');
+      logger.info('blocks size: ' + blocks.length);
+      logger.info('txs size: 0');
+      const writer = new BufferStreamWriter(Buffer.alloc(0));
+      NSRequestGetObjects.Writer.request(writer, request);
+      context.socket.write(writer.getBuffer());
+    }
+  }
+
+  public processObjects(
+    blockEntries: IBlockCompletEntry[],
+    context: P2pConnectionContext
+  ) {
+    for (const block of blockEntries) {
+      for (const txBuffer of block.txs) {
+        try {
+          const tx = Transaction.read(new BufferStreamReader(txBuffer));
+          const txHash = Transaction.hash(tx);
+          this.blockchain.haveTransaction(txHash);
+        } catch (e) {
+          logger.error(e);
+          logger.error('Transaction parsing failed!');
+          logger.error('tx id: ' + CNFashHash(txBuffer));
+          logger.info('dropping connection');
+          context.state = ConnectionState.SHUTDOWN;
+          return;
+        }
+      }
     }
   }
 }

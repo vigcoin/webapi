@@ -40,6 +40,8 @@ export class MemoryPool extends EventEmitter {
   private payment: Payment = new Payment();
   private timestamp: TimeStamp = new TimeStamp();
 
+  private interval: number = 10000;
+
   // private transactionDetails:
   constructor(filename: string) {
     super();
@@ -61,6 +63,12 @@ export class MemoryPool extends EventEmitter {
     }
     this.buildIndices();
     this.removeExpiredTransactions();
+  }
+
+  public onIdle() {
+    setTimeout(() => {
+      this.removeExpiredTransactions();
+    }, this.interval);
   }
 
   public readTransaction(reader: BufferStreamReader) {

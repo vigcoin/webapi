@@ -1,4 +1,10 @@
-import { IHash, IKeyImage, IPublicKey, ISignature } from '../crypto/types';
+import {
+  IHash,
+  IKeyImage,
+  IPublicKey,
+  ISignature,
+  SIGNATURE_LENGTH,
+} from '../crypto/types';
 
 export type uint64 = number;
 export type uint32 = number;
@@ -49,6 +55,12 @@ export interface ITransactionOutput {
   tag: uint8;
   amount: uint64;
   target: ITransactionOutputTarget;
+}
+
+export enum ETransactionIOType {
+  BASE = 0xff,
+  KEY = 0x02,
+  SIGNATURE = 0x03,
 }
 
 export interface ITransactionInput {
@@ -106,36 +118,26 @@ export interface IBlockEntry {
   transactions: ITransactionEntry[];
 }
 
-// Verification
+// Verification Context
 
 // tslint:disable-next-line: no-namespace
-export namespace VerificationContext {
-  export interface IVCTx {
-    shouldBeRelayed: boolean;
-    verifivationFailed: boolean;
-    verifivationImpossible: boolean;
-    addedToPool: boolean;
-    txFeeTooSmall: boolean;
-  }
-
-  export interface IVCBlock {
-    addedToMainChain: boolean;
-    verificationFailed: boolean;
-    markedAsOrphaned: boolean;
-    alreadyExists: boolean;
-    switchedToAltChain: boolean;
-  }
+export interface IVCTx {
+  shouldBeRelayed: boolean;
+  verifivationFailed: boolean;
+  verifivationImpossible: boolean;
+  addedToPool: boolean;
+  txFeeTooSmall: boolean;
 }
 
-// Serialization/Unserialization
-
-export interface ISerializer<T> {
-  serialize(data: T): boolean;
-  unserialize(data: T): boolean;
+export interface IVCBlock {
+  addedToMainChain: boolean;
+  verificationFailed: boolean;
+  markedAsOrphaned: boolean;
+  alreadyExists: boolean;
+  switchedToAltChain: boolean;
 }
 
 // Memory Pool
-
 export interface IBlockInfo {
   height: uint32;
   id: IHash;
@@ -157,3 +159,14 @@ export interface ITransactionDetails {
 }
 
 export type IGlobalOut = Map<uint64, uint64>;
+
+export interface ITransactionIndex {
+  block: uint32;
+  transaction: uint16;
+}
+
+export interface ITransactionMultisignatureOutputUsage {
+  transactionIndex: ITransactionIndex;
+  outputIndex: uint16;
+  isUsed: boolean;
+}

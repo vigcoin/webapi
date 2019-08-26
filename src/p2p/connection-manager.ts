@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { Socket } from 'net';
+import { BLOCK_HEIGHT_UPDATED } from '../config/events';
 import {
   ICoreSyncData,
   INetwork,
@@ -20,16 +21,32 @@ import { handshake, ping, timedsync } from './protocol';
 import { Handler } from './protocol/handler';
 
 export class ConnectionManager extends EventEmitter {
+  public observedHeight: number = 0;
+
   private connections: Map<string, P2pConnectionContext> = new Map();
   private peerId: IPeerIDType;
   private networkId: uint8[];
   private p2pConfig: P2PConfig;
+  private handler: Handler;
 
-  constructor(peerId: IPeerIDType, networkId: uint8[], p2pConfig: P2PConfig) {
+  constructor(
+    peerId: IPeerIDType,
+    networkId: uint8[],
+    p2pConfig: P2PConfig,
+    handler: Handler
+  ) {
     super();
     this.peerId = peerId;
     this.networkId = networkId;
     this.p2pConfig = p2pConfig;
+    this.handler = handler;
+
+    this.handler.on(
+      BLOCK_HEIGHT_UPDATED,
+      (height: number, context: P2pConnectionContext) => {
+        this.updateObservedHeight(height, context);
+      }
+    );
   }
 
   public stop() {
@@ -112,16 +129,15 @@ export class ConnectionManager extends EventEmitter {
 
   public updateObservedHeight(
     newHeight: number,
-    context: P2pConnectionContext,
-    handler: Handler
-  ): number {
-    let updated = false;
-    let observedHeight = handler.observedHeight;
+    context: P2pConnectionContext
+  ) {
+    let observedHeight = this.observedHeight;
     const height = observedHeight;
     if (newHeight > context.remoteBlockchainHeight) {
       if (newHeight > observedHeight) {
         observedHeight = newHeight;
-        updated = true;
+        this.emit(BLOCK_HEIGHT_UPDATED, observedHeight);
+        return observedHeight;
       }
     } else {
       // newHeight is less than remote height
@@ -129,23 +145,20 @@ export class ConnectionManager extends EventEmitter {
         if (context.remoteBlockchainHeight === observedHeight) {
           // The client switched to alternative chain and had maximum observed height.
           // Need to recalculate max height
-          observedHeight = this.recalculateMaxObservedHeight(handler);
+          observedHeight = this.recalculateMaxObservedHeight();
           if (height !== observedHeight) {
-            updated = true;
+            this.emit(BLOCK_HEIGHT_UPDATED, observedHeight);
+            return observedHeight;
           }
         }
       }
     }
-
-    if (updated) {
-      return observedHeight;
-    }
     return 0;
   }
 
-  public recalculateMaxObservedHeight(handler: Handler): number {
+  public recalculateMaxObservedHeight(): number {
     const peerHeight = this.getHeight();
-    const blockHeight = handler.height;
+    const blockHeight = this.handler.height;
     return peerHeight > blockHeight ? peerHeight : blockHeight;
   }
 
@@ -156,13 +169,12 @@ export class ConnectionManager extends EventEmitter {
   // try_to_connect_and_handshake_with_new_peer
   public async connect(
     network: INetwork,
-    handler: Handler,
     pm: PeerManager,
     peer: IPeer,
     takePeerListOnly: boolean
   ) {
     const s = await P2pConnectionContext.createConnection(peer, network);
-    return this.handshake(peer, handler, pm, s, takePeerListOnly);
+    return this.handshake(peer, pm, s, takePeerListOnly);
   }
 
   // Commands
@@ -171,7 +183,6 @@ export class ConnectionManager extends EventEmitter {
   // request
   public async handshake(
     peer: IPeer,
-    handler: Handler,
     pm: PeerManager,
     s: Socket,
     takePeerListOnly: boolean = false
@@ -179,11 +190,11 @@ export class ConnectionManager extends EventEmitter {
     logger.info('Sending handshaking request ...');
     const request: handshake.IRequest = {
       node: this.getLocalPeerData(),
-      payload: handler.getPayLoad(),
+      payload: this.handler.getPayLoad(),
     };
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     handshake.Writer.request(writer, request);
-    const { context, levin } = this.initContext(pm, handler, s, false);
+    const { context, levin } = this.initContext(pm, s, false);
     const response: any = await levin.invoke(handshake, writer.getBuffer());
     context.version = response.node.version;
     logger.info('Handling peer list');
@@ -193,7 +204,7 @@ export class ConnectionManager extends EventEmitter {
       return { context, levin };
     }
     logger.info('Processing pay load!');
-    this.processPayLoad(handler, context, response.payload, true);
+    this.processPayLoad(context, response.payload, true);
     logger.info('Pay load processed!');
     context.peerId = response.node.peerId;
     const pe: IPeerEntry = {
@@ -213,7 +224,6 @@ export class ConnectionManager extends EventEmitter {
   // response
   public async onHandshake(
     pm: PeerManager,
-    handler: Handler,
     data: handshake.IRequest,
     context: P2pConnectionContext,
     levin: LevinProtocol
@@ -231,7 +241,7 @@ export class ConnectionManager extends EventEmitter {
     const response: handshake.IResponse = {
       localPeerList: pm.getLocalPeerList(),
       node: this.getLocalPeerData(),
-      payload: handler.getPayLoad(),
+      payload: this.handler.getPayLoad(),
     };
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     handshake.Writer.response(writer, response);
@@ -240,9 +250,9 @@ export class ConnectionManager extends EventEmitter {
 
   // TIMEDSYNC
   // request
-  public async timedsync(handler: Handler) {
+  public async timedsync() {
     const request: timedsync.IRequest = {
-      payload: handler.getPayLoad(),
+      payload: this.handler.getPayLoad(),
     };
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     timedsync.Writer.request(writer, request);
@@ -274,12 +284,7 @@ export class ConnectionManager extends EventEmitter {
     });
   }
 
-  public initContext(
-    pm: PeerManager,
-    handler: Handler,
-    s: Socket,
-    inComing: boolean = true
-  ) {
+  public initContext(pm: PeerManager, s: Socket, inComing: boolean = true) {
     if (inComing) {
       logger.info('New incoming context creating');
     } else {
@@ -288,14 +293,13 @@ export class ConnectionManager extends EventEmitter {
     const context = new P2pConnectionContext(s);
     context.isIncoming = inComing;
     const levin = new LevinProtocol(s);
-    return this.initLevin(s, context, levin, handler, pm);
+    return this.initLevin(s, context, levin, pm);
   }
 
   protected initLevin(
     s: Socket,
     context: P2pConnectionContext,
     levin: LevinProtocol,
-    handler: Handler,
     pm: PeerManager
   ) {
     this.set(context);
@@ -304,7 +308,7 @@ export class ConnectionManager extends EventEmitter {
         case ConnectionState.SYNC_REQURIED:
           break;
         case ConnectionState.SYNCHRONIZING:
-          handler.startSync(context);
+          this.handler.startSync(context);
           break;
       }
     });
@@ -320,9 +324,9 @@ export class ConnectionManager extends EventEmitter {
     });
     levin.on('handshake', async (data: handshake.IRequest) => {
       logger.info('Receiving handshaking command!');
-      await this.onHandshake(pm, handler, data, context, levin);
+      await this.onHandshake(pm, data, context, levin);
     });
-    levin.initIncoming(s, context, handler);
+    levin.initIncoming(s, context, this.handler);
 
     return {
       context,
@@ -354,25 +358,17 @@ export class ConnectionManager extends EventEmitter {
   }
 
   private processPayLoad(
-    handler: Handler,
     context: P2pConnectionContext,
     data: ICoreSyncData,
     isInitial: boolean
   ) {
-    handler.processPayLoad(context, data, isInitial);
-    const newHeight = this.updateObservedHeight(
-      data.currentHeight,
-      context,
-      handler
-    );
+    this.handler.processPayLoad(context, data, isInitial);
 
-    if (newHeight !== 0) {
-      handler.notifyNewHeight(newHeight);
-    }
+    this.updateObservedHeight(data.currentHeight, context);
 
     context.remoteBlockchainHeight = data.currentHeight;
     if (isInitial) {
-      handler.notifyPeerCount(this.size);
+      this.handler.notifyPeerCount(this.size);
     }
   }
 

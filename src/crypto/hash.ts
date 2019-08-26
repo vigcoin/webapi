@@ -1,8 +1,7 @@
-import { getFastHash } from '@vigcoin/neon';
-import { IHash } from './types';
+import { CNFashHash, IHash } from './types';
 
 export class Hash {
   public static from(buffer: Buffer): IHash {
-    return Buffer.from(getFastHash(buffer), 'hex');
+    return Buffer.from(CNFashHash(buffer), 'hex');
   }
 }

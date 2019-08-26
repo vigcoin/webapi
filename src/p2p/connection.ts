@@ -44,6 +44,7 @@ export class ConnectionContext extends EventEmitter {
   }
 
   public remoteBlockchainHeight: uint32 = 0; // uint32;
+  public lastResponseHeight: uint32 = 0; // unit32;
   public id: Buffer; // boost::uuids::uuid, uint8[16]
   public ip: uint32 = 0; // uint32
   public port: uint32 = 0; // uint32
@@ -56,7 +57,6 @@ export class ConnectionContext extends EventEmitter {
   protected startTime: Date;
   protected neededObjects: IHash[];
   protected requestedObjects: IHash[];
-  protected lastResponseHeight: uint32 = 0; // unit32;
 
   get state() {
     return this._state;

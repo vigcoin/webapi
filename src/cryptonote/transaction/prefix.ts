@@ -2,6 +2,7 @@ import assert = require('assert');
 import { BufferStreamReader } from '../serialize/reader';
 import { BufferStreamWriter } from '../serialize/writer';
 import {
+  ETransactionIOType,
   IInputBase,
   IInputKey,
   IInputSignature,
@@ -18,13 +19,13 @@ export class TransactionPrefix {
     let target: ITransactionInputTarget;
     switch (tag) {
       // IInputBase
-      case 0xff:
+      case ETransactionIOType.BASE:
         target = {
           blockIndex: reader.readVarint(),
         };
         break;
       // IInputKey
-      case 0x02:
+      case ETransactionIOType.KEY:
         {
           const amount = reader.readVarint();
           const size = reader.readVarint();
@@ -44,7 +45,7 @@ export class TransactionPrefix {
         }
         break;
       // IInputSignature
-      case 0x03:
+      case ETransactionIOType.SIGNATURE:
         {
           const amount = reader.readVarint();
           const count = reader.readVarint();
@@ -70,13 +71,13 @@ export class TransactionPrefix {
     let target: ITransactionInputTarget;
     switch (input.tag) {
       // IInputBase
-      case 0xff:
+      case ETransactionIOType.BASE:
         target = input.target as IInputBase;
         writer.writeVarint(target.blockIndex);
 
         break;
       // IInputKey
-      case 0x02:
+      case ETransactionIOType.KEY:
         target = input.target as IInputKey;
 
         writer.writeVarint(target.amount);
@@ -88,7 +89,7 @@ export class TransactionPrefix {
         writer.writeHash(target.keyImage);
         break;
       // IInputSignature
-      case 0x03:
+      case ETransactionIOType.SIGNATURE:
         target = input.target as IInputSignature;
 
         writer.writeVarint(target.amount);
@@ -107,7 +108,7 @@ export class TransactionPrefix {
 
     switch (tag) {
       // IOutputKey
-      case 0x02:
+      case ETransactionIOType.KEY:
         output = {
           amount,
           tag,
@@ -117,7 +118,7 @@ export class TransactionPrefix {
         };
         break;
       // IOutputSignature
-      case 0x03:
+      case ETransactionIOType.SIGNATURE:
       // output = {
       //   amount,
       //   tag,

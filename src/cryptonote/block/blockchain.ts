@@ -1,7 +1,20 @@
 import * as assert from 'assert';
 import { Configuration } from '../../config/types';
-import { IHash } from '../../crypto/types';
-import { IBlock, IBlockEntry, uint64 } from '../types';
+import { IHash, IKeyImage } from '../../crypto/types';
+import { logger } from '../../logger';
+import { MultiMap } from '../../util/map';
+import { Transaction } from '../transaction/index';
+import {
+  ETransactionIOType,
+  IBlock,
+  IBlockEntry,
+  IInputKey,
+  IInputSignature,
+  ITransactionIndex,
+  ITransactionMultisignatureOutputUsage,
+  uint16,
+  uint64,
+} from '../types';
 import { Block } from './block';
 import { BlockIndex } from './block-index';
 
@@ -23,7 +36,21 @@ export class BlockChain {
   private currency: Configuration.ICurrency;
   private blockIndex: BlockIndex;
   private block: Block;
-  private offsets: number[];
+  private offsets: uint64[];
+
+  // caches
+  private blockHashes: Set<IHash> = new Set();
+  private transactionPairs: Map<IHash, ITransactionIndex> = new Map();
+  private spendKeys: Set<IKeyImage> = new Set();
+  private outputs: MultiMap<
+    uint64,
+    Map<ITransactionIndex, uint16>
+  > = new MultiMap();
+  private multiSignatureOutputs: MultiMap<
+    uint64,
+    ITransactionMultisignatureOutputUsage
+  > = new MultiMap();
+
   private initialized = false;
 
   constructor(config: Configuration.ICurrency) {
@@ -49,6 +76,65 @@ export class BlockChain {
       }
     }
     this.initialized = true;
+  }
+
+  public cache() {
+    const start = Date.now();
+    for (let i = 0; i < this.height; i++) {
+      const be = this.get(i);
+      const hash = Block.hash(be.block);
+      this.blockHashes.add(hash);
+      for (let j = 0; j < be.transactions.length; j++) {
+        const te = be.transactions[j];
+        const txHash = Transaction.hash(te.tx);
+        const ti: ITransactionIndex = {
+          block: i,
+          transaction: j,
+        };
+        this.transactionPairs.set(txHash, ti);
+
+        // process outputs
+        let count = 0;
+        for (const output of te.tx.prefix.outputs) {
+          switch (output.tag) {
+            case ETransactionIOType.KEY:
+              const map = new Map<ITransactionIndex, uint16>();
+              map.set(ti, count);
+              this.outputs.set(output.amount, map);
+              break;
+            case ETransactionIOType.SIGNATURE:
+              const usage: ITransactionMultisignatureOutputUsage = {
+                isUsed: false,
+                outputIndex: count,
+                transactionIndex: ti,
+              };
+              this.multiSignatureOutputs.set(output.amount, usage);
+              break;
+          }
+          count++;
+        }
+
+        // process inputs
+        for (const input of te.tx.prefix.inputs) {
+          switch (input.tag) {
+            case ETransactionIOType.KEY:
+              const key = input.target as IInputKey;
+              this.spendKeys.add(key.keyImage);
+              break;
+            case ETransactionIOType.SIGNATURE:
+              const sign = input.target as IInputSignature;
+              const usage = this.multiSignatureOutputs.get(sign.amount);
+              if (usage && usage[sign.outputIndex]) {
+                usage[sign.outputIndex].isUsed = true;
+              }
+              break;
+          }
+        }
+      }
+    }
+    const end = Date.now();
+    logger.info('Cached building completed!');
+    logger.info('Time elasped:' + (end - start) / 1000);
   }
 
   public empty(): boolean {
@@ -102,5 +188,9 @@ export class BlockChain {
       sparseChain.push(this.genesis().block.header.preHash);
     }
     return sparseChain;
+  }
+
+  public haveTransaction(transaction: IHash): boolean {
+    return !!this.transactionPairs.get(transaction);
   }
 }

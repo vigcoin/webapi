@@ -33,3 +33,13 @@ export const cryptonote = {
     0x10,
   ],
 };
+
+// tslint:disable-next-line:no-namespace
+export namespace parameters {
+  export const CRYPTONOTE_MAX_BLOCK_NUMBER = 500000000;
+  export const CRYPTONOTE_MAX_BLOCK_BLOB_SIZE = 500000000;
+
+  export const CRYPTONOTE_MAX_TX_SIZE = 1000000000;
+
+  export const CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 0x3d;
+}

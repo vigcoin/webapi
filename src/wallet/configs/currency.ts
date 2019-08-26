@@ -1,3 +1,5 @@
+import { parameters } from '../../config';
+
 module.exports = {
-  prefix: 0x3d,
+  prefix: parameters.CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX,
 };

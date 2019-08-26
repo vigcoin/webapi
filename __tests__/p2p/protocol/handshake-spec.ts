@@ -25,8 +25,6 @@ const peerId = randomBytes(8);
 const networkId = cryptonote.NETWORK_ID;
 const p2pConfig = new P2PConfig();
 
-const cm = new ConnectionManager(peerId, networkId, p2pConfig);
-
 const dir = path.resolve(__dirname, '../../vigcoin');
 const p2pFile = path.resolve(__dirname, '../../vigcoin/p2pstate.bin');
 
@@ -47,6 +45,8 @@ bc.init();
 
 const handler = new Handler(bc);
 
+const cm = new ConnectionManager(peerId, networkId, p2pConfig, handler);
+
 describe('test p2p handshake', () => {
   it('should handshake to just take peerlist', done => {
     const pm = getDefaultPeerManager();
@@ -58,7 +58,7 @@ describe('test p2p handshake', () => {
     const client = createConnection(
       { host: IP.toString(ip), port },
       async () => {
-        assert(await cm.handshake(peer, handler, pm, client, true));
+        assert(await cm.handshake(peer, pm, client, true));
         assert(pm.gray.length > 0);
         assert(pm.white.length === 0);
         client.destroy();
@@ -82,7 +82,7 @@ describe('test p2p handshake', () => {
     const client = createConnection(
       { host: IP.toString(ip), port },
       async () => {
-        handler.on(BLOCK_HEIGHT_UPDATED, height => {
+        cm.on(BLOCK_HEIGHT_UPDATED, height => {
           // assert(height > 30000);
           blockHeightUpdated = true;
           if (peersCountUpdated) {
@@ -95,7 +95,7 @@ describe('test p2p handshake', () => {
             close();
           }
         });
-        assert(await cm.handshake(peer, handler, pm1, client, false));
+        assert(await cm.handshake(peer, pm1, client, false));
         assert(pm1.gray.length > 0);
         assert(pm1.white.length === 1);
       }
@@ -114,7 +114,7 @@ describe('test p2p handshake', () => {
     jest.setTimeout(10000);
     let processed = false;
     const server = createServer(socket => {
-      const { levin } = cm.initContext(pm2, handler, socket, true);
+      const { levin } = cm.initContext(pm2, socket, true);
       levin.on('processed', message => {
         assert(message === 'handshake');
         processed = true;
@@ -124,7 +124,7 @@ describe('test p2p handshake', () => {
     server.listen(port);
     const client = createConnection({ port }, async () => {
       const peer = { port, ip: IP.toNumber('127.0.0.1') };
-      assert(await cm.handshake(peer, handler, pm2, client, true));
+      assert(await cm.handshake(peer, pm2, client, true));
       assert(processed);
       assert(pm2.gray.length >= 0);
       client.destroy();
@@ -147,7 +147,7 @@ describe('test p2p handshake', () => {
     jest.setTimeout(10000);
     let processed = false;
     const server = createServer(socket => {
-      const { levin } = cm.initContext(pm2, handler, socket);
+      const { levin } = cm.initContext(pm2, socket);
       levin.on('processed', message => {
         assert(message === 'handshake');
         processed = true;
@@ -157,7 +157,7 @@ describe('test p2p handshake', () => {
     server.listen(port);
     const client = createConnection({ port }, async () => {
       const peer = { port, ip: IP.toNumber('127.0.0.1') };
-      assert(await cm.handshake(peer, handler, pm2, client));
+      assert(await cm.handshake(peer, pm2, client));
       assert(processed);
       assert(pm2.gray.length >= 0);
       client.destroy();

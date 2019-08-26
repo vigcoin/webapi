@@ -1,4 +1,5 @@
-import * as assert from 'assert';
+import { getFastHash } from '@vigcoin/neon';
+
 export const HASH_LENGTH = 32;
 export const SIGNATURE_LENGTH = 64;
 export const NULL_HASH: Buffer = Buffer.alloc(HASH_LENGTH);
@@ -10,3 +11,5 @@ export type IPrivateKey = IHash;
 export type IKeyDerivation = IHash;
 export type IKeyImage = IHash;
 export type ISignature = IHash;
+
+export const CNFashHash = getFastHash;

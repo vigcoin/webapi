@@ -1,10 +1,10 @@
-import { getFastHash } from '@vigcoin/neon';
 import assert = require('assert');
-import { IHash, ISignature } from '../../crypto/types';
+import { CNFashHash, IHash, ISignature } from '../../crypto/types';
 import { BufferStreamReader } from '../serialize/reader';
 import { BufferStreamWriter } from '../serialize/writer';
 import { TransactionPrefix } from '../transaction/prefix';
 import {
+  ETransactionIOType,
   ITransaction,
   ITransactionEntry,
   ITransactionInput,
@@ -25,12 +25,12 @@ export class Transaction {
   }
   public static readSignatureCount(input: ITransactionInput) {
     switch (input.tag) {
-      case 0xff:
+      case ETransactionIOType.BASE:
         return 0;
-      case 0x02:
+      case ETransactionIOType.KEY:
         const key: any = input.target;
         return key.outputIndexes.length;
-      case 0x03:
+      case ETransactionIOType.SIGNATURE:
         const signature: any = input.target;
         return signature.count;
     }
@@ -115,7 +115,7 @@ export class Transaction {
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     Transaction.write(writer, transaction);
     const buffer = writer.getBuffer();
-    const hashStr = getFastHash(buffer);
+    const hashStr = CNFashHash(buffer);
     const hash = Buffer.from(hashStr, 'hex');
     return hash;
   }

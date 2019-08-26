@@ -20,7 +20,6 @@ import { ConnectionManager } from '../../src/p2p/connection-manager';
 import { Handler } from '../../src/p2p/protocol/handler';
 import { getBlockFile, getDefaultAppDir } from '../../src/util/fs';
 import { IP } from '../../src/util/ip';
-import { chmod } from 'fs';
 
 describe('test connections', () => {
   const network: INetwork = {
@@ -37,11 +36,29 @@ describe('test connections', () => {
   const networkId = cryptonote.NETWORK_ID;
   const p2pConfig = new P2PConfig();
 
+  const gDir = path.resolve(__dirname, '../vigcoin');
+  const currencyConfig: Configuration.ICurrency = {
+    block: {
+      genesisCoinbaseTxHex: mainnet.block.genesisCoinbaseTxHex,
+      version: {
+        major: 1,
+        minor: 1,
+        patch: 1,
+      },
+    },
+    blockFiles: getBlockFile(gDir, mainnet),
+    hardfork: [],
+  };
+  const bc: BlockChain = getBlockChain(currencyConfig);
+  bc.init();
+
+  const handler = new Handler(bc);
+
   it('should connect to peer with connection manager', async () => {
     jest.setTimeout(10000);
     const config = getConfigByType(getType(p2pConfig.testnet));
 
-    const cm = new ConnectionManager(peerId, networkId, p2pConfig);
+    const cm = new ConnectionManager(peerId, networkId, p2pConfig, handler);
     const host = '69.171.73.252';
     const port = 19800;
     const ip = IP.toNumber(host);
@@ -129,27 +146,27 @@ describe('test connections', () => {
       p2pConfig.dataDir = path.resolve(__dirname, '../vigcoin');
       const dir = p2pConfig.dataDir ? p2pConfig.dataDir : getDefaultAppDir();
       const h = getHandler(dir, config);
-      const reHeight = cm.recalculateMaxObservedHeight(h);
+      const reHeight = cm.recalculateMaxObservedHeight();
 
       assert(reHeight === 49);
 
       context.remoteBlockchainHeight = 50;
-      const reHeight1 = cm.recalculateMaxObservedHeight(h);
+      const reHeight1 = cm.recalculateMaxObservedHeight();
       assert(reHeight1 === 50);
 
-      h.observedHeight = 10;
+      cm.observedHeight = 10;
 
-      assert(cm.updateObservedHeight(100, context, h) === 100);
-      assert(cm.updateObservedHeight(20, context, h) === 0);
-      h.observedHeight = 60;
-      assert(cm.updateObservedHeight(51, context, h) === 0);
-      h.observedHeight = 50;
-      assert(cm.updateObservedHeight(49, context, h) === 0);
-      assert(cm.updateObservedHeight(50, context, h) === 0);
+      assert(cm.updateObservedHeight(100, context) === 100);
+      assert(cm.updateObservedHeight(20, context) === 0);
+      cm.observedHeight = 60;
+      assert(cm.updateObservedHeight(51, context) === 0);
+      cm.observedHeight = 50;
+      assert(cm.updateObservedHeight(49, context) === 0);
+      assert(cm.updateObservedHeight(50, context) === 0);
       cm.set(context1);
 
       context1.remoteBlockchainHeight = 1000;
-      assert(cm.updateObservedHeight(49, context, h) === 1000);
+      assert(cm.updateObservedHeight(49, context) === 1000);
       cm.stop();
       cm.remove(context);
       cm.remove(context1);
@@ -196,27 +213,10 @@ describe('test connections', () => {
   });
 
   it('should init context and emit state change', done => {
-    const dir = path.resolve(__dirname, '../vigcoin');
-    const config: Configuration.ICurrency = {
-      block: {
-        genesisCoinbaseTxHex: '111',
-        version: {
-          major: 1,
-          minor: 1,
-          patch: 1,
-        },
-      },
-      blockFiles: getBlockFile(dir, mainnet),
-      hardfork: [],
-    };
-    const bc: BlockChain = getBlockChain(config);
-    bc.init();
-
-    const handler = new Handler(bc);
-    const cm = new ConnectionManager(peerId, networkId, p2pConfig);
+    const cm = new ConnectionManager(peerId, networkId, p2pConfig, handler);
     const pm = getDefaultPeerManager();
     const server = createServer(socket => {
-      const { levin, context } = cm.initContext(pm, handler, socket);
+      const { levin, context } = cm.initContext(pm, socket);
       levin.on('state', () => {
         assert(context.state === ConnectionState.BEFORE_HANDSHAKE);
         client.destroy();
@@ -228,31 +228,14 @@ describe('test connections', () => {
     const port = Math.floor(Math.random() * 1000) + 10000;
     server.listen(port);
     const client = createConnection({ port }, () => {
-      cm.initContext(pm, handler, client, false);
+      cm.initContext(pm, client, false);
       client.write(Buffer.from([0, 1, 2, 3]));
     });
   });
 
   it('should init connect with handshake only', async () => {
     jest.setTimeout(10000);
-    const dir = path.resolve(__dirname, '../vigcoin');
-    const config: Configuration.ICurrency = {
-      block: {
-        genesisCoinbaseTxHex: mainnet.block.genesisCoinbaseTxHex,
-        version: {
-          major: 1,
-          minor: 1,
-          patch: 1,
-        },
-      },
-      blockFiles: getBlockFile(dir, mainnet),
-      hardfork: [],
-    };
-    const bc: BlockChain = getBlockChain(config);
-    bc.init();
-
-    const handler = new Handler(bc);
-    const cm = new ConnectionManager(peerId, networkId, p2pConfig);
+    const cm = new ConnectionManager(peerId, networkId, p2pConfig, handler);
     const host = '69.171.73.252';
     const port = 19800;
     const peer: IPeer = {
@@ -261,31 +244,14 @@ describe('test connections', () => {
       ip: IP.toNumber(host),
     };
     const pm = getDefaultPeerManager();
-    await cm.connect(network, handler, pm, peer, true);
+    await cm.connect(network, pm, peer, true);
     await cm.stop();
     assert(pm.white.length === 0);
   });
 
   it('should init connect not only handshake', async () => {
     jest.setTimeout(10000);
-    const dir = path.resolve(__dirname, '../vigcoin');
-    const config: Configuration.ICurrency = {
-      block: {
-        genesisCoinbaseTxHex: mainnet.block.genesisCoinbaseTxHex,
-        version: {
-          major: 1,
-          minor: 1,
-          patch: 1,
-        },
-      },
-      blockFiles: getBlockFile(dir, mainnet),
-      hardfork: [],
-    };
-    const bc: BlockChain = getBlockChain(config);
-    bc.init();
-
-    const handler = new Handler(bc);
-    const cm = new ConnectionManager(peerId, networkId, p2pConfig);
+    const cm = new ConnectionManager(peerId, networkId, p2pConfig, handler);
     const host = '69.171.73.252';
     const port = 19800;
     const peer: IPeer = {
@@ -294,31 +260,14 @@ describe('test connections', () => {
       ip: IP.toNumber(host),
     };
     const pm = getDefaultPeerManager();
-    await cm.connect(network, handler, pm, peer, false);
+    await cm.connect(network, pm, peer, false);
     await cm.stop();
     assert(pm.white.length > 0);
   });
 
   it('should send timed sync request', async () => {
     jest.setTimeout(10000);
-    const dir = path.resolve(__dirname, '../vigcoin');
-    const config: Configuration.ICurrency = {
-      block: {
-        genesisCoinbaseTxHex: mainnet.block.genesisCoinbaseTxHex,
-        version: {
-          major: 1,
-          minor: 1,
-          patch: 1,
-        },
-      },
-      blockFiles: getBlockFile(dir, mainnet),
-      hardfork: [],
-    };
-    const bc: BlockChain = getBlockChain(config);
-    bc.init();
-
-    const handler = new Handler(bc);
-    const cm = new ConnectionManager(peerId, networkId, p2pConfig);
+    const cm = new ConnectionManager(peerId, networkId, p2pConfig, handler);
     const host = '69.171.73.252';
     const port = 19800;
     const peer: IPeer = {
@@ -327,14 +276,8 @@ describe('test connections', () => {
       ip: IP.toNumber(host),
     };
     const pm = getDefaultPeerManager();
-    const { levin, context } = await cm.connect(
-      network,
-      handler,
-      pm,
-      peer,
-      false
-    );
-    cm.timedsync(handler);
+    const { levin, context } = await cm.connect(network, pm, peer, false);
+    cm.timedsync();
     await cm.stop();
     assert(pm.white.length > 0);
   });

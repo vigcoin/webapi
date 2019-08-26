@@ -83,7 +83,8 @@ export class P2PServer extends EventEmitter {
     this.connectionManager = new ConnectionManager(
       this.peerId,
       networkId,
-      this.p2pConfig
+      this.p2pConfig,
+      this.handler
     );
 
     this.handler.on(BLOCKCHAIN_SYNCHRONZIED, () => {
@@ -116,7 +117,7 @@ export class P2PServer extends EventEmitter {
     const timer = setTimeout(async () => {
       clearTimeout(timer);
       setInterval(() => {
-        this.connectionManager.timedsync(this.handler);
+        this.connectionManager.timedsync();
       }, this.network.handshakeInterval * 1000);
     }, 0);
   }
@@ -191,7 +192,7 @@ export class P2PServer extends EventEmitter {
   protected async startServer() {
     return new Promise((resolve, reject) => {
       const server = createServer(s => {
-        this.connectionManager.initContext(this.pm, this.handler, s, true);
+        this.connectionManager.initContext(this.pm, s, true);
       });
       const { port, host } = this.serverConfig;
       server.listen({ port, host }, e => {
@@ -287,7 +288,6 @@ export class P2PServer extends EventEmitter {
         try {
           await this.connectionManager.connect(
             this.network,
-            this.handler,
             this.pm,
             peer.peer,
             false
@@ -315,7 +315,6 @@ export class P2PServer extends EventEmitter {
         try {
           await this.connectionManager.connect(
             this.network,
-            this.handler,
             this.pm,
             peer,
             true
