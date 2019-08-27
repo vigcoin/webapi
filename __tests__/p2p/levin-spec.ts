@@ -29,6 +29,8 @@ import { ConnectionManager } from '../../src/p2p/connection-manager';
 import { Handler } from '../../src/p2p/protocol/handler';
 import { getBlockFile } from '../../src/util/fs';
 import { IP } from '../../src/util/ip';
+import { readFileSync } from 'fs';
+import { NSNewBlock } from '../../src/cryptonote/protocol/commands/new-block';
 
 const dir = path.resolve(__dirname, '../vigcoin');
 const config: Configuration.ICurrency = {
@@ -474,6 +476,51 @@ describe('test levin protocol', () => {
           0x00,
         ])
       );
+    });
+  });
+
+  it('should handle new block', done => {
+    const server = createServer(socket => {
+      const { levin } = connectionManager.initContext(pm, socket);
+      levin.state = LevinState.NORMAL;
+      levin.on(PROCESSED, message => {
+        assert(message === 'cryptonote-new-block');
+        client.destroy();
+        server.close();
+        done();
+      });
+    });
+    const port = Math.floor(Math.random() * 1000) + 10240;
+    server.listen(port);
+    const client = createConnection({ port }, () => {
+      const buffer = readFileSync(
+        path.resolve(__dirname, './data/new-block.dat')
+      );
+      const { levin } = connectionManager.initContext(pm, client);
+      levin.invoke(NSNewBlock, buffer);
+    });
+  });
+
+  it('should handle new block', done => {
+    const server = createServer(socket => {
+      const { levin, context } = connectionManager.initContext(pm, socket);
+      levin.state = LevinState.NORMAL;
+      context.state = ConnectionState.NORMAL;
+      levin.on(PROCESSED, message => {
+        assert(message === 'cryptonote-new-block');
+        client.destroy();
+        server.close();
+        done();
+      });
+    });
+    const port = Math.floor(Math.random() * 1000) + 10240;
+    server.listen(port);
+    const client = createConnection({ port }, () => {
+      const buffer = readFileSync(
+        path.resolve(__dirname, './data/new-block.dat')
+      );
+      const { levin } = connectionManager.initContext(pm, client);
+      levin.invoke(NSNewBlock, buffer);
     });
   });
 

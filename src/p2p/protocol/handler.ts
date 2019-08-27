@@ -149,7 +149,9 @@ export class Handler extends EventEmitter {
     if (context.state !== ConnectionState.NORMAL) {
       return;
     }
-    for (const tx of request.blockCompleteEntry.txs) {
+    if (request.blockCompleteEntry.txs) {
+      for (const tx of request.blockCompleteEntry.txs) {
+      }
     }
   }
   public onNewTransactions() {}
