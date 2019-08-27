@@ -91,13 +91,6 @@ export class Handler extends EventEmitter {
     return this.blockchain.height;
   }
 
-  // public notifyNewHeight(current: number) {
-  //   if (this.observedHeight < current) {
-  //     this.observedHeight = current;
-  //     this.emit(BLOCK_HEIGHT_UPDATED, this.observedHeight);
-  //   }
-  // }
-
   public notifyPeerCount(count: number) {
     this.emit(PEERS_COUNT_UPDATED, count);
   }
@@ -111,33 +104,33 @@ export class Handler extends EventEmitter {
       case Command.NOTIFY_NEW_BLOCK:
         logger.info('on Notify New Block');
         this.onNewBlock(buffer, context);
-        break;
+        return 'cryptonote-new-block';
       case Command.NOTIFY_NEW_TRANSACTIONS:
         logger.info('on Notify New Transactions');
         this.onNewTransactions();
+        return 'cryptonote-new-transactions';
         break;
       case Command.NOTIFY_REQUEST_GET_OBJECTS:
         logger.info('on Notify Request Objects');
-        break;
-
+        return 'cryptonote-request-get-objects';
       case Command.NOTIFY_RESPONSE_GET_OBJECTS:
         logger.info('on Notify Response Objects');
         this.onResponseObjects(buffer, context);
-        break;
+        return 'cryptonote-response-get-objects';
       case Command.NOTIFY_REQUEST_CHAIN:
         logger.info('on Notify Request Chain');
-        break;
+        return 'cryptonote-request-chain';
       case Command.NOTIFY_RESPONSE_CHAIN_ENTRY:
         logger.info('on Notify Response Chain Entry');
         this.onResponseChain(buffer, context);
-        break;
+        return 'cryptonote-response-chain-entry';
       case Command.NOTIFY_REQUEST_TX_POOL:
         logger.info('on Notify Request TX Pool');
         this.onRequestPool(buffer, context);
-        break;
+        return 'cryptonote-request-tx-pool';
       default:
         logger.info('Unknown Command!');
-        break;
+        return 'cryptonote-error-command';
     }
   }
 
@@ -256,6 +249,13 @@ export class Handler extends EventEmitter {
     const request: NSRequestTXPool.IRequest = NSRequestTXPool.Reader.request(
       new BufferStreamReader(buffer)
     );
+    logger.info('-->>NOTIFY_REQUEST_TX_POOL<<--');
+
+    if (request.txs) {
+      logger.info(' txs size: ' + request.txs.length);
+
+      // TODO: add process when txs are not empty
+    }
   }
 
   public startSync(context: P2pConnectionContext) {

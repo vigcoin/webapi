@@ -158,8 +158,8 @@ export class LevinProtocol extends EventEmitter {
     };
   }
 
+  public state: LevinState = LevinState.NORMAL;
   private socket: Socket;
-  private state: LevinState = LevinState.NORMAL;
   constructor(socket: Socket) {
     super();
     this.socket = socket;
@@ -250,7 +250,7 @@ export class LevinProtocol extends EventEmitter {
       case ConnectionState.SYNC_REQURIED:
         logger.info('Start synchronizing!');
         context.state = ConnectionState.SYNCHRONIZING;
-        // handler.startSync(context);
+        handler.startSync(context);
         break;
       case ConnectionState.POOL_SYNC_REQUIRED:
         logger.info('Into normal state!');
@@ -295,7 +295,12 @@ export class LevinProtocol extends EventEmitter {
         this.onPing(cmd, context);
         break;
       default:
-        handler.onCommand(cmd.command, cmd.buffer, context);
+        const cryptonoteCmd = handler.onCommand(
+          cmd.command,
+          cmd.buffer,
+          context
+        );
+        this.emit(PROCESSED, cryptonoteCmd);
     }
   }
   public onTimedSyncResponse(cmd: ILevinCommand) {

@@ -3,7 +3,7 @@ import { createConnection, createServer } from 'net';
 import { BlockChain } from '../../src/cryptonote/block/blockchain';
 import { BufferStreamReader } from '../../src/cryptonote/serialize/reader';
 import { getBlockChain } from '../../src/init/blockchain';
-import { ILevinCommand, LevinProtocol } from '../../src/p2p/levin';
+import { ILevinCommand, LevinProtocol, LevinState } from '../../src/p2p/levin';
 import { handshake, ping, timedsync } from '../../src/p2p/protocol';
 import {
   handshakeRequest,
@@ -17,8 +17,10 @@ import { data as mainnet } from '../../src/init/net-types/mainnet';
 import { randomBytes } from 'crypto';
 import * as path from 'path';
 import { cryptonote } from '../../src/config';
+import { PROCESSED } from '../../src/config/events';
 import { Configuration } from '../../src/config/types';
 import { IPeerNodeData } from '../../src/cryptonote/p2p';
+import { NSRequestTXPool } from '../../src/cryptonote/protocol/commands/request-tx-pool';
 import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';
 import { getDefaultPeerManager, getP2PServer } from '../../src/init/p2p';
 import { P2PConfig } from '../../src/p2p/config';
@@ -437,6 +439,41 @@ describe('test levin protocol', () => {
       client.destroy();
       server.close();
       done();
+    });
+  });
+
+  // Levin cryptonote protocol
+
+  it('should handle tx memory pool', done => {
+    const server = createServer(socket => {
+      const { levin } = connectionManager.initContext(pm, socket);
+      levin.state = LevinState.NORMAL;
+      levin.on(PROCESSED, message => {
+        assert(message === 'cryptonote-request-tx-pool');
+        client.destroy();
+        server.close();
+        done();
+      });
+    });
+    const port = Math.floor(Math.random() * 1000) + 10240;
+    server.listen(port);
+    const client = createConnection({ port }, () => {
+      const { levin } = connectionManager.initContext(pm, client);
+      levin.invoke(
+        NSRequestTXPool,
+        Buffer.from([
+          0x01,
+          0x11,
+          0x01,
+          0x01,
+          0x01,
+          0x01,
+          0x02,
+          0x01,
+          0x01,
+          0x00,
+        ])
+      );
     });
   });
 
