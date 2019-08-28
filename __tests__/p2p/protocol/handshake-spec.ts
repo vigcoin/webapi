@@ -11,6 +11,7 @@ import { Configuration } from '../../../src/config/types';
 import { BlockChain } from '../../../src/cryptonote/block/blockchain';
 import { IPeer } from '../../../src/cryptonote/p2p';
 import { getBlockChain } from '../../../src/init/blockchain';
+import { getMemoryPool } from '../../../src/init/mem-pool';
 import { data as mainnet } from '../../../src/init/net-types/mainnet';
 import { data as testnet } from '../../../src/init/net-types/testnet';
 import { getDefaultPeerManager, getP2PServer } from '../../../src/init/p2p';
@@ -43,7 +44,9 @@ const config: Configuration.ICurrency = {
 const bc: BlockChain = getBlockChain(config);
 bc.init();
 
-const handler = new Handler(bc);
+const memPool = getMemoryPool(dir, mainnet);
+
+const handler = new Handler(bc, memPool);
 
 const cm = new ConnectionManager(peerId, networkId, p2pConfig, handler);
 

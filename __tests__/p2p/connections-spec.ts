@@ -8,8 +8,9 @@ import { BlockChain } from '../../src/cryptonote/block/blockchain';
 import { IPeerEntry } from '../../src/cryptonote/p2p';
 import { getBlockChain } from '../../src/init/blockchain';
 import { getConfigByType, getType } from '../../src/init/cryptonote';
+import { getMemoryPool } from '../../src/init/mem-pool';
 import { data as mainnet } from '../../src/init/net-types/mainnet';
-import { getDefaultPeerManager, getHandler, network } from '../../src/init/p2p';
+import { getDefaultPeerManager, getHandler } from '../../src/init/p2p';
 import { INetwork, IPeer } from '../../src/p2p';
 import { P2PConfig } from '../../src/p2p/config';
 import {
@@ -51,8 +52,9 @@ describe('test connections', () => {
   };
   const bc: BlockChain = getBlockChain(currencyConfig);
   bc.init();
+  const memPool = getMemoryPool(gDir, mainnet);
 
-  const handler = new Handler(bc);
+  const handler = new Handler(bc, memPool);
 
   it('should connect to peer with connection manager', async () => {
     jest.setTimeout(10000);

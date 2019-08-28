@@ -15,13 +15,16 @@ import {
 import { data as mainnet } from '../../src/init/net-types/mainnet';
 
 import { randomBytes } from 'crypto';
+import { readFileSync } from 'fs';
 import * as path from 'path';
 import { cryptonote } from '../../src/config';
 import { PROCESSED } from '../../src/config/events';
 import { Configuration } from '../../src/config/types';
 import { IPeerNodeData } from '../../src/cryptonote/p2p';
+import { NSNewBlock } from '../../src/cryptonote/protocol/commands/new-block';
 import { NSRequestTXPool } from '../../src/cryptonote/protocol/commands/request-tx-pool';
 import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';
+import { getMemoryPool } from '../../src/init/mem-pool';
 import { getDefaultPeerManager, getP2PServer } from '../../src/init/p2p';
 import { P2PConfig } from '../../src/p2p/config';
 import { ConnectionContext, ConnectionState } from '../../src/p2p/connection';
@@ -29,8 +32,6 @@ import { ConnectionManager } from '../../src/p2p/connection-manager';
 import { Handler } from '../../src/p2p/protocol/handler';
 import { getBlockFile } from '../../src/util/fs';
 import { IP } from '../../src/util/ip';
-import { readFileSync } from 'fs';
-import { NSNewBlock } from '../../src/cryptonote/protocol/commands/new-block';
 
 const dir = path.resolve(__dirname, '../vigcoin');
 const config: Configuration.ICurrency = {
@@ -48,7 +49,9 @@ const config: Configuration.ICurrency = {
 const bc: BlockChain = getBlockChain(config);
 bc.init();
 
-const handler = new Handler(bc);
+const memPool = getMemoryPool(dir, mainnet);
+
+const handler = new Handler(bc, memPool);
 
 const p2pserver = getP2PServer(dir, mainnet);
 const peerId = randomBytes(8);
