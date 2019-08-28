@@ -33,6 +33,7 @@ import { Handler } from '../../src/p2p/protocol/handler';
 import { getBlockFile } from '../../src/util/fs';
 import { IP } from '../../src/util/ip';
 import { Command } from '../../src/p2p/protocol/command';
+import { NSResponseGetObjects } from '../../src/cryptonote/protocol/commands/response-get-objects';
 
 const dir = path.resolve(__dirname, '../vigcoin');
 const config: Configuration.ICurrency = {
@@ -525,6 +526,29 @@ describe('test levin protocol', () => {
       );
       const { levin } = connectionManager.initContext(pm, client);
       levin.invoke(NSNewBlock, buffer);
+    });
+  });
+
+  it('should handle response get objects', done => {
+    const server = createServer(socket => {
+      const { levin, context } = connectionManager.initContext(pm, socket);
+      levin.state = LevinState.NORMAL;
+      context.state = ConnectionState.NORMAL;
+      levin.on(PROCESSED, message => {
+        assert(message === Command.NOTIFY_RESPONSE_GET_OBJECTS);
+        client.destroy();
+        server.close();
+        done();
+      });
+    });
+    const port = Math.floor(Math.random() * 1000) + 10240;
+    server.listen(port);
+    const client = createConnection({ port }, () => {
+      const buffer = readFileSync(
+        path.resolve(__dirname, './data/response-get-objects.bin')
+      );
+      const { levin } = connectionManager.initContext(pm, client);
+      levin.invoke(NSResponseGetObjects, buffer);
     });
   });
 

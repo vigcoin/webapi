@@ -1,13 +1,11 @@
 import * as assert from 'assert';
 import { EventEmitter } from 'events';
-import { parameters } from '../../config/consts';
 import {
   BLOCK_HEIGHT_UPDATED,
   BLOCKCHAIN_SYNCHRONZIED,
   PEERS_COUNT_UPDATED,
 } from '../../config/events';
-import { CNFashHash, IHash } from '../../crypto/types';
-import { Block } from '../../cryptonote/block/block';
+import { IHash } from '../../crypto/types';
 import { BlockChain } from '../../cryptonote/block/blockchain';
 import { MemoryPool } from '../../cryptonote/mem-pool';
 import { ICoreSyncData } from '../../cryptonote/p2p';
@@ -20,8 +18,7 @@ import { NSResponseGetObjects } from '../../cryptonote/protocol/commands/respons
 import { IBlockCompletEntry } from '../../cryptonote/protocol/defines';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
-import { Transaction } from '../../cryptonote/transaction/index';
-import { IBlock, uint32 } from '../../cryptonote/types';
+import { uint32 } from '../../cryptonote/types';
 import { logger } from '../../logger';
 import { ConnectionState, P2pConnectionContext } from '../connection';
 import { Command } from './command';
@@ -182,31 +179,31 @@ export class Handler extends EventEmitter {
     }
     this.emit(BLOCK_HEIGHT_UPDATED, response.currentBlockchainHeight, context);
     context.remoteBlockchainHeight = response.currentBlockchainHeight;
-    for (const be of response.blocks) {
-      try {
-        const block: IBlock = Block.readBlock(new BufferStreamReader(be.block));
-        const hash = Block.hash(block);
+    // for (const be of response.blocks) {
+    //   try {
+    //     const block: IBlock = Block.readBlock(new BufferStreamReader(be.block));
+    //     const hash = Block.hash(block);
 
-        if (block.transactionHashes.length !== be.txs.length) {
-          logger.info('-->>NOTIFY_RESPONSE_GET_OBJECTS<<--');
-          logger.info('block ids mismatch with block complete entries!');
-          logger.error('dropping connection');
-          context.state = ConnectionState.SHUTDOWN;
-          return;
-        }
-      } catch (e) {
-        logger.error('recevied wrong block!');
-        logger.error(
-          'failed to parse and validate block: ' + be.block.toString('hex')
-        );
-        logger.error('dropping connection');
-        context.state = ConnectionState.SHUTDOWN;
-        return;
-      }
-    }
-    if (!this.processObjects(response.blocks, context)) {
-      return;
-    }
+    //     if (block.transactionHashes.length !== be.txs.length) {
+    //       logger.info('-->>NOTIFY_RESPONSE_GET_OBJECTS<<--');
+    //       logger.info('block ids mismatch with block complete entries!');
+    //       logger.error('dropping connection');
+    //       context.state = ConnectionState.SHUTDOWN;
+    //       return;
+    //     }
+    //   } catch (e) {
+    //     logger.error('recevied wrong block!');
+    //     logger.error(
+    //       'failed to parse and validate block: ' + be.block.toString('hex')
+    //     );
+    //     logger.error('dropping connection');
+    //     context.state = ConnectionState.SHUTDOWN;
+    //     return;
+    //   }
+    // }
+    // if (!this.processObjects(response.blocks, context)) {
+    //   return;
+    // }
   }
 
   public onRequestChain() {}
@@ -306,36 +303,35 @@ export class Handler extends EventEmitter {
     context: P2pConnectionContext
   ) {
     for (const block of blockEntries) {
-      for (const txBuffer of block.txs) {
-        assert(txBuffer.length <= parameters.CRYPTONOTE_MAX_TX_SIZE);
-        try {
-          const tx = Transaction.read(new BufferStreamReader(txBuffer));
-          const txHash = Transaction.hash(tx);
-          if (this.blockchain.haveTransaction(txHash)) {
-            logger.info(
-              'tx ' + txHash.toString('hex') + ' is already in blockchain!'
-            );
-            continue;
-          }
-          if (this.memPool.haveTx(txHash)) {
-            logger.info(
-              'tx ' +
-                txHash.toString('hex') +
-                ' is already in transaction pool!'
-            );
-            continue;
-          }
-
-          this.memPool.addTx(tx);
-        } catch (e) {
-          logger.error(e);
-          logger.error('Transaction parsing failed!');
-          logger.error('tx id: ' + CNFashHash(txBuffer));
-          logger.info('dropping connection');
-          context.state = ConnectionState.SHUTDOWN;
-          return false;
-        }
-      }
+      // for (const txBuffer of block.txs) {
+      //   assert(txBuffer.length <= parameters.CRYPTONOTE_MAX_TX_SIZE);
+      //   try {
+      //     // const tx = Transaction.read(new BufferStreamReader(txBuffer));
+      //     // const txHash = Transaction.hash(tx);
+      //     // if (this.blockchain.haveTransaction(txHash)) {
+      //     //   logger.info(
+      //     //     'tx ' + txHash.toString('hex') + ' is already in blockchain!'
+      //     //   );
+      //     //   continue;
+      //     // }
+      //     // if (this.memPool.haveTx(txHash)) {
+      //     //   logger.info(
+      //     //     'tx ' +
+      //     //       txHash.toString('hex') +
+      //     //       ' is already in transaction pool!'
+      //     //   );
+      //     //   continue;
+      //     // }
+      //     // this.memPool.addTx(tx);
+      //   } catch (e) {
+      //     logger.error(e);
+      //     logger.error('Transaction parsing failed!');
+      //     logger.error('tx id: ' + CNFashHash(txBuffer));
+      //     logger.info('dropping connection');
+      //     context.state = ConnectionState.SHUTDOWN;
+      //     return false;
+      //   }
+      // }
     }
     return true;
   }
