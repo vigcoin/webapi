@@ -32,6 +32,7 @@ import { ConnectionManager } from '../../src/p2p/connection-manager';
 import { Handler } from '../../src/p2p/protocol/handler';
 import { getBlockFile } from '../../src/util/fs';
 import { IP } from '../../src/util/ip';
+import { Command } from '../../src/p2p/protocol/command';
 
 const dir = path.resolve(__dirname, '../vigcoin');
 const config: Configuration.ICurrency = {
@@ -454,7 +455,7 @@ describe('test levin protocol', () => {
       const { levin } = connectionManager.initContext(pm, socket);
       levin.state = LevinState.NORMAL;
       levin.on(PROCESSED, message => {
-        assert(message === 'cryptonote-request-tx-pool');
+        assert(message === Command.NOTIFY_REQUEST_TX_POOL);
         client.destroy();
         server.close();
         done();
@@ -487,7 +488,7 @@ describe('test levin protocol', () => {
       const { levin } = connectionManager.initContext(pm, socket);
       levin.state = LevinState.NORMAL;
       levin.on(PROCESSED, message => {
-        assert(message === 'cryptonote-new-block');
+        assert(message === Command.NOTIFY_NEW_BLOCK);
         client.destroy();
         server.close();
         done();
@@ -510,7 +511,7 @@ describe('test levin protocol', () => {
       levin.state = LevinState.NORMAL;
       context.state = ConnectionState.NORMAL;
       levin.on(PROCESSED, message => {
-        assert(message === 'cryptonote-new-block');
+        assert(message === Command.NOTIFY_NEW_BLOCK);
         client.destroy();
         server.close();
         done();

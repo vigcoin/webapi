@@ -5,7 +5,10 @@ import { logger } from '../../logger';
 import { BufferStreamReader } from '../serialize/reader';
 import { BufferStreamWriter } from '../serialize/writer';
 import { TransactionPrefix } from '../transaction/prefix';
-import { ETransactionIOType, IInputKey, IInputSignature ,
+import {
+  ETransactionIOType,
+  IInputKey,
+  IInputSignature,
   ITransaction,
   ITransactionEntry,
   ITransactionInput,

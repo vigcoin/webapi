@@ -108,34 +108,33 @@ export class Handler extends EventEmitter {
       case Command.NOTIFY_NEW_BLOCK:
         logger.info('on Notify New Block');
         this.onNewBlock(buffer, context);
-        return 'cryptonote-new-block';
+        break;
       case Command.NOTIFY_NEW_TRANSACTIONS:
         logger.info('on Notify New Transactions');
         this.onNewTransactions();
-        return 'cryptonote-new-transactions';
         break;
       case Command.NOTIFY_REQUEST_GET_OBJECTS:
         logger.info('on Notify Request Objects');
-        return 'cryptonote-request-get-objects';
+        break;
       case Command.NOTIFY_RESPONSE_GET_OBJECTS:
         logger.info('on Notify Response Objects');
         this.onResponseObjects(buffer, context);
-        return 'cryptonote-response-get-objects';
+        break;
       case Command.NOTIFY_REQUEST_CHAIN:
         logger.info('on Notify Request Chain');
-        return 'cryptonote-request-chain';
+        break;
       case Command.NOTIFY_RESPONSE_CHAIN_ENTRY:
         logger.info('on Notify Response Chain Entry');
         this.onResponseChain(buffer, context);
-        return 'cryptonote-response-chain-entry';
+        break;
       case Command.NOTIFY_REQUEST_TX_POOL:
         logger.info('on Notify Request TX Pool');
         this.onRequestPool(buffer, context);
-        return 'cryptonote-request-tx-pool';
+        break;
       default:
         logger.info('Unknown Command!');
-        return 'cryptonote-error-command';
     }
+    return cmd;
   }
 
   public onIdle() {
