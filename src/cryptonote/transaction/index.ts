@@ -1,18 +1,17 @@
 import assert = require('assert');
+import { parameters } from '../../config';
 import { CNFashHash, IHash, ISignature } from '../../crypto/types';
+import { logger } from '../../logger';
 import { BufferStreamReader } from '../serialize/reader';
 import { BufferStreamWriter } from '../serialize/writer';
 import { TransactionPrefix } from '../transaction/prefix';
-import { IInputKey, IInputSignature, usize } from '../types';
-import { logger } from '../../logger';
-import {
-  ETransactionIOType,
+import { ETransactionIOType, IInputKey, IInputSignature ,
   ITransaction,
   ITransactionEntry,
   ITransactionInput,
   ITransactionPrefix,
+  usize,
 } from '../types';
-import { parameters } from '../../config';
 
 // tslint:disable-next-line: max-classes-per-file
 export class Transaction {

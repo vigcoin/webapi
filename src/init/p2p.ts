@@ -4,7 +4,6 @@ import { INetwork, IServerConfig, P2PServer } from '../p2p/index';
 import { PeerList, PeerManager } from '../p2p/peer-manager';
 import { Handler } from '../p2p/protocol/handler';
 import { getBlockChainInitialized } from './blockchain';
-import { MemoryPool } from '../cryptonote/mem-pool';
 import { getMemoryPool } from './mem-pool';
 
 export const network: INetwork = {

@@ -16,6 +16,21 @@ describe('transaction util test', () => {
   });
 
   it('should decompose amout', () => {
+    const decomposed = decompose(9007199254740991, 10000);
+    assert(decomposed.dust === 991);
+    assert(decomposed.chunks[0] === 40000);
+    assert(decomposed.chunks[1] === 700000);
+    assert(decomposed.chunks[2] === 4000000);
+    assert(decomposed.chunks[3] === 50000000);
+    assert(decomposed.chunks[4] === 200000000);
+    assert(decomposed.chunks[5] === 9000000000);
+    assert(decomposed.chunks[6] === 90000000000);
+    assert(decomposed.chunks[7] === 100000000000);
+    assert(decomposed.chunks[8] === 7000000000000);
+    assert(decomposed.chunks[9] === 9000000000000000);
+  });
+
+  it('should decompose amout', () => {
     const decomposed = decompose(0, 10000);
   });
   it('should decompose amout', () => {
