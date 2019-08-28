@@ -3,6 +3,8 @@ import { CNFashHash, IHash, ISignature } from '../../crypto/types';
 import { BufferStreamReader } from '../serialize/reader';
 import { BufferStreamWriter } from '../serialize/writer';
 import { TransactionPrefix } from '../transaction/prefix';
+import { IInputKey, IInputSignature, usize } from '../types';
+import { logger } from '../../logger';
 import {
   ETransactionIOType,
   ITransaction,
@@ -10,6 +12,7 @@ import {
   ITransactionInput,
   ITransactionPrefix,
 } from '../types';
+import { parameters } from '../../config';
 
 // tslint:disable-next-line: max-classes-per-file
 export class Transaction {
@@ -118,5 +121,85 @@ export class Transaction {
     const hashStr = CNFashHash(buffer);
     const hash = Buffer.from(hashStr, 'hex');
     return hash;
+  }
+
+  public static getAmountInput(transaction: ITransaction) {
+    let amount = 0;
+    for (const input of transaction.prefix.inputs) {
+      switch (input.tag) {
+        case ETransactionIOType.KEY:
+          const key = input.target as IInputKey;
+          amount += key.amount;
+          break;
+        case ETransactionIOType.SIGNATURE:
+          const signature = input.target as IInputSignature;
+          amount += signature.amount;
+          break;
+      }
+    }
+    return amount;
+  }
+
+  public static getAmountInputSingle(input: ITransactionInput) {
+    switch (input.tag) {
+      case ETransactionIOType.KEY:
+        const key = input.target as IInputKey;
+        return key.amount;
+      case ETransactionIOType.SIGNATURE:
+        const signature = input.target as IInputSignature;
+        return signature.amount;
+    }
+  }
+
+  public static getAmountOutput(transaction: ITransaction) {
+    let amount = 0;
+    for (const output of transaction.prefix.outputs) {
+      amount += output.amount;
+    }
+    return amount;
+  }
+
+  public static checkAmount(transaction: ITransaction) {
+    const inputAmount = Transaction.getAmountInput(transaction);
+    const outputAmount = Transaction.getAmountOutput(transaction);
+    if (outputAmount > inputAmount) {
+      logger.info(
+        'transaction use more money then it has: use ' +
+          outputAmount +
+          ', have ' +
+          inputAmount
+      );
+      return false;
+    }
+    return true;
+  }
+
+  public static isFusion(transaction: ITransaction, size: usize) {
+    if (size > parameters.FUSION_TX_MAX_SIZE) {
+      return false;
+    }
+    if (
+      transaction.prefix.inputs.length < parameters.FUSION_TX_MIN_INPUT_COUNT
+    ) {
+      return false;
+    }
+
+    if (
+      transaction.prefix.inputs.length <
+      transaction.prefix.outputs.length *
+        parameters.FUSION_TX_MIN_IN_OUT_COUNT_RATIO
+    ) {
+      return false;
+    }
+
+    let totalAmount = 0;
+
+    for (const input of transaction.prefix.inputs) {
+      const amount = Transaction.getAmountInputSingle(input);
+      if (amount < parameters.DEFAULT_DUST_THRESHOLD) {
+        return false;
+      }
+      totalAmount += amount;
+    }
   }
 }

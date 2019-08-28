@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import { EventEmitter } from 'events';
+import { parameters } from '../../config/consts';
 import {
   BLOCK_HEIGHT_UPDATED,
   BLOCKCHAIN_SYNCHRONZIED,
@@ -8,6 +9,7 @@ import {
 import { CNFashHash, IHash } from '../../crypto/types';
 import { Block } from '../../cryptonote/block/block';
 import { BlockChain } from '../../cryptonote/block/blockchain';
+import { MemoryPool } from '../../cryptonote/mem-pool';
 import { ICoreSyncData } from '../../cryptonote/p2p';
 import { NSNewBlock } from '../../cryptonote/protocol/commands/new-block';
 import { NSRequestChain } from '../../cryptonote/protocol/commands/request-chain';
@@ -28,10 +30,12 @@ export class Handler extends EventEmitter {
   public peers: uint32 = 0;
 
   private blockchain: BlockChain;
+  private memPool: MemoryPool;
 
-  constructor(blockchain: BlockChain) {
+  constructor(blockchain: BlockChain, memPool: MemoryPool) {
     super();
     this.blockchain = blockchain;
+    this.memPool = memPool;
   }
 
   public getPayLoad(): ICoreSyncData {
@@ -179,14 +183,18 @@ export class Handler extends EventEmitter {
     }
     this.emit(BLOCK_HEIGHT_UPDATED, response.currentBlockchainHeight, context);
     context.remoteBlockchainHeight = response.currentBlockchainHeight;
-
     for (const be of response.blocks) {
       try {
         const block: IBlock = Block.readBlock(new BufferStreamReader(be.block));
         const hash = Block.hash(block);
 
-        // if (block.transactionHashes.length === be.txs.length) {
-        // }
+        if (block.transactionHashes.length !== be.txs.length) {
+          logger.info('-->>NOTIFY_RESPONSE_GET_OBJECTS<<--');
+          logger.info('block ids mismatch with block complete entries!');
+          logger.error('dropping connection');
+          context.state = ConnectionState.SHUTDOWN;
+          return;
+        }
       } catch (e) {
         logger.error('recevied wrong block!');
         logger.error(
@@ -196,6 +204,9 @@ export class Handler extends EventEmitter {
         context.state = ConnectionState.SHUTDOWN;
         return;
       }
+    }
+    if (!this.processObjects(response.blocks, context)) {
+      return;
     }
   }
 
@@ -297,19 +308,36 @@ export class Handler extends EventEmitter {
   ) {
     for (const block of blockEntries) {
       for (const txBuffer of block.txs) {
+        assert(txBuffer.length <= parameters.CRYPTONOTE_MAX_TX_SIZE);
         try {
           const tx = Transaction.read(new BufferStreamReader(txBuffer));
           const txHash = Transaction.hash(tx);
-          this.blockchain.haveTransaction(txHash);
+          if (this.blockchain.haveTransaction(txHash)) {
+            logger.info(
+              'tx ' + txHash.toString('hex') + ' is already in blockchain!'
+            );
+            continue;
+          }
+          if (this.memPool.haveTx(txHash)) {
+            logger.info(
+              'tx ' +
+                txHash.toString('hex') +
+                ' is already in transaction pool!'
+            );
+            continue;
+          }
+
+          this.memPool.addTx(tx);
         } catch (e) {
           logger.error(e);
           logger.error('Transaction parsing failed!');
           logger.error('tx id: ' + CNFashHash(txBuffer));
           logger.info('dropping connection');
           context.state = ConnectionState.SHUTDOWN;
-          return;
+          return false;
         }
       }
     }
+    return true;
   }
 }

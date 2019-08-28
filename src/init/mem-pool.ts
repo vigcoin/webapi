@@ -1,3 +1,7 @@
+import { Configuration } from '../config/types';
+import * as path from 'path';
+import { MemoryPool } from '../cryptonote/mem-pool';
+
 // seconds, one day
 export const CRYPTONOTE_MEMPOOL_TX_LIVETIME = 60 * 60 * 24;
 // seconds, one week
@@ -21,4 +25,9 @@ export function getLiveTime(keptByBlock: boolean) {
   return keptByBlock
     ? CRYPTONOTE_MEMPOOL_TX_FROM_ALT_BLOCK_LIVETIME
     : CRYPTONOTE_MEMPOOL_TX_LIVETIME;
+}
+
+export function getMemoryPool(dir: string, config: Configuration.IConfig) {
+  const filename = path.resolve(dir, config.extFiles.pool);
+  return new MemoryPool(filename);
 }

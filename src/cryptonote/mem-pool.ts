@@ -8,12 +8,16 @@ import { logger } from '../logger';
 import { toUnixTimeStamp } from '../util/time';
 import { BufferStreamReader } from './serialize/reader';
 import { TransactionDetails } from './transaction/detail';
+import { Transaction } from './transaction/index';
 import { Payment } from './transaction/payment';
 import { TimeStamp } from './transaction/timestamp';
+
 import {
+  ETransactionIOType,
   IGlobalOut,
   IInputKey,
   IInputSignature,
+  ITransaction,
   ITransactionDetails,
   uint64,
   uint8,
@@ -161,7 +165,7 @@ export class MemoryPool extends EventEmitter {
   public removeTransactionInputs(td: ITransactionDetails) {
     for (const input of td.tx.prefix.inputs) {
       switch (input.tag) {
-        case 0x02:
+        case ETransactionIOType.KEY:
           const key = input.target as IInputKey;
           const images = this.spendKeyImages.get(key.keyImage);
           if (!images) {
@@ -186,7 +190,7 @@ export class MemoryPool extends EventEmitter {
             this.spendKeyImages.delete(key.keyImage);
           }
           break;
-        case 0x03:
+        case ETransactionIOType.SIGNATURE:
           if (!td.keptByBlock) {
             const signature = input.target as IInputSignature;
             const output: IGlobalOut = new Map();
@@ -196,6 +200,22 @@ export class MemoryPool extends EventEmitter {
           }
           break;
       }
+    }
+  }
+
+  public haveTx(tx: IHash) {
+    for (const details of this.transactions) {
+      if (tx.equals(details.id)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public addTx(tx: ITransaction) {
+    const amountInput = Transaction.getAmountInput(tx);
+    const amountOutput = Transaction.getAmountOutput(tx);
+    if (Transaction.checkAmount(tx)) {
     }
   }
 }

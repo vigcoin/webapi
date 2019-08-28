@@ -4,6 +4,8 @@ import { INetwork, IServerConfig, P2PServer } from '../p2p/index';
 import { PeerList, PeerManager } from '../p2p/peer-manager';
 import { Handler } from '../p2p/protocol/handler';
 import { getBlockChainInitialized } from './blockchain';
+import { MemoryPool } from '../cryptonote/mem-pool';
+import { getMemoryPool } from './mem-pool';
 
 export const network: INetwork = {
   conectionTimeout: p2p.P2P_DEFAULT_CONNECTION_TIMEOUT,
@@ -36,7 +38,8 @@ export function getServerConfig(config: Configuration.IConfig): IServerConfig {
 
 export function getHandler(dir: string, config: Configuration.IConfig) {
   const blc = getBlockChainInitialized(dir, config);
-  return new Handler(blc);
+  const memPool = getMemoryPool(dir, config);
+  return new Handler(blc, memPool);
 }
 
 export function getP2PServer(

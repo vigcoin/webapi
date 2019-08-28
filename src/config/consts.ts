@@ -39,7 +39,21 @@ export namespace parameters {
   export const CRYPTONOTE_MAX_BLOCK_NUMBER = 500000000;
   export const CRYPTONOTE_MAX_BLOCK_BLOB_SIZE = 500000000;
 
+  // TODO: Define number of blocks for block size median calculation
+  export const CRYPTONOTE_REWARD_BLOCKS_WINDOW = 100;
+  // Size of block (bytes) after which reward for block calculated using block size
+  export const CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE = 10000;
+
+  export const CRYPTONOTE_COINBASE_BLOB_RESERVED_SIZE = 600;
   export const CRYPTONOTE_MAX_TX_SIZE = 1000000000;
 
   export const CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 0x3d;
+
+  export const MINIMUM_FEE = 100;
+  export const DEFAULT_DUST_THRESHOLD = MINIMUM_FEE;
+
+  export const FUSION_TX_MAX_SIZE =
+    (CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE * 30) / 100;
+  export const FUSION_TX_MIN_INPUT_COUNT = 12;
+  export const FUSION_TX_MIN_IN_OUT_COUNT_RATIO = 4;
 }
