@@ -143,8 +143,6 @@ export class Handler extends EventEmitter {
     const request: NSNewBlock.IRequest = NSNewBlock.Reader.request(
       new BufferStreamReader(buffer)
     );
-    console.log(request);
-
     logger.info('-->>NOTIFY_NEW_BLOCK<<--');
     logger.info('hop : ' + request.hop);
     this.emit(BLOCK_HEIGHT_UPDATED, request.currentBlockHeight, context);
@@ -165,8 +163,6 @@ export class Handler extends EventEmitter {
     const response = NSResponseGetObjects.Reader.request(
       new BufferStreamReader(buffer)
     );
-    console.log(response);
-
     logger.info('-->>NOTIFY_RESPONSE_GET_OBJECTS<<--');
     if (context.lastResponseHeight > response.currentBlockchainHeight) {
       logger.error('received wrong OBJECTS!');
@@ -220,7 +216,6 @@ export class Handler extends EventEmitter {
     const request: NSResponseChain.IRequest = NSResponseChain.Reader.request(
       new BufferStreamReader(buffer)
     );
-
     logger.info('NOTIFY_RESPONSE_CHAIN_ENTRY : ');
     logger.info('block size : ' + request.blockHashes.length);
     logger.info('start height : ' + request.startHeight);
@@ -231,6 +226,7 @@ export class Handler extends EventEmitter {
       context.state = ConnectionState.SHUTDOWN;
       return;
     }
+
     if (!this.blockchain.have(request.blockHashes[0])) {
       logger.info(
         'received block ids starting from unknown id: ' + request.blockHashes[0]
@@ -239,7 +235,6 @@ export class Handler extends EventEmitter {
       context.state = ConnectionState.SHUTDOWN;
       return;
     }
-
     context.remoteBlockchainHeight = request.totalHeight;
     context.lastResponseHeight =
       request.startHeight + request.blockHashes.length;
@@ -250,7 +245,6 @@ export class Handler extends EventEmitter {
       logger.info('block ids size: ' + request.blockHashes.length);
       context.state = ConnectionState.SHUTDOWN;
     }
-
     const missed = [];
 
     for (const block of request.blockHashes) {
@@ -291,7 +285,6 @@ export class Handler extends EventEmitter {
   }
 
   // Requests
-
   public requestMissingObjects(blocks: IHash[], context: P2pConnectionContext) {
     if (blocks.length) {
       const request: NSRequestGetObjects.IRequest = {
