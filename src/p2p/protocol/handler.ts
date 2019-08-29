@@ -6,6 +6,7 @@ import {
   PEERS_COUNT_UPDATED,
 } from '../../config/events';
 import { IHash } from '../../crypto/types';
+import { Block } from '../../cryptonote/block/block';
 import { BlockChain } from '../../cryptonote/block/blockchain';
 import { MemoryPool } from '../../cryptonote/mem-pool';
 import { ICoreSyncData } from '../../cryptonote/p2p';
@@ -18,7 +19,7 @@ import { NSResponseGetObjects } from '../../cryptonote/protocol/commands/respons
 import { IBlockCompletEntry } from '../../cryptonote/protocol/defines';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
-import { uint32 } from '../../cryptonote/types';
+import { IBlock, uint32 } from '../../cryptonote/types';
 import { logger } from '../../logger';
 import { ConnectionState, P2pConnectionContext } from '../connection';
 import { Command } from './command';
@@ -142,6 +143,8 @@ export class Handler extends EventEmitter {
     const request: NSNewBlock.IRequest = NSNewBlock.Reader.request(
       new BufferStreamReader(buffer)
     );
+    console.log(request);
+
     logger.info('-->>NOTIFY_NEW_BLOCK<<--');
     logger.info('hop : ' + request.hop);
     this.emit(BLOCK_HEIGHT_UPDATED, request.currentBlockHeight, context);
@@ -162,6 +165,7 @@ export class Handler extends EventEmitter {
     const response = NSResponseGetObjects.Reader.request(
       new BufferStreamReader(buffer)
     );
+    console.log(response);
 
     logger.info('-->>NOTIFY_RESPONSE_GET_OBJECTS<<--');
     if (context.lastResponseHeight > response.currentBlockchainHeight) {
@@ -179,31 +183,35 @@ export class Handler extends EventEmitter {
     }
     this.emit(BLOCK_HEIGHT_UPDATED, response.currentBlockchainHeight, context);
     context.remoteBlockchainHeight = response.currentBlockchainHeight;
-    // for (const be of response.blocks) {
-    //   try {
-    //     const block: IBlock = Block.readBlock(new BufferStreamReader(be.block));
-    //     const hash = Block.hash(block);
+    if (response.blocks) {
+      for (const be of response.blocks) {
+        try {
+          const block: IBlock = Block.readBlock(
+            new BufferStreamReader(be.block)
+          );
+          const hash = Block.hash(block);
 
-    //     if (block.transactionHashes.length !== be.txs.length) {
-    //       logger.info('-->>NOTIFY_RESPONSE_GET_OBJECTS<<--');
-    //       logger.info('block ids mismatch with block complete entries!');
-    //       logger.error('dropping connection');
-    //       context.state = ConnectionState.SHUTDOWN;
-    //       return;
-    //     }
-    //   } catch (e) {
-    //     logger.error('recevied wrong block!');
-    //     logger.error(
-    //       'failed to parse and validate block: ' + be.block.toString('hex')
-    //     );
-    //     logger.error('dropping connection');
-    //     context.state = ConnectionState.SHUTDOWN;
-    //     return;
-    //   }
-    // }
-    // if (!this.processObjects(response.blocks, context)) {
-    //   return;
-    // }
+          if (block.transactionHashes.length !== be.txs.length) {
+            logger.info('-->>NOTIFY_RESPONSE_GET_OBJECTS<<--');
+            logger.info('block ids mismatch with block complete entries!');
+            logger.error('dropping connection');
+            context.state = ConnectionState.SHUTDOWN;
+            return;
+          }
+        } catch (e) {
+          logger.error('recevied wrong block!');
+          logger.error(
+            'failed to parse and validate block: ' + be.block.toString('hex')
+          );
+          logger.error('dropping connection');
+          context.state = ConnectionState.SHUTDOWN;
+          return;
+        }
+      }
+      if (!this.processObjects(response.blocks, context)) {
+        return;
+      }
+    }
   }
 
   public onRequestChain() {}
