@@ -102,6 +102,7 @@ export class Handler extends EventEmitter {
     buffer: Buffer,
     context: P2pConnectionContext
   ) {
+    logger.info('buffer size: ' + buffer.length);
     switch (cmd) {
       case Command.NOTIFY_NEW_BLOCK:
         logger.info('on Notify New Block');

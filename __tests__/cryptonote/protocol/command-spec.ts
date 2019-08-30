@@ -1,5 +1,7 @@
 import * as assert from 'assert';
 import { randomBytes } from 'crypto';
+import { readFileSync } from 'fs';
+import * as path from 'path';
 import { NSNewBlock } from '../../../src/cryptonote/protocol/commands/new-block';
 import { NSNewTransactions } from '../../../src/cryptonote/protocol/commands/new-transactions';
 import { NSRequestChain } from '../../../src/cryptonote/protocol/commands/request-chain';
@@ -13,8 +15,11 @@ import { Command } from '../../../src/p2p/protocol/command';
 import { buffer as newBlockBuffer } from '../../data/new-block';
 import { buffer as newTransactionsBuffer } from '../../data/new-transactions';
 import { buffer as responseChainBuffer } from '../../data/response-chain';
-import { buffer as responseGetObjectsBuffer } from '../../data/response-get-objects';
 import { buffer as txPoolBuffer } from '../../data/tx-pool';
+
+const responseGetObjectsBuffer = readFileSync(
+  path.resolve(__dirname, './commands/data/response-get-objects.bin')
+);
 
 describe('test cryptonote protocol command', () => {
   it('should have proper value', () => {
@@ -138,11 +143,12 @@ describe('test cryptonote protocol command', () => {
 
     assert(request.txs[0].equals(request1.txs[0]));
   });
+
   it('should handle response get objects', () => {
     const request: NSResponseGetObjects.IRequest = NSResponseGetObjects.Reader.request(
       new BufferStreamReader(responseGetObjectsBuffer)
     );
-    assert(request.currentBlockchainHeight === 328051);
+    assert(request.currentBlockchainHeight === 346480);
     assert(request.blocks.length === 200);
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     NSResponseGetObjects.Writer.request(writer, request);
