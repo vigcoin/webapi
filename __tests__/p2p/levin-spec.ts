@@ -388,12 +388,12 @@ describe('test levin protocol', () => {
     const port = Math.floor(Math.random() * 1000) + 10240;
     server.listen(port);
     const client = createConnection({ port }, async () => {
-      const { levin } = connectionManager.initContext(pm, client);
-      const request: ping.IRequest = {};
-      const writer = new BufferStreamWriter(Buffer.alloc(0));
-      ping.Writer.request(writer, request);
       let caught = false;
       try {
+        const { levin } = connectionManager.initContext(pm, client);
+        const request: ping.IRequest = {};
+        const writer = new BufferStreamWriter(Buffer.alloc(0));
+        ping.Writer.request(writer, request);
         await levin.invoke(timedsync, writer.getBuffer());
       } catch (e) {
         caught = true;

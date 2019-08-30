@@ -78,31 +78,31 @@ describe('response get objects', () => {
     });
   });
 
-  // it('should handle response get objects 1', done => {
-  //   jest.setTimeout(10000);
-  //   const server = createServer(socket => {
-  //     const { levin, context } = connectionManager.initContext(pm, socket);
-  //     levin.state = LevinState.NORMAL;
-  //     context.state = ConnectionState.NORMAL;
-  //     levin.on(PROCESSED, message => {
-  //       assert(message === Command.NOTIFY_RESPONSE_GET_OBJECTS);
-  //       client.destroy();
-  //       server.close();
-  //       done();
-  //     });
-  //   });
-  //   const port = Math.floor(Math.random() * 1000) + 10240;
-  //   server.listen(port);
-  //   const client = createConnection({ port }, () => {
-  //     const buffer = readFileSync(
-  //       path.resolve(
-  //         __dirname,
-  //         '../../../cryptonote/protocol/commands/data/response-get-objects.bin'
-  //       )
-  //     );
-  //     assert(buffer.length === 82963);
-  //     const { levin } = connectionManager.initContext(pm, client);
-  //     levin.invoke(NSResponseGetObjects, buffer);
-  //   });
-  // });
+  it('should handle response get objects 1', done => {
+    jest.setTimeout(10000);
+    const server = createServer(socket => {
+      const { levin, context } = connectionManager.initContext(pm, socket);
+      levin.state = LevinState.NORMAL;
+      context.state = ConnectionState.NORMAL;
+      levin.on(PROCESSED, message => {
+        assert(message === Command.NOTIFY_RESPONSE_GET_OBJECTS);
+        client.destroy();
+        server.close();
+        done();
+      });
+    });
+    const port = Math.floor(Math.random() * 1000) + 10240;
+    server.listen(port);
+    const client = createConnection({ port }, () => {
+      const buffer = readFileSync(
+        path.resolve(
+          __dirname,
+          '../../../cryptonote/protocol/commands/data/response-get-objects.bin'
+        )
+      );
+      assert(buffer.length === 82963);
+      const { levin } = connectionManager.initContext(pm, client);
+      levin.invoke(NSResponseGetObjects, buffer);
+    });
+  });
 });

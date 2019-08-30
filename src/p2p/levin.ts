@@ -160,6 +160,7 @@ export class LevinProtocol extends EventEmitter {
 
   public state: LevinState = LevinState.NORMAL;
   private socket: Socket;
+  private chunks: Buffer[] = [];
   constructor(socket: Socket) {
     super();
     this.socket = socket;
@@ -190,10 +191,17 @@ export class LevinProtocol extends EventEmitter {
       logger.error(e);
     });
     s.on('data', buffer => {
+      logger.info('buffer size: ' + buffer.length);
+      this.chunks.push(buffer);
+      if (!this.isFinished()) {
+        return;
+      }
       if (this.state === LevinState.NORMAL) {
         logger.info('Receiving new data!');
-        this.onIncomingData(new BufferStreamReader(buffer), context, handler);
+        const concated = Buffer.concat(this.chunks);
+        this.onIncomingData(new BufferStreamReader(concated), context, handler);
         logger.info('Data processed!');
+        this.chunks = [];
       }
     });
     s.on('end', () => {
@@ -202,6 +210,20 @@ export class LevinProtocol extends EventEmitter {
       );
       s.destroy();
     });
+  }
+
+  public isFinished() {
+    const buffer = Buffer.concat(this.chunks);
+    const reader = new BufferStreamReader(buffer);
+    try {
+      const header = LevinProtocol.readHeader(reader);
+      assert(buffer.length <= header.size + 33);
+      return buffer.length === header.size + 33;
+    } catch (e) {
+      logger.info('Error data encountered!');
+      this.chunks = [];
+      return true;
+    }
   }
 
   public async invoke(t: any, outgoing: Buffer) {
