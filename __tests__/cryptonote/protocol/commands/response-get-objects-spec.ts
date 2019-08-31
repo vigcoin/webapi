@@ -12,7 +12,10 @@ import { BlockChain } from '../../../../src/cryptonote/block/blockchain';
 import { INetwork, IPeer } from '../../../../src/cryptonote/p2p';
 import { getMemoryPool } from '../../../../src/init/mem-pool';
 import { data as mainnet } from '../../../../src/init/net-types/mainnet';
-import { P2pConnectionContext } from '../../../../src/p2p/connection';
+import {
+  P2pConnectionContext,
+  ConnectionState,
+} from '../../../../src/p2p/connection';
 import { Handler } from '../../../../src/p2p/protocol/handler';
 import { IP } from '../../../../src/util/ip';
 
@@ -73,6 +76,9 @@ describe('serialize response get objects', () => {
     context.lastResponseHeight = request.currentBlockchainHeight + 1;
 
     assert(!handler.onResponseObjects(buffer, context));
+    assert(context.state === ConnectionState.SHUTDOWN);
+    context.lastResponseHeight = request.currentBlockchainHeight;
+    assert(handler.onResponseObjects(buffer, context));
     socket.destroy();
   });
 });
