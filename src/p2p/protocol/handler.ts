@@ -176,7 +176,7 @@ export class Handler extends EventEmitter {
       );
       logger.error('dropping connection');
       context.state = ConnectionState.SHUTDOWN;
-      return;
+      return false;
     }
     this.emit(BLOCK_HEIGHT_UPDATED, response.currentBlockchainHeight, context);
     context.remoteBlockchainHeight = response.currentBlockchainHeight;
@@ -202,11 +202,11 @@ export class Handler extends EventEmitter {
           );
           logger.error('dropping connection');
           context.state = ConnectionState.SHUTDOWN;
-          return;
+          return false;
         }
       }
       if (!this.processObjects(response.blocks, context)) {
-        return;
+        return true;
       }
     }
   }
