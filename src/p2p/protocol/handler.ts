@@ -1,11 +1,12 @@
 import * as assert from 'assert';
 import { EventEmitter } from 'events';
+import { parameters } from '../../config';
 import {
   BLOCK_HEIGHT_UPDATED,
   BLOCKCHAIN_SYNCHRONZIED,
   PEERS_COUNT_UPDATED,
 } from '../../config/events';
-import { IHash, CNFashHash } from '../../crypto/types';
+import { CNFashHash, IHash } from '../../crypto/types';
 import { Block } from '../../cryptonote/block/block';
 import { BlockChain } from '../../cryptonote/block/blockchain';
 import { MemoryPool } from '../../cryptonote/mem-pool';
@@ -19,12 +20,11 @@ import { NSResponseGetObjects } from '../../cryptonote/protocol/commands/respons
 import { IBlockCompletEntry } from '../../cryptonote/protocol/defines';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
+import { Transaction } from '../../cryptonote/transaction/index';
 import { IBlock, uint32 } from '../../cryptonote/types';
 import { logger } from '../../logger';
 import { ConnectionState, P2pConnectionContext } from '../connection';
 import { Command } from './command';
-import { parameters } from '../../config';
-import { Transaction } from '../../cryptonote/transaction/index';
 
 export class Handler extends EventEmitter {
   public peers: uint32 = 0;
@@ -231,7 +231,8 @@ export class Handler extends EventEmitter {
 
     if (!this.blockchain.have(request.blockHashes[0])) {
       logger.info(
-        'received block ids starting from unknown id: ' + request.blockHashes[0]
+        'received block ids starting from unknown id: ' +
+          request.blockHashes[0].toString('hex')
       );
       logger.info('dropping connection');
       context.state = ConnectionState.SHUTDOWN;
