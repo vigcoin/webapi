@@ -10,6 +10,7 @@ import { p2p } from '../../../../src/config/consts';
 import { BlockChain } from '../../../../src/cryptonote/block/blockchain';
 import { INetwork, IPeer } from '../../../../src/cryptonote/p2p';
 import { NSNewBlock } from '../../../../src/cryptonote/protocol/commands/new-block';
+import { NSResponseChain } from '../../../../src/cryptonote/protocol/commands/response-chain';
 import { getMemoryPool } from '../../../../src/init/mem-pool';
 import { data as mainnet } from '../../../../src/init/net-types/mainnet';
 import {
@@ -18,8 +19,6 @@ import {
 } from '../../../../src/p2p/connection';
 import { Handler } from '../../../../src/p2p/protocol/handler';
 import { IP } from '../../../../src/util/ip';
-import { NSRequestChain } from '../../../../src/cryptonote/protocol/commands/request-chain';
-import { NSResponseChain } from '../../../../src/cryptonote/protocol/commands/response-chain';
 
 const network: INetwork = {
   conectionTimeout: p2p.P2P_DEFAULT_CONNECTION_TIMEOUT,
@@ -46,6 +45,7 @@ const config: Configuration.ICurrency = {
 };
 const bc: BlockChain = getBlockChain(config);
 bc.init();
+bc.cache();
 
 const memPool = getMemoryPool(dir, mainnet);
 
@@ -75,6 +75,42 @@ describe('serialize response chain entry', () => {
     assert(request.startHeight === 2086);
     assert(request.blockHashes.length === 10000);
     assert(!handler.onResponseChain(buffer, context));
+    socket.destroy();
+  });
+
+  it('should process response chain entry', async () => {
+    const host = '69.171.73.252';
+    const port = 19800;
+
+    const peer: IPeer = {
+      port,
+      // tslint:disable-next-line:object-literal-sort-keys
+      ip: IP.toNumber(host),
+    };
+    const socket = await P2pConnectionContext.createConnection(peer, network);
+
+    const context = new P2pConnectionContext(socket);
+    const buffer = readFileSync(
+      path.resolve(__dirname, './data/response-chain-entry.bin')
+    );
+    const request: NSResponseChain.IRequest = NSResponseChain.Reader.request(
+      new BufferStreamReader(buffer)
+    );
+
+    assert(request.totalHeight === 347922);
+    assert(request.startHeight === 0);
+    assert(request.blockHashes.length === 10000);
+    assert(handler.onResponseChain(buffer, context));
+    context.lastResponseHeight = 1;
+    context.remoteBlockchainHeight = 2;
+    assert(handler.requestMissingObjects([], context));
+
+    context.remoteBlockchainHeight = 10;
+    assert(handler.requestMissingObjects([], context));
+
+    context.lastResponseHeight = 11;
+    assert(!handler.requestMissingObjects([], context));
+
     socket.destroy();
   });
 });

@@ -7,7 +7,7 @@ export class BufferStreamWriter {
   private buffer: Buffer;
   private index: number;
 
-  constructor(buffer: Buffer) {
+  constructor(buffer: Buffer = Buffer.alloc(0)) {
     assert(buffer);
     assert(buffer instanceof Buffer);
     this.buffer = buffer;

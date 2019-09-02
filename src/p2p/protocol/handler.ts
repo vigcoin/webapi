@@ -194,7 +194,6 @@ export class Handler extends EventEmitter {
             assert(block.transactionHashes.length === be.txs.length);
           }
         } catch (e) {
-          console.log(e);
           logger.error(e);
           logger.error('recevied wrong block!');
           logger.error(
@@ -257,6 +256,8 @@ export class Handler extends EventEmitter {
       }
     }
 
+    logger.info('missed generated!');
+
     return this.requestMissingObjects(missed, context);
   }
 
@@ -290,6 +291,7 @@ export class Handler extends EventEmitter {
 
   // Requests
   public requestMissingObjects(blocks: IHash[], context: P2pConnectionContext) {
+    logger.info('requesting missing objects');
     if (blocks.length) {
       const request: NSRequestGetObjects.IRequest = {
         blocks,
@@ -300,7 +302,54 @@ export class Handler extends EventEmitter {
       const writer = new BufferStreamWriter(Buffer.alloc(0));
       NSRequestGetObjects.Writer.request(writer, request);
       context.socket.write(writer.getBuffer());
+      return true;
     }
+    if (context.lastResponseHeight < context.remoteBlockchainHeight - 1) {
+      this.sendRequestChain(context);
+      return true;
+    }
+
+    if (!(context.lastResponseHeight === context.remoteBlockchainHeight - 1)) {
+      logger.error(
+        'Fail to request empty blocks with connection: [' + context + ']'
+      );
+      return false;
+    }
+
+    this.requestMissingPoolTransactions(context);
+
+    context.state = ConnectionState.NORMAL;
+
+    logger.info('Synchronized! State OK.');
+
+    this.emit(BLOCKCHAIN_SYNCHRONZIED);
+
+    return true;
+  }
+
+  public requestMissingPoolTransactions(context: P2pConnectionContext) {
+    // assert(context.version >= )
+    const transactions = this.memPool.getTransactions();
+    const txs = [];
+    for (const tx of transactions) {
+      txs.push(Transaction.hash(tx));
+    }
+    const request: NSRequestTXPool.IRequest = {
+      txs,
+    };
+    const writer = new BufferStreamWriter();
+    NSRequestTXPool.Writer.request(writer, request);
+    context.socket.write(writer.getBuffer());
+  }
+
+  public sendRequestChain(context: P2pConnectionContext) {
+    const blockHashes = this.blockchain.buildSparseChain();
+    const request: NSRequestChain.IRequest = {
+      blockHashes,
+    };
+    const writer = new BufferStreamWriter();
+    NSRequestChain.Writer.request(writer, request);
+    context.socket.write(writer.getBuffer());
   }
 
   public processObjects(

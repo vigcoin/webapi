@@ -164,6 +164,7 @@ export class BlockChain {
     for (let i = this.height - 1; i > 0; i--) {
       const be = this.get(i);
       if (be.block.header.preHash.equals(hash)) {
+        logger.info('hash found, index: ', i - 1);
         return this.get(i - 1);
       }
     }

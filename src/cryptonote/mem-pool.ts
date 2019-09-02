@@ -218,4 +218,12 @@ export class MemoryPool extends EventEmitter {
     if (Transaction.checkAmount(tx)) {
     }
   }
+
+  public getTransactions(): ITransaction[] {
+    const transactions = [];
+    for (const transaction of this.transactions) {
+      transactions.push(transaction.tx);
+    }
+    return transactions;
+  }
 }
