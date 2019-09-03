@@ -116,11 +116,14 @@ export class Transaction {
     this.writeSignatures(writer, transaction.prefix, transaction.signatures);
   }
 
-  public static hash(transaction: ITransaction): IHash {
+  public static toBuffer(transaction: ITransaction): Buffer {
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     Transaction.write(writer, transaction);
-    const buffer = writer.getBuffer();
-    const hashStr = CNFashHash(buffer);
+    return writer.getBuffer();
+  }
+
+  public static hash(transaction: ITransaction): IHash {
+    const hashStr = CNFashHash(Transaction.toBuffer(transaction));
     const hash = Buffer.from(hashStr, 'hex');
     return hash;
   }

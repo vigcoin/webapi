@@ -10,6 +10,7 @@ import {
   IBlockEntry,
   IInputKey,
   IInputSignature,
+  ITransaction,
   ITransactionIndex,
   ITransactionMultisignatureOutputUsage,
   uint16,
@@ -193,5 +194,27 @@ export class BlockChain {
 
   public haveTransaction(transaction: IHash): boolean {
     return !!this.transactionPairs.get(transaction);
+  }
+
+  public getHeightByHash(hash: IHash): ITransactionIndex {
+    return this.transactionPairs.get(hash);
+  }
+
+  public getTransactionsWithMissed(
+    txs: IHash[],
+    missed: IHash[]
+  ): ITransaction[] {
+    const result: ITransaction[] = [];
+    for (const tx of txs) {
+      const ti = this.transactionPairs.get(tx);
+      if (!ti) {
+        missed.push(tx);
+      } else {
+        const be = this.get(ti.block);
+        const te = be.transactions[ti.transaction];
+        result.push(te.tx);
+      }
+    }
+    return result;
   }
 }

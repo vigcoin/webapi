@@ -21,7 +21,7 @@ import { IBlockCompletEntry } from '../../cryptonote/protocol/defines';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 import { Transaction } from '../../cryptonote/transaction/index';
-import { IBlock, uint32 } from '../../cryptonote/types';
+import { IBlock, ITransaction, uint32 } from '../../cryptonote/types';
 import { logger } from '../../logger';
 import { ConnectionState, P2pConnectionContext } from '../connection';
 import { Command } from './command';
@@ -112,10 +112,11 @@ export class Handler extends EventEmitter {
         break;
       case Command.NOTIFY_NEW_TRANSACTIONS:
         logger.info('on Notify New Transactions');
-        this.onNewTransactions();
+        this.onNewTransactions(buffer, context);
         break;
       case Command.NOTIFY_REQUEST_GET_OBJECTS:
         logger.info('on Notify Request Objects');
+        this.onRequestObjects(buffer, context);
         break;
       case Command.NOTIFY_RESPONSE_GET_OBJECTS:
         logger.info('on Notify Response Objects');
@@ -159,9 +160,66 @@ export class Handler extends EventEmitter {
     }
     return true;
   }
-  public onNewTransactions() {}
+  public onNewTransactions(buffer: Buffer, context: P2pConnectionContext) {}
 
-  public onRequestObjects() {}
+  public onRequestObjects(buffer: Buffer, context: P2pConnectionContext) {
+    const request = NSRequestGetObjects.Reader.request(
+      new BufferStreamReader(buffer)
+    );
+    logger.info('-->>NOTIFY_RESPONSE_GET_OBJECTS<<--');
+    const currentHeight = this.blockchain.height;
+    const missed = [];
+    const blocks: IBlock[] = [];
+    if (request.blocks) {
+      for (const block of request.blocks) {
+        const height = this.blockchain.getHeightByHash(block);
+        if (!height) {
+          missed.push(block);
+          continue;
+        }
+        blocks.push(this.blockchain.get(height.block).block);
+      }
+    }
+
+    const blockCompleteEntries = [];
+    const missedTxs = [];
+
+    for (const block of blocks) {
+      const be: IBlockCompletEntry = {
+        block: Block.toBuffer(block),
+      };
+      const txs = this.blockchain.getTransactionsWithMissed(
+        block.transactionHashes,
+        missedTxs
+      );
+      be.txs = this.marshallTx(txs);
+      blockCompleteEntries.push(block);
+    }
+    const outTxs = this.blockchain.getTransactionsWithMissed(
+      request.txs,
+      missedTxs
+    );
+    const resTxs = this.marshallTx(outTxs);
+    const response: NSResponseGetObjects.IRequest = {
+      blocks: blockCompleteEntries,
+      currentBlockchainHeight: currentHeight,
+      missedHashes: missedTxs,
+      txs: resTxs,
+    };
+    const writer = new BufferStreamWriter();
+    NSResponseGetObjects.Writer.request(writer, response);
+    context.socket.write(writer.getBuffer());
+  }
+
+  public marshallTx(txs: ITransaction[]): Buffer[] {
+    if (txs) {
+      const res: Buffer[] = [];
+      for (const tx of txs) {
+        res.push(Transaction.toBuffer(tx));
+      }
+      return res;
+    }
+  }
 
   public onResponseObjects(buffer: Buffer, context: P2pConnectionContext) {
     const response = NSResponseGetObjects.Reader.request(

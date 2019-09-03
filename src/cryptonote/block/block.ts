@@ -78,6 +78,11 @@ export class Block {
 
   // Generate Hash for a block
   public static hash(block: IBlock): Buffer {
+    return Buffer.from(CNFashHash(Block.toBuffer(block)), 'hex');
+  }
+
+  // Generate Hash for a block
+  public static toBuffer(block: IBlock): Buffer {
     const writer = new BufferStreamWriter(Buffer.alloc(0));
     this.writeBlockHeader(writer, block.header);
     const hash = Transaction.hash(block.transaction);
@@ -93,7 +98,7 @@ export class Block {
     const finalWriter = new BufferStreamWriter(Buffer.alloc(0));
     finalWriter.writeVarint(writer.getBuffer().length);
     finalWriter.write(writer.getBuffer());
-    return Buffer.from(CNFashHash(finalWriter.getBuffer()), 'hex');
+    return finalWriter.getBuffer();
   }
 
   // Generate genesis block
