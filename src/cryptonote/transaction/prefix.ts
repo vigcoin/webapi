@@ -1,6 +1,8 @@
 import assert = require('assert');
 import { BufferStreamReader } from '../serialize/reader';
 import { BufferStreamWriter } from '../serialize/writer';
+import { write } from 'fs';
+import { CNFashHash, IHash } from '../../crypto/types';
 import {
   ETransactionIOType,
   IInputBase,
@@ -217,5 +219,17 @@ export class TransactionPrefix {
       TransactionPrefix.writeOutput(writer, prefix.outputs[i]);
     }
     TransactionPrefix.writeExtra(writer, prefix.extra);
+  }
+
+  public static toBuffer(prefix: ITransactionPrefix): Buffer {
+    const writer = new BufferStreamWriter();
+    TransactionPrefix.write(writer, prefix);
+    return writer.getBuffer();
+  }
+
+  public static hash(prefix: ITransactionPrefix): IHash {
+    const hashStr = CNFashHash(TransactionPrefix.toBuffer(prefix));
+    const hash = Buffer.from(hashStr, 'hex');
+    return hash;
   }
 }

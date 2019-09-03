@@ -207,4 +207,13 @@ export class Transaction {
       totalAmount += amount;
     }
   }
+  public static checkSematic(transaction: ITransaction) {
+    if (!transaction.prefix.inputs.length) {
+      logger.error(
+        'Empty inputs, rejected for transaction : ' +
+          Transaction.hash(transaction)
+      );
+      return false;
+    }
+  }
 }

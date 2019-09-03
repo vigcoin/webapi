@@ -12,6 +12,7 @@ import { BlockChain } from '../../cryptonote/block/blockchain';
 import { MemoryPool } from '../../cryptonote/mem-pool';
 import { ICoreSyncData } from '../../cryptonote/p2p';
 import { NSNewBlock } from '../../cryptonote/protocol/commands/new-block';
+import { NSNewTransactions } from '../../cryptonote/protocol/commands/new-transactions';
 import { NSRequestChain } from '../../cryptonote/protocol/commands/request-chain';
 import { NSRequestGetObjects } from '../../cryptonote/protocol/commands/request-get-objects';
 import { NSRequestTXPool } from '../../cryptonote/protocol/commands/request-tx-pool';
@@ -160,13 +161,40 @@ export class Handler extends EventEmitter {
     }
     return true;
   }
-  public onNewTransactions(buffer: Buffer, context: P2pConnectionContext) {}
+  public onNewTransactions(buffer: Buffer, context: P2pConnectionContext) {
+    if (context.state !== ConnectionState.NORMAL) {
+      return false;
+    }
+    const request = NSNewTransactions.Reader.request(
+      new BufferStreamReader(buffer)
+    );
+    logger.info('-->>NOTIFY_NEW_TRANSACTIONS<<--');
+    if (request.txs) {
+      for (const tx of request.txs) {
+        if (tx.length > parameters.CRYPTONOTE_MAX_TX_SIZE) {
+          logger.error('WRONG TRANSACTION BLOB, too big size: ' + tx.length);
+          return false;
+        }
+        try {
+          const transaction: ITransaction = Transaction.read(
+            new BufferStreamReader(tx)
+          );
+          const hash = Transaction.hash(transaction);
+          const directHash = CNFashHash(tx);
+          assert(hash.equals(directHash));
+        } catch (e) {
+          logger.error('WRONG TRANSACTION BLOB, Failed to parse, rejected!');
+          return false;
+        }
+      }
+    }
+  }
 
   public onRequestObjects(buffer: Buffer, context: P2pConnectionContext) {
     const request = NSRequestGetObjects.Reader.request(
       new BufferStreamReader(buffer)
     );
-    logger.info('-->>NOTIFY_RESPONSE_GET_OBJECTS<<--');
+    logger.info('-->>NOTIFY_REQUEST_GET_OBJECTS<<--');
     const currentHeight = this.blockchain.height;
     const missed = [];
     const blocks: IBlock[] = [];

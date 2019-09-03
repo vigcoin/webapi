@@ -1,6 +1,5 @@
 import { IHash } from '../../crypto/types';
 import { MultiMap } from '../../util/map';
-import { toUnixTimeStamp } from '../../util/time';
 
 export class TimeStamp {
   private map: MultiMap<Date, IHash> = new MultiMap();
