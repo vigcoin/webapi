@@ -1,8 +1,6 @@
-import assert = require('assert');
+import { CNFashHash, IHash } from '../../crypto/types';
 import { BufferStreamReader } from '../serialize/reader';
 import { BufferStreamWriter } from '../serialize/writer';
-import { write } from 'fs';
-import { CNFashHash, IHash } from '../../crypto/types';
 import {
   ETransactionIOType,
   IInputBase,

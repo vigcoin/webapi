@@ -22,6 +22,7 @@ import { IBlockCompletEntry } from '../../cryptonote/protocol/defines';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 import { Transaction } from '../../cryptonote/transaction/index';
+import { TransactionPrefix } from '../../cryptonote/transaction/prefix';
 import { IBlock, ITransaction, uint32 } from '../../cryptonote/types';
 import { logger } from '../../logger';
 import { ConnectionState, P2pConnectionContext } from '../connection';
@@ -171,22 +172,28 @@ export class Handler extends EventEmitter {
     logger.info('-->>NOTIFY_NEW_TRANSACTIONS<<--');
     if (request.txs) {
       for (const tx of request.txs) {
-        if (tx.length > parameters.CRYPTONOTE_MAX_TX_SIZE) {
-          logger.error('WRONG TRANSACTION BLOB, too big size: ' + tx.length);
-          return false;
-        }
-        try {
-          const transaction: ITransaction = Transaction.read(
-            new BufferStreamReader(tx)
-          );
-          const hash = Transaction.hash(transaction);
-          const directHash = CNFashHash(tx);
-          assert(hash.equals(directHash));
-        } catch (e) {
-          logger.error('WRONG TRANSACTION BLOB, Failed to parse, rejected!');
-          return false;
+        if (!this.handIncomingTx(tx)) {
         }
       }
+    }
+  }
+
+  public handIncomingTx(txBuffer: Buffer, keptByBlock: boolean = false) {
+    if (txBuffer.length > parameters.CRYPTONOTE_MAX_TX_SIZE) {
+      logger.error('WRONG TRANSACTION BLOB, too big size: ' + txBuffer.length);
+      return false;
+    }
+    try {
+      const transaction: ITransaction = Transaction.read(
+        new BufferStreamReader(txBuffer)
+      );
+      const hash = Transaction.hash(transaction);
+      const directHash = CNFashHash(txBuffer);
+      assert(hash.equals(directHash));
+      const prefixHash = TransactionPrefix.hash(transaction.prefix);
+    } catch (e) {
+      logger.error('WRONG TRANSACTION BLOB, Failed to parse, rejected!');
+      return false;
     }
   }
 
