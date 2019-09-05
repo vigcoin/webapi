@@ -27,6 +27,7 @@ import { IBlock, ITransaction, uint32 } from '../../cryptonote/types';
 import { logger } from '../../logger';
 import { ConnectionState, P2pConnectionContext } from '../connection';
 import { Command } from './command';
+import { TransactionValidator } from '../../cryptonote/transaction/validator';
 
 export class Handler extends EventEmitter {
   public peers: uint32 = 0;
@@ -191,11 +192,24 @@ export class Handler extends EventEmitter {
       const directHash = CNFashHash(txBuffer);
       assert(hash.equals(directHash));
       const prefixHash = TransactionPrefix.hash(transaction.prefix);
+
+      if (!TransactionValidator.checkSematic(transaction)) {
+        logger.error(
+          'WRONG TRANSACTION BLOB, Failed to check tx ' +
+            hash +
+            ' semantic, rejected!'
+        );
+        return false;
+      }
+
+      return this.handNewTransaction(transaction, hash);
     } catch (e) {
       logger.error('WRONG TRANSACTION BLOB, Failed to parse, rejected!');
       return false;
     }
   }
+
+  public handNewTransaction(transaction: ITransaction, txHash: IHash) {}
 
   public onRequestObjects(buffer: Buffer, context: P2pConnectionContext) {
     const request = NSRequestGetObjects.Reader.request(

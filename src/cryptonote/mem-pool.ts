@@ -11,6 +11,7 @@ import { TransactionDetails } from './transaction/detail';
 import { Transaction } from './transaction/index';
 import { Payment } from './transaction/payment';
 import { TimeStamp } from './transaction/timestamp';
+import { TransactionAmount } from './transaction/amount';
 
 import {
   ETransactionIOType,
@@ -213,9 +214,9 @@ export class MemoryPool extends EventEmitter {
   }
 
   public addTx(tx: ITransaction) {
-    const amountInput = Transaction.getAmountInput(tx);
-    const amountOutput = Transaction.getAmountOutput(tx);
-    if (Transaction.checkAmount(tx)) {
+    const amountInput = TransactionAmount.getInput(tx);
+    const amountOutput = TransactionAmount.getOutput(tx);
+    if (TransactionAmount.check(tx)) {
     }
   }
 

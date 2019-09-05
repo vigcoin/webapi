@@ -1,4 +1,4 @@
-import { getFastHash } from '@vigcoin/neon';
+import { getFastHash, isPublicKey } from '@vigcoin/neon';
 
 export const HASH_LENGTH = 32;
 export const SIGNATURE_LENGTH = 64;
@@ -13,3 +13,4 @@ export type IKeyImage = IHash;
 export type ISignature = IHash;
 
 export const CNFashHash = getFastHash;
+export const IsPublicKey = isPublicKey;
