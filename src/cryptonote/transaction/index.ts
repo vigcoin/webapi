@@ -13,6 +13,7 @@ import {
   usize,
 } from '../types';
 import { TransactionAmount } from './amount';
+import { decompose } from './util';
 
 // tslint:disable-next-line: max-classes-per-file
 export class Transaction {
@@ -124,34 +125,5 @@ export class Transaction {
     const hashStr = CNFashHash(Transaction.toBuffer(transaction));
     const hash = Buffer.from(hashStr, 'hex');
     return hash;
-  }
-
-  public static isFusion(transaction: ITransaction, size: usize) {
-    if (size > parameters.FUSION_TX_MAX_SIZE) {
-      return false;
-    }
-    if (
-      transaction.prefix.inputs.length < parameters.FUSION_TX_MIN_INPUT_COUNT
-    ) {
-      return false;
-    }
-
-    if (
-      transaction.prefix.inputs.length <
-      transaction.prefix.outputs.length *
-        parameters.FUSION_TX_MIN_IN_OUT_COUNT_RATIO
-    ) {
-      return false;
-    }
-
-    let totalAmount = 0;
-
-    for (const input of transaction.prefix.inputs) {
-      const amount = TransactionAmount.getInputSingle(input);
-      if (amount < parameters.DEFAULT_DUST_THRESHOLD) {
-        return false;
-      }
-      totalAmount += amount;
-    }
   }
 }

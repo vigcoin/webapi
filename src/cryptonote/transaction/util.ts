@@ -18,8 +18,6 @@ export function decompose(amount: uint64, dustThreshould: uint32) {
     // Chunk can't be zero to be here
     chunks.push(chunk);
   }
-  return {
-    chunks,
-    dust,
-  };
+  chunks.push(dust);
+  return chunks;
 }

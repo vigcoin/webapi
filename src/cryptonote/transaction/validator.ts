@@ -12,6 +12,9 @@ import {
 } from '../types';
 import { TransactionAmount } from './amount';
 import { Transaction } from './index';
+import { parameters } from '../../config';
+import { usize } from '../types';
+import { decompose } from './util';
 
 export class TransactionValidator {
   // Check Transaction Overflow
@@ -191,5 +194,12 @@ export class TransactionValidator {
       return false;
     }
     return true;
+  }
+
+  public static isFusion(transaction: ITransaction, txBuffer: Buffer) {
+    if (txBuffer.length > parameters.FUSION_TX_MAX_SIZE) {
+      return false;
+    }
+    return TransactionAmount.isFusion(transaction);
   }
 }

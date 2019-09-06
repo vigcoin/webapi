@@ -2,47 +2,59 @@ import * as assert from 'assert';
 import { decompose } from '../../../src/cryptonote/transaction/util';
 describe('transaction util test', () => {
   it('should decompose amout', () => {
-    const decomposed = decompose(1234567890123, 10000);
-    assert(decomposed.dust === 123);
-    assert(decomposed.chunks[0] === 90000);
-    assert(decomposed.chunks[1] === 800000);
-    assert(decomposed.chunks[2] === 7000000);
-    assert(decomposed.chunks[3] === 60000000);
-    assert(decomposed.chunks[4] === 500000000);
-    assert(decomposed.chunks[5] === 4000000000);
-    assert(decomposed.chunks[6] === 30000000000);
-    assert(decomposed.chunks[7] === 200000000000);
-    assert(decomposed.chunks[8] === 1000000000000);
+    const decomposed = Buffer.from(decompose(1234567890123, 10000));
+    assert(
+      decomposed.equals(
+        Buffer.from([
+          90000,
+          800000,
+          7000000,
+          60000000,
+          500000000,
+          4000000000,
+          30000000000,
+          200000000000,
+          1000000000000,
+          123,
+        ])
+      )
+    );
   });
 
   it('should decompose amout', () => {
-    const decomposed = decompose(9007199254740991, 10000);
-    assert(decomposed.dust === 991);
-    assert(decomposed.chunks[0] === 40000);
-    assert(decomposed.chunks[1] === 700000);
-    assert(decomposed.chunks[2] === 4000000);
-    assert(decomposed.chunks[3] === 50000000);
-    assert(decomposed.chunks[4] === 200000000);
-    assert(decomposed.chunks[5] === 9000000000);
-    assert(decomposed.chunks[6] === 90000000000);
-    assert(decomposed.chunks[7] === 100000000000);
-    assert(decomposed.chunks[8] === 7000000000000);
-    assert(decomposed.chunks[9] === 9000000000000000);
+    const decomposed = Buffer.from(decompose(9007199254740991, 10000));
+    assert(
+      decomposed.equals(
+        Buffer.from([
+          40000,
+          700000,
+          4000000,
+          50000000,
+          200000000,
+          9000000000,
+          90000000000,
+          100000000000,
+          7000000000000,
+          9000000000000000,
+          991,
+        ])
+      )
+    );
   });
 
   it('should decompose amout', () => {
     const decomposed = decompose(0, 10000);
+    assert(!!decompose);
   });
+
   it('should decompose amout', () => {
     const decomposed = decompose(98, 10000);
-    assert(decomposed.chunks.length === 0);
-    assert(decomposed.dust === 98);
+    assert(decomposed[0] === 98);
   });
 
   it('should decompose amout', () => {
     const decomposed = decompose(908, 10);
-    assert(decomposed.chunks.length === 1);
-    assert(decomposed.chunks[0] === 900);
-    assert(decomposed.dust === 8);
+    assert(decomposed[0] === 900);
+    assert(decomposed[1] === 8);
   });
 });

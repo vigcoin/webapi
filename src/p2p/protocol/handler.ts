@@ -202,14 +202,34 @@ export class Handler extends EventEmitter {
         return false;
       }
 
-      return this.handNewTransaction(transaction, hash);
+      return this.handNewTransaction(transaction, hash, txBuffer);
     } catch (e) {
       logger.error('WRONG TRANSACTION BLOB, Failed to parse, rejected!');
       return false;
     }
   }
 
-  public handNewTransaction(transaction: ITransaction, txHash: IHash) {}
+  public handNewTransaction(
+    transaction: ITransaction,
+    txHash: IHash,
+    txBuffer: Buffer
+  ) {}
+
+  public addNewTransaction(
+    transaction: ITransaction,
+    txHash: IHash,
+    txBuffer: Buffer
+  ) {
+    if (this.blockchain.haveTransaction(txHash)) {
+      logger.info('tx ' + txHash + ' is already in blockchain');
+      return true;
+    }
+    if (this.memPool.haveTx(txHash)) {
+      logger.info('tx ' + txHash + ' is already in transaction pool');
+      return true;
+    }
+    return this.memPool.addTx(transaction, txBuffer, false);
+  }
 
   public onRequestObjects(buffer: Buffer, context: P2pConnectionContext) {
     const request = NSRequestGetObjects.Reader.request(

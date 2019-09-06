@@ -7,12 +7,13 @@ import { getLiveTime, isForgetable } from '../init/mem-pool';
 import { logger } from '../logger';
 import { toUnixTimeStamp } from '../util/time';
 import { BufferStreamReader } from './serialize/reader';
+import { TransactionAmount } from './transaction/amount';
 import { TransactionDetails } from './transaction/detail';
-import { Transaction } from './transaction/index';
 import { Payment } from './transaction/payment';
 import { TimeStamp } from './transaction/timestamp';
-import { TransactionAmount } from './transaction/amount';
+import { TransactionValidator } from './transaction/validator';
 
+import { parameters } from '../config';
 import {
   ETransactionIOType,
   IGlobalOut,
@@ -213,11 +214,66 @@ export class MemoryPool extends EventEmitter {
     return false;
   }
 
-  public addTx(tx: ITransaction) {
-    const amountInput = TransactionAmount.getInput(tx);
-    const amountOutput = TransactionAmount.getOutput(tx);
-    if (TransactionAmount.check(tx)) {
+  public addTx(tx: ITransaction, txBuffer: Buffer, keptByBlock: boolean) {
+    if (!TransactionValidator.checkInputsTypes(tx.prefix)) {
+      return false;
     }
+
+    if (!TransactionAmount.check(tx)) {
+      return false;
+    }
+
+    const fee = TransactionAmount.getFee(tx);
+    const isFusion = TransactionValidator.isFusion(tx, txBuffer);
+    if (!keptByBlock && !isFusion && fee < parameters.MINIMUM_FEE) {
+      logger.info(
+        'transaction fee is not enough: ' + TransactionAmount.format(fee)
+      );
+      logger.info(
+        'minimum fee: ' + TransactionAmount.format(parameters.MINIMUM_FEE)
+      );
+      return false;
+    }
+
+    // Check key images for transaction if it is not kept by block
+    if (!keptByBlock) {
+      if (this.haveSpentInputs(tx)) {
+        logger.info(
+          'transaction_t with id= ' +
+            txBuffer.toString('hex') +
+            ' used already spent inputs'
+        );
+        return false;
+      }
+    }
+  }
+
+  public haveSpentInputs(transaction: ITransaction) {
+    for (const input of transaction.prefix.inputs) {
+      switch (input.tag) {
+        case ETransactionIOType.KEY:
+          {
+            const key = input.target as IInputKey;
+            const found = this.spendKeyImages.get(key.keyImage);
+            if (found) {
+              return true;
+            }
+          }
+          break;
+        case ETransactionIOType.SIGNATURE:
+          {
+            const signature = input.target as IInputSignature;
+            const map = new Map();
+            map.set(signature.amount, signature.outputIndex);
+            const found = this.spendOutputs.has(map);
+            if (found) {
+              return true;
+            }
+          }
+          break;
+      }
+    }
+    return false;
   }
 
   public getTransactions(): ITransaction[] {

@@ -6,6 +6,9 @@ import { BufferStreamReader } from '../../src/cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';
 import { Transaction } from '../../src/cryptonote/transaction/index';
 import { Payment } from '../../src/cryptonote/transaction/payment';
+import { TransactionAmount } from '../../src/cryptonote/transaction/amount';
+import { NULL_HASH } from '../../src/crypto/types';
+import { parameters } from '../../src/config';
 
 describe('transaction test', () => {
   it('should read from buffer', () => {
@@ -37,6 +40,16 @@ describe('transaction test', () => {
     assert(buffer.equals(buffer2));
     const hash2 = Hash.from(buffer2);
     assert(hash.equals(hash2));
+    const inputs = TransactionAmount.getInputList(transaction);
+    const outputs = TransactionAmount.getOutputList(transaction);
+    assert(inputs.length > 0);
+    assert(outputs.length > 0);
+    const outputAmount = TransactionAmount.getOutput(transaction);
+    assert(outputAmount > parameters.FUSION_TX_MIN_INPUT_COUNT);
+    const inputAmount = TransactionAmount.getInput(transaction);
+    assert(inputAmount > parameters.FUSION_TX_MIN_INPUT_COUNT);
+    assert(TransactionAmount.check(transaction));
+    assert(!TransactionAmount.isFusion(transaction));
   });
 
   it('should read from buffer and added by payment 1', () => {

@@ -49,6 +49,8 @@ export namespace parameters {
 
   export const CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 0x3d;
 
+  export const CRYPTONOTE_DISPLAY_DECIMAL_POINT = 8;
+
   export const MINIMUM_FEE = 100;
   export const DEFAULT_DUST_THRESHOLD = MINIMUM_FEE;
 
