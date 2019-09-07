@@ -1,5 +1,6 @@
 import * as crypto from 'crypto';
-import { HASH_LENGTH, IKeyImage, IsPublicKey } from '../../crypto/types';
+import { parameters } from '../../config';
+import { IHash, ISignature, IsPublicKey } from '../../crypto/types';
 import { logger } from '../../logger';
 import {
   ETransactionIOType,
@@ -9,12 +10,10 @@ import {
   IOutputSignature,
   ITransaction,
   ITransactionPrefix,
+  uint32,
 } from '../types';
 import { TransactionAmount } from './amount';
 import { Transaction } from './index';
-import { parameters } from '../../config';
-import { usize } from '../types';
-import { decompose } from './util';
 
 export class TransactionValidator {
   // Check Transaction Overflow
@@ -201,5 +200,14 @@ export class TransactionValidator {
       return false;
     }
     return TransactionAmount.isFusion(transaction);
+  }
+
+  public static checkKeyInput(
+    input: IInputKey,
+    prefix: IHash,
+    signatures: ISignature[],
+    maxBlockheight: uint32
+  ): boolean {
+    return true;
   }
 }

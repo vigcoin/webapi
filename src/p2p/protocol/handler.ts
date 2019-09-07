@@ -23,11 +23,11 @@ import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 import { Transaction } from '../../cryptonote/transaction/index';
 import { TransactionPrefix } from '../../cryptonote/transaction/prefix';
+import { TransactionValidator } from '../../cryptonote/transaction/validator';
 import { IBlock, ITransaction, uint32 } from '../../cryptonote/types';
 import { logger } from '../../logger';
 import { ConnectionState, P2pConnectionContext } from '../connection';
 import { Command } from './command';
-import { TransactionValidator } from '../../cryptonote/transaction/validator';
 
 export class Handler extends EventEmitter {
   public peers: uint32 = 0;
@@ -201,7 +201,6 @@ export class Handler extends EventEmitter {
         );
         return false;
       }
-
       return this.handNewTransaction(transaction, hash, txBuffer);
     } catch (e) {
       logger.error('WRONG TRANSACTION BLOB, Failed to parse, rejected!');

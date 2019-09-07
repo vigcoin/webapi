@@ -6,3 +6,7 @@ export function readBufferDate(buffer: Buffer, offset: number = 0): Date {
 export function toUnixTimeStamp(date: Date): number {
   return parseInt((new Date().getTime() / 1000).toFixed(0), 10);
 }
+
+export function unixNow(): number {
+  return toUnixTimeStamp(new Date());
+}

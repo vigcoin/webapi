@@ -1,3 +1,5 @@
+import { parameters } from '../../config';
+import { unixNow } from '../../util/time';
 import { uint32, uint64 } from '../types';
 
 export function decompose(amount: uint64, dustThreshould: uint32) {
@@ -20,4 +22,26 @@ export function decompose(amount: uint64, dustThreshould: uint32) {
   }
   chunks.push(dust);
   return chunks;
+}
+
+export function isTxUnlock(unlockTime: uint64, height: uint64) {
+  if (unlockTime < parameters.CRYPTONOTE_MAX_BLOCK_NUMBER) {
+    // Interpreted as block index
+    const blockHeight =
+      height - 1 + parameters.CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS;
+    if (blockHeight >= unlockTime) {
+      return true;
+    }
+    return false;
+  } else {
+    // Interpreted as time
+    const currentTime = unixNow();
+    if (
+      currentTime + parameters.CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS >=
+      unlockTime
+    ) {
+      return true;
+    }
+    return false;
+  }
 }
