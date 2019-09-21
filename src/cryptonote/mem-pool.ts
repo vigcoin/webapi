@@ -27,6 +27,11 @@ import {
 
 const CURRENT_MEMPOOL_ARCHIVE_VER = 1;
 
+export class BlockTemplate {
+  private txHashes: IHash[];
+}
+
+// tslint:disable-next-line:max-classes-per-file
 export class MemoryPool extends EventEmitter {
   private filename: string;
   private fd: number;

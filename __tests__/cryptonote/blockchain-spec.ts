@@ -140,4 +140,8 @@ describe('read from empty file', () => {
     );
     assert(genesis.hash.equals(temp));
   });
+
+  test('should cache', () => {
+    blockChain.cache();
+  });
 });

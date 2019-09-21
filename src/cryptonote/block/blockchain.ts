@@ -97,6 +97,7 @@ export class BlockChain {
   }
 
   public cache() {
+    logger.info('start blockchain caching');
     const start = Date.now();
     for (let i = 0; i < this.height; i++) {
       const be = this.get(i);
@@ -184,12 +185,24 @@ export class BlockChain {
     return be.generatedCoins;
   }
 
+  public has(hash: IHash) {
+    return this.blockHashes.has(hash);
+  }
+
   public have(hash: IHash): IBlockEntry {
+    logger.info('trying to found hash: ' + hash.toString('hex'));
+    logger.info('currenty height is ' + this.height);
     for (let i = this.height - 1; i > 0; i--) {
-      const be = this.get(i);
-      if (be.block.header.preHash.equals(hash)) {
-        logger.info('hash found, index: ', i - 1);
-        return this.get(i - 1);
+      logger.info(' i is ' + i);
+      try {
+        const be = this.get(i);
+        if (be.block.header.preHash.equals(hash)) {
+          logger.info('hash found, index: ', i - 1);
+          return this.get(i - 1);
+        }
+      } catch (e) {
+        logger.error(e);
+        return;
       }
     }
   }
@@ -363,5 +376,27 @@ export class BlockChain {
           break;
       }
     }
+  }
+
+  // public loadTransactions(block: IBlock): ITransaction[] {
+  //   for (const txHash of block.transactionHashes) {
+  //   }
+  // }
+
+  public addNew(block: IBlock): boolean {
+    try {
+      const id: IHash = Block.hash(block);
+      if (this.have(id)) {
+        logger.info('Block with id = ' + id + ' already exists');
+        return false;
+      }
+      // block.
+    } catch (e) {
+      logger.info(
+        'Failed to get block hash, possible block has invalid format'
+      );
+      return false;
+    }
+    return true;
   }
 }

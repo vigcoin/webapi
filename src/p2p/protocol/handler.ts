@@ -65,19 +65,27 @@ export class Handler extends EventEmitter {
     isInitial: boolean
   ): boolean {
     if (context.state === ConnectionState.BEFORE_HANDSHAKE && !isInitial) {
+      logger.error('State in before Handshake and not initialized!');
       return false;
     }
     if (context.state !== ConnectionState.SYNCHRONIZING) {
-      if (this.haveBlock(data.hash)) {
+      logger.info('State not in sychronizing!');
+      if (!this.haveBlock(data.hash)) {
+        logger.info('Block found!');
         if (isInitial) {
+          logger.info('BLOCKCHAIN_SYNCHRONZIED event emitted!');
+          logger.info('State changed into POOL_SYNC_REQUIRED!');
           this.emit(BLOCKCHAIN_SYNCHRONZIED); //
           context.state = ConnectionState.POOL_SYNC_REQUIRED;
         } else {
           context.state = ConnectionState.NORMAL;
+          logger.info('State changed into NORMAL!');
         }
       } else {
+        logger.info('Block not found!');
         const diff = data.currentHeight - this.blockchain.height;
         context.state = ConnectionState.SYNC_REQURIED;
+        logger.info('State changed into SYNC_REQUIRED!');
         if (diff > 0) {
           logger.info('New block height found: ' + data.currentHeight);
         } else {
@@ -91,7 +99,7 @@ export class Handler extends EventEmitter {
   }
 
   public haveBlock(hash: Buffer) {
-    return this.blockchain.have(hash);
+    return this.blockchain.has(hash);
   }
 
   get height() {
@@ -161,8 +169,30 @@ export class Handler extends EventEmitter {
       for (const tx of request.blockCompleteEntry.txs) {
       }
     }
+
+    if (
+      request.blockCompleteEntry.block.length >
+      parameters.CRYPTONOTE_MAX_BLOCK_BLOB_SIZE
+    ) {
+      logger.info(
+        'WRONG BLOCK BLOB, too big size ' +
+          request.blockCompleteEntry.block.length +
+          ', rejected'
+      );
+      return;
+    }
+    try {
+      const block: IBlock = Block.readBlock(
+        new BufferStreamReader(request.blockCompleteEntry.block)
+      );
+      this.blockchain.addNew(block);
+    } catch (e) {
+      logger.info('Failed to parse and validate new block');
+    }
+
     return true;
   }
+
   public onNewTransactions(buffer: Buffer, context: P2pConnectionContext) {
     if (context.state !== ConnectionState.NORMAL) {
       return false;

@@ -37,6 +37,7 @@ export function getServerConfig(config: Configuration.IConfig): IServerConfig {
 
 export function getHandler(dir: string, config: Configuration.IConfig) {
   const blc = getBlockChainInitialized(dir, config);
+  // blc.cache();
   const memPool = getMemoryPool(dir, config);
   return new Handler(blc, memPool);
 }
