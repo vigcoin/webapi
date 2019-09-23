@@ -21,6 +21,7 @@ import {
   writeKVBlockHeader,
 } from '../json';
 import { handshake } from './handshake';
+import { logger } from '../../../logger';
 
 // tslint:disable-next-line:no-namespace
 export namespace ping {
@@ -39,7 +40,7 @@ export namespace ping {
 
   export class Handler {
     public static onTry(
-      response: ping.IResponse,
+      response: IResponse,
       data: handshake.IRequest,
       context: P2pConnectionContext,
       pm: PeerManager
@@ -58,6 +59,13 @@ export namespace ping {
           id: data.node.peerId,
         };
         pm.appendWhite(pe);
+        logger.info('BACK PING SUCCESS!');
+        logger.info(
+          IP.toString(context.ip) +
+            ':' +
+            data.node.myPort +
+            ' added to whitelist'
+        );
       }
     }
 
