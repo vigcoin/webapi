@@ -190,14 +190,14 @@ export class BlockChain {
   }
 
   public have(hash: IHash): IBlockEntry {
-    logger.info('trying to found hash: ' + hash.toString('hex'));
-    logger.info('currenty height is ' + this.height);
+    // logger.info('trying to found hash: ' + hash.toString('hex'));
+    // logger.info('currenty height is ' + this.height);
     for (let i = this.height - 1; i > 0; i--) {
-      logger.info(' i is ' + i);
+      // logger.info(' i is ' + i);
       try {
         const be = this.get(i);
         if (be.block.header.preHash.equals(hash)) {
-          logger.info('hash found, index: ', i - 1);
+          // logger.info('hash found, index: ', i - 1);
           return this.get(i - 1);
         }
       } catch (e) {

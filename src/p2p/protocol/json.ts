@@ -141,7 +141,7 @@ export function writeJSONName(writer: BufferStreamWriter, name: string) {
 
 export function readJSONString(reader: BufferStreamReader) {
   const size = readJSONVarint(reader);
-  logger.info('string size: ' + size);
+  // logger.info('string size: ' + size);
   return reader.read(size);
 }
 
@@ -153,43 +153,43 @@ export function writeJSONString(writer: BufferStreamWriter, data: string) {
 export function readJSONValue(reader: BufferStreamReader, type: number) {
   switch (type) {
     case BIN_KV_SERIALIZE_TYPE_INT64:
-      logger.info('read int64');
+      // logger.info('read int64');
       return reader.read(8);
     case BIN_KV_SERIALIZE_TYPE_INT32:
-      logger.info('read int32');
+      // logger.info('read int32');
       return reader.readInt32();
     case BIN_KV_SERIALIZE_TYPE_INT16:
-      logger.info('read int16');
+      // logger.info('read int16');
       return reader.readInt16();
     case BIN_KV_SERIALIZE_TYPE_INT8:
-      logger.info('read int8');
+      // logger.info('read int8');
       return reader.readInt8();
     case BIN_KV_SERIALIZE_TYPE_UINT64:
-      logger.info('read uint64');
+      // logger.info('read uint64');
       return reader.read(8);
     case BIN_KV_SERIALIZE_TYPE_UINT32:
-      logger.info('read uint32');
+      // logger.info('read uint32');
       return reader.readUInt32();
     case BIN_KV_SERIALIZE_TYPE_UINT16:
-      logger.info('read uint16');
+      // logger.info('read uint16');
       return reader.readUInt16();
     case BIN_KV_SERIALIZE_TYPE_UINT8:
-      logger.info('read uint8');
+      // logger.info('read uint8');
       return reader.readUInt8();
     case BIN_KV_SERIALIZE_TYPE_DOUBLE:
-      logger.info('read double');
+      // logger.info('read double');
       return reader.readDouble();
     case BIN_KV_SERIALIZE_TYPE_BOOL:
-      logger.info('read boolean');
+      // logger.info('read boolean');
       return reader.readUInt8() !== 0;
     case BIN_KV_SERIALIZE_TYPE_STRING:
-      logger.info('read string');
+      // logger.info('read string');
       return readJSONString(reader);
     case BIN_KV_SERIALIZE_TYPE_OBJECT:
-      logger.info('read object');
+      // logger.info('read object');
       return readJSONObject(reader);
     case BIN_KV_SERIALIZE_TYPE_ARRAY:
-      logger.info('read array');
+      // logger.info('read array');
       return readJSONArray(reader, type);
     default:
       throw new Error('Unknown data type： ' + type);
@@ -234,9 +234,9 @@ export function writeJSONValue(
 export function readJSONArray(reader: BufferStreamReader, type: number): any[] {
   const arr = [];
   const size = readJSONVarint(reader);
-  logger.info('array size: ' + size);
+  // logger.info('array size: ' + size);
   for (let i = 0; i < size; i++) {
-    logger.info('reading array index: ' + i + ', reverse index: ' + (size - i));
+    // logger.info('reading array index: ' + i + ', reverse index: ' + (size - i));
     arr.push(readJSONValue(reader, type));
   }
   return arr;
@@ -248,7 +248,7 @@ export function readJSONObjectValue(reader: BufferStreamReader) {
   if (type & BIN_KV_SERIALIZE_FLAG_ARRAY) {
     // tslint:disable-next-line:no-bitwise
     type &= ~BIN_KV_SERIALIZE_FLAG_ARRAY;
-    logger.info('Reading json array..');
+    // logger.info('Reading json array..');
     return readJSONArray(reader, type);
   }
   const obj = readJSONValue(reader, type);
@@ -265,19 +265,19 @@ export function writeJSONObjectValue(
 }
 
 export function readJSONObject(reader: BufferStreamReader) {
-  logger.info('Reading JSON Object...');
-  logger.info('Date remained: ' + reader.getRemainedSize());
+  // logger.info('Reading JSON Object...');
+  // logger.info('Date remained: ' + reader.getRemainedSize());
   const count = readJSONVarint(reader);
-  logger.info('Date remained: ' + reader.getRemainedSize());
-  logger.info('Objects number: ' + count);
+  // logger.info('Date remained: ' + reader.getRemainedSize());
+  // logger.info('Objects number: ' + count);
   const obj: any = {};
   for (let i = 0; i < count; i++) {
-    logger.info('current index : ' + i + ' in ' + count);
+    // logger.info('current index : ' + i + ' in ' + count);
     const name = readJSONName(reader);
-    logger.info('Reading attribute name: ' + name);
+    // logger.info('Reading attribute name: ' + name);
     obj[name] = readJSONObjectValue(reader);
   }
-  logger.info('End reading JSON Object');
+  // logger.info('End reading JSON Object');
 
   return obj;
 }
@@ -297,7 +297,7 @@ export function readJSON(reader: BufferStreamReader): any {
   assert(header.signatureA === PORTABLE_STORAGE_SIGNATUREA);
   assert(header.signatureB === PORTABLE_STORAGE_SIGNATUREB);
   assert(header.version === PORTABLE_STORAGE_FORMAT_VER);
-  logger.info('Header verified');
+  // logger.info('Header verified');
   return readJSONObject(reader);
 }
 

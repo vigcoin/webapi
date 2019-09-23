@@ -187,13 +187,17 @@ export class ConnectionManager extends EventEmitter {
     s: Socket,
     takePeerListOnly: boolean = false
   ) {
-    logger.info('Sending handshaking request ...');
-    const request: handshake.IRequest = {
-      node: this.getLocalPeerData(),
-      payload: this.handler.getPayLoad(),
-    };
-    const writer = new BufferStreamWriter(Buffer.alloc(0));
-    handshake.Writer.request(writer, request);
+    // logger.info('Sending handshaking request ...');
+    // const request: handshake.IRequest = {
+    //   node: this.getLocalPeerData(),
+    //   payload: this.handler.getPayLoad(),
+    // };
+    // const writer = new BufferStreamWriter(Buffer.alloc(0));
+    // handshake.Writer.request(writer, request);
+    const writer = handshake.Sender.request(
+      this.getLocalPeerData(),
+      this.handler.getPayLoad()
+    );
     const { context, levin } = this.initContext(pm, s, false);
     const response: any = await levin.invoke(handshake, writer.getBuffer());
     context.version = response.node.version;
