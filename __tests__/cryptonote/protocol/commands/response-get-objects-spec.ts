@@ -13,8 +13,8 @@ import { INetwork, IPeer } from '../../../../src/cryptonote/p2p';
 import { getMemoryPool } from '../../../../src/init/mem-pool';
 import { data as mainnet } from '../../../../src/init/net-types/mainnet';
 import {
-  P2pConnectionContext,
   ConnectionState,
+  P2pConnectionContext,
 } from '../../../../src/p2p/connection';
 import { Handler } from '../../../../src/p2p/protocol/handler';
 import { IP } from '../../../../src/util/ip';

@@ -187,19 +187,12 @@ export class ConnectionManager extends EventEmitter {
     s: Socket,
     takePeerListOnly: boolean = false
   ) {
-    // logger.info('Sending handshaking request ...');
-    // const request: handshake.IRequest = {
-    //   node: this.getLocalPeerData(),
-    //   payload: this.handler.getPayLoad(),
-    // };
-    // const writer = new BufferStreamWriter(Buffer.alloc(0));
-    // handshake.Writer.request(writer, request);
-    const writer = handshake.Sender.request(
+    const buffer = handshake.Handler.getBuffer(
       this.getLocalPeerData(),
       this.handler.getPayLoad()
     );
     const { context, levin } = this.initContext(pm, s, false);
-    const response: any = await levin.invoke(handshake, writer.getBuffer());
+    const response: any = await levin.invoke(handshake, buffer);
     context.version = response.node.version;
     logger.info('Handling peer list');
     pm.handleRemotePeerList(response.node.localTime, response.localPeerList);
@@ -244,30 +237,18 @@ export class ConnectionManager extends EventEmitter {
         ping.Handler.onTry(res as ping.IResponse, data, context, pm);
       }
     }
-    const response: handshake.IResponse = {
-      localPeerList: pm.getLocalPeerList(),
-      node: this.getLocalPeerData(),
-      payload: this.handler.getPayLoad(),
-    };
-    const writer = new BufferStreamWriter(Buffer.alloc(0));
-    handshake.Writer.response(writer, response);
-    levin.writeResponse(handshake.ID.ID, writer.getBuffer(), true);
+    handshake.Handler.sendResponse(
+      levin,
+      pm.getLocalPeerList(),
+      this.getLocalPeerData(),
+      this.handler.getPayLoad()
+    );
   }
 
   // TIMEDSYNC
   // request
   public async timedsync() {
-    const request: timedsync.IRequest = {
-      payload: this.handler.getPayLoad(),
-    };
-    const writer = new BufferStreamWriter(Buffer.alloc(0));
-    timedsync.Writer.request(writer, request);
-    const buffer = LevinProtocol.request(
-      timedsync.ID.ID,
-      writer.getBuffer(),
-      0,
-      false
-    );
+    const buffer = timedsync.Handler.getBuffer(this.handler.getPayLoad());
     logger.info('Getting connections timedsync');
     this.connections.forEach((context: P2pConnectionContext) => {
       if (context.peerId.length) {

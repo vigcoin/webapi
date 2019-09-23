@@ -1,10 +1,10 @@
-import {
-  ICoreSyncData,
-  IPeerEntry,
-  IPeerNodeData,
-} from '../../../cryptonote/p2p';
+import { randomBytes } from 'crypto';
+import { PROCESSED, TIMED_SYNC } from '../../../config/events';
+import { ICoreSyncData, IPeerEntry } from '../../../cryptonote/p2p';
 import { BufferStreamReader } from '../../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../../cryptonote/serialize/writer';
+import { P2pConnectionContext } from '../../connection';
+import { ILevinCommand, LevinProtocol } from '../../levin';
 import { P2P_COMMAND_ID_BASE } from '../defines';
 import {
   readJSON,
@@ -30,6 +30,52 @@ export namespace timedsync {
     localPeerList: IPeerEntry[];
   }
 
+  export class Handler {
+    public static getBuffer(payload: ICoreSyncData) {
+      const request: IRequest = {
+        payload,
+      };
+      const writer = new BufferStreamWriter(Buffer.alloc(0));
+      Writer.request(writer, request);
+      return LevinProtocol.request(ID.ID, writer.getBuffer(), 0, false);
+    }
+    public static process(
+      cmd: ILevinCommand,
+      context: P2pConnectionContext,
+      levin: LevinProtocol
+    ) {
+      if (cmd.isResponse) {
+        const response: IResponse = Reader.response(
+          new BufferStreamReader(cmd.buffer)
+        );
+        levin.emit(TIMED_SYNC, response);
+        return;
+      }
+
+      const reader = new BufferStreamReader(cmd.buffer);
+      timedsync.Reader.request(reader);
+
+      if (levin.isReply(cmd)) {
+        // TODO: update to correct data
+        const response: timedsync.IResponse = {
+          localTime: new Date(),
+          payload: {
+            currentHeight: Math.floor(Math.random() * 10000),
+            hash: randomBytes(32),
+          },
+          // tslint:disable-next-line:object-literal-sort-keys
+          localPeerList: [],
+        };
+        const writer = new BufferStreamWriter(Buffer.alloc(0));
+        timedsync.Writer.response(writer, response);
+        const data = LevinProtocol.response(cmd.command, writer.getBuffer(), 0);
+        levin.socket.write(data);
+      }
+      levin.emit(PROCESSED, 'timedsync');
+    }
+  }
+
+  // tslint:disable-next-line:max-classes-per-file
   export class Reader {
     public static request(reader: BufferStreamReader): IRequest {
       const json = readJSON(reader);

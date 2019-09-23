@@ -1,17 +1,18 @@
 import * as assert from 'assert';
+import { PING, PROCESSED } from '../../../config/events';
 import {
+  IPeerEntry,
   IPeerIDType,
   IPeerNodeData,
-  IPeerEntry,
 } from '../../../cryptonote/p2p';
 import { BufferStreamReader } from '../../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../../cryptonote/serialize/writer';
-import { P2P_COMMAND_ID_BASE } from '../defines';
-import { ILevinCommand, LevinProtocol } from '../../levin';
-import { P2pConnectionContext } from '../../connection';
-import { PING, PROCESSED } from '../../../config/events';
+import { logger } from '../../../logger';
 import { IP } from '../../../util/ip';
+import { P2pConnectionContext } from '../../connection';
+import { ILevinCommand, LevinProtocol } from '../../levin';
 import { PeerManager } from '../../peer-manager';
+import { P2P_COMMAND_ID_BASE } from '../defines';
 import {
   BIN_KV_SERIALIZE_TYPE_STRING,
   BIN_KV_SERIALIZE_TYPE_UINT64,
@@ -21,7 +22,6 @@ import {
   writeKVBlockHeader,
 } from '../json';
 import { handshake } from './handshake';
-import { logger } from '../../../logger';
 
 // tslint:disable-next-line:no-namespace
 export namespace ping {

@@ -1,14 +1,13 @@
 import * as assert from 'assert';
 import { readFileSync } from 'fs';
 import * as path from 'path';
+import { parameters } from '../../src/config';
 import { Hash } from '../../src/crypto/hash';
 import { BufferStreamReader } from '../../src/cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';
+import { TransactionAmount } from '../../src/cryptonote/transaction/amount';
 import { Transaction } from '../../src/cryptonote/transaction/index';
 import { Payment } from '../../src/cryptonote/transaction/payment';
-import { TransactionAmount } from '../../src/cryptonote/transaction/amount';
-import { NULL_HASH } from '../../src/crypto/types';
-import { parameters } from '../../src/config';
 
 describe('transaction test', () => {
   it('should read from buffer', () => {

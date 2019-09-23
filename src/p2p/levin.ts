@@ -1,15 +1,12 @@
 import * as assert from 'assert';
-import { randomBytes } from 'crypto';
 import { EventEmitter } from 'events';
 import { Socket } from 'net';
 import { cryptonote } from '../config';
-import { HANDSHAKE, PING, PROCESSED, TIMED_SYNC } from '../config/events';
-import { IPeerNodeData } from '../cryptonote/p2p';
+import { HANDSHAKE, PROCESSED } from '../config/events';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../cryptonote/serialize/writer';
 import { int32, uint32, uint64, UINT64 } from '../cryptonote/types';
 import { logger } from '../logger';
-import { IP } from '../util/ip';
 import { ConnectionState, P2pConnectionContext } from './connection';
 import { handshake, ping, timedsync } from './protocol';
 import { Handler } from './protocol/handler';
@@ -294,11 +291,7 @@ export class LevinProtocol extends EventEmitter {
         this.onHandshake(cmd, context, handler);
         break;
       case timedsync.ID.ID:
-        if (cmd.isResponse) {
-          this.onTimedSyncResponse(cmd);
-          return;
-        }
-        this.onTimedSync(cmd, context);
+        timedsync.Handler.process(cmd, context, this);
         break;
       case ping.ID.ID:
         ping.Handler.process(cmd, context, this);
@@ -311,12 +304,6 @@ export class LevinProtocol extends EventEmitter {
         );
         this.emit(PROCESSED, cryptonoteCmd);
     }
-  }
-  public onTimedSyncResponse(cmd: ILevinCommand) {
-    const response: timedsync.IResponse = timedsync.Reader.response(
-      new BufferStreamReader(cmd.buffer)
-    );
-    this.emit(TIMED_SYNC, response);
   }
 
   public onHandshake(
@@ -340,29 +327,6 @@ export class LevinProtocol extends EventEmitter {
     context.peerId = request.node.peerId;
     this.emit(HANDSHAKE, request);
     this.emit(PROCESSED, 'handshake');
-  }
-
-  public onTimedSync(cmd: ILevinCommand, context: P2pConnectionContext) {
-    const reader = new BufferStreamReader(cmd.buffer);
-    timedsync.Reader.request(reader);
-
-    if (this.isReply(cmd)) {
-      // TODO: update to correct data
-      const response: timedsync.IResponse = {
-        localTime: new Date(),
-        payload: {
-          currentHeight: Math.floor(Math.random() * 10000),
-          hash: randomBytes(32),
-        },
-        // tslint:disable-next-line:object-literal-sort-keys
-        localPeerList: [],
-      };
-      const writer = new BufferStreamWriter(Buffer.alloc(0));
-      timedsync.Writer.response(writer, response);
-      const data = LevinProtocol.response(cmd.command, writer.getBuffer(), 0);
-      this.socket.write(data);
-    }
-    this.emit(PROCESSED, 'timedsync');
   }
 
   public writeResponse(cmd: number, buffer: Buffer, response: boolean) {

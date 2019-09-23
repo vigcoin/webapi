@@ -6,6 +6,7 @@ import {
 import { BufferStreamReader } from '../../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../../cryptonote/serialize/writer';
 import { logger } from '../../../logger';
+import { LevinProtocol } from '../../levin';
 import { P2P_COMMAND_ID_BASE } from '../defines';
 import {
   readJSON,
@@ -32,8 +33,8 @@ export namespace handshake {
     localPeerList: IPeerEntry[];
   }
 
-  export class Sender {
-    public static request(node: IPeerNodeData, payload: ICoreSyncData) {
+  export class Handler {
+    public static getBuffer(node: IPeerNodeData, payload: ICoreSyncData) {
       logger.info('Sending handshaking request ...');
       const request: IRequest = {
         node,
@@ -41,7 +42,23 @@ export namespace handshake {
       };
       const writer = new BufferStreamWriter(Buffer.alloc(0));
       Writer.request(writer, request);
-      return writer;
+      return writer.getBuffer();
+    }
+
+    public static sendResponse(
+      levin: LevinProtocol,
+      localPeerList: IPeerEntry[],
+      node: IPeerNodeData,
+      payload: ICoreSyncData
+    ) {
+      const response: handshake.IResponse = {
+        localPeerList,
+        node,
+        payload,
+      };
+      const writer = new BufferStreamWriter(Buffer.alloc(0));
+      Writer.response(writer, response);
+      levin.writeResponse(ID.ID, writer.getBuffer(), true);
     }
   }
 
