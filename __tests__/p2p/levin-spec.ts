@@ -226,7 +226,11 @@ describe('test levin protocol', () => {
         peerId: Buffer.from([0x12, 0x75, 0x23, 0x65, 0x0f, 0x9b, 0x42, 0x3b]),
       };
       context.ip = IP.toNumber('183.14.133.114');
-      const { success, response } = await levin.tryPing(data, context);
+      const { success, response } = await ping.Handler.try(
+        data,
+        context,
+        levin
+      );
       assert(success);
       const message = response as ping.IResponse;
       assert(String(message.status) === ping.PING_OK_RESPONSE_STATUS_TEXT);
@@ -260,7 +264,7 @@ describe('test levin protocol', () => {
         peerId: Buffer.from([0x12, 0x75, 0x23, 0x65, 0x0f, 0x9b, 0x42, 0x3b]),
       };
       context.ip = IP.toNumber('183.14.133.114');
-      const { success } = await levin.tryPing(data, context);
+      const { success } = await ping.Handler.try(data, context, levin);
       assert(!success);
       client.destroy();
       server.close();
@@ -293,7 +297,7 @@ describe('test levin protocol', () => {
         myPort: 19800,
         peerId: Buffer.from([0x12, 0x75, 0x23, 0x65, 0x0f, 0x9b, 0x42, 0x3b]),
       };
-      const { success } = await levin.tryPing(data, context);
+      const { success } = await ping.Handler.try(data, context, levin);
       assert(!success);
       client.destroy();
       server.close();

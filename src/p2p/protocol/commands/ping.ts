@@ -1,8 +1,17 @@
 import * as assert from 'assert';
-import { IPeerIDType } from '../../../cryptonote/p2p';
+import {
+  IPeerIDType,
+  IPeerNodeData,
+  IPeerEntry,
+} from '../../../cryptonote/p2p';
 import { BufferStreamReader } from '../../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../../cryptonote/serialize/writer';
 import { P2P_COMMAND_ID_BASE } from '../defines';
+import { ILevinCommand, LevinProtocol } from '../../levin';
+import { P2pConnectionContext } from '../../connection';
+import { PING, PROCESSED } from '../../../config/events';
+import { IP } from '../../../util/ip';
+import { PeerManager } from '../../peer-manager';
 import {
   BIN_KV_SERIALIZE_TYPE_STRING,
   BIN_KV_SERIALIZE_TYPE_UINT64,
@@ -11,6 +20,7 @@ import {
   writeJSONVarint,
   writeKVBlockHeader,
 } from '../json';
+import { handshake } from './handshake';
 
 // tslint:disable-next-line:no-namespace
 export namespace ping {
@@ -27,6 +37,80 @@ export namespace ping {
     peerId: IPeerIDType;
   }
 
+  export class Handler {
+    public static onTry(
+      response: ping.IResponse,
+      data: handshake.IRequest,
+      context: P2pConnectionContext,
+      pm: PeerManager
+    ) {
+      if (
+        response.status === ping.PING_OK_RESPONSE_STATUS_TEXT &&
+        response.peerId.equals(data.node.peerId)
+      ) {
+        const pe: IPeerEntry = {
+          lastSeen: new Date(),
+          peer: {
+            ip: context.ip,
+            port: data.node.myPort,
+          },
+          // tslint:disable-next-line:object-literal-sort-keys
+          id: data.node.peerId,
+        };
+        pm.appendWhite(pe);
+      }
+    }
+
+    public static async try(
+      data: IPeerNodeData,
+      context: P2pConnectionContext,
+      levin: LevinProtocol
+    ) {
+      if (data.myPort === 0) {
+        return { success: false };
+      }
+      if (!IP.isAllowed(context.ip)) {
+        return { success: false };
+      }
+
+      const request: IRequest = {};
+      const writer = new BufferStreamWriter(Buffer.alloc(0));
+      Writer.request(writer, request);
+      const response = await levin.invoke(ping, writer.getBuffer());
+      return { success: true, response };
+    }
+
+    public static process(
+      cmd: ILevinCommand,
+      context: P2pConnectionContext,
+      levin: LevinProtocol
+    ) {
+      const reader = new BufferStreamReader(cmd.buffer);
+      if (cmd.isResponse) {
+        const response: IResponse = Reader.response(reader);
+        assert(String(response.status) === PING_OK_RESPONSE_STATUS_TEXT);
+        levin.emit(PING, response);
+        return;
+      } else {
+        Reader.request(reader);
+      }
+
+      if (levin.isReply(cmd)) {
+        const response: IResponse = {
+          status: ping.PING_OK_RESPONSE_STATUS_TEXT,
+          // tslint:disable-next-line:object-literal-sort-keys
+          peerId: context.peerId,
+        };
+        const writer = new BufferStreamWriter(Buffer.alloc(0));
+        Writer.response(writer, response);
+        const data = LevinProtocol.response(cmd.command, writer.getBuffer(), 1);
+        levin.socket.write(data);
+      }
+      levin.emit(PROCESSED, 'ping');
+    }
+  }
+
+  // tslint:disable-next-line:max-classes-per-file
   export class Reader {
     public static request(reader: BufferStreamReader): IRequest {
       const json = readJSON(reader);

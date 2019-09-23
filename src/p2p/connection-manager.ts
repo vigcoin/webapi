@@ -220,6 +220,7 @@ export class ConnectionManager extends EventEmitter {
     if (context.peerId.equals(this.peerId)) {
       logger.info('Connection to self detected, dropping connection!');
       s.destroy();
+      s = null;
       this.remove(context);
     }
     return { context, levin };
@@ -234,12 +235,13 @@ export class ConnectionManager extends EventEmitter {
   ) {
     logger.info('on connection manager handshake!');
     if (!data.node.peerId.equals(this.peerId) && data.node.myPort !== 0) {
-      const { success, response: res } = await levin.tryPing(
+      const { success, response: res } = await ping.Handler.try(
         data.node,
-        context
+        context,
+        levin
       );
       if (success) {
-        this.onPing(res as ping.IResponse, data, context, pm);
+        ping.Handler.onTry(res as ping.IResponse, data, context, pm);
       }
     }
     const response: handshake.IResponse = {
@@ -288,6 +290,7 @@ export class ConnectionManager extends EventEmitter {
     });
   }
 
+  // connectionHandler
   public initContext(pm: PeerManager, s: Socket, inComing: boolean = true) {
     if (inComing) {
       logger.info('New incoming context creating');
@@ -336,29 +339,6 @@ export class ConnectionManager extends EventEmitter {
       context,
       levin,
     };
-  }
-
-  private onPing(
-    response: ping.IResponse,
-    data: handshake.IRequest,
-    context: P2pConnectionContext,
-    pm: PeerManager
-  ) {
-    if (
-      response.status === ping.PING_OK_RESPONSE_STATUS_TEXT &&
-      response.peerId.equals(data.node.peerId)
-    ) {
-      const pe: IPeerEntry = {
-        lastSeen: new Date(),
-        peer: {
-          ip: context.ip,
-          port: data.node.myPort,
-        },
-        // tslint:disable-next-line:object-literal-sort-keys
-        id: data.node.peerId,
-      };
-      pm.appendWhite(pe);
-    }
   }
 
   private processPayLoad(

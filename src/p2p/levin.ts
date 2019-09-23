@@ -159,26 +159,11 @@ export class LevinProtocol extends EventEmitter {
   }
 
   public state: LevinState = LevinState.NORMAL;
-  private socket: Socket;
+  public socket: Socket;
   private chunks: Buffer[] = [];
   constructor(socket: Socket) {
     super();
     this.socket = socket;
-  }
-
-  public async tryPing(data: IPeerNodeData, context: P2pConnectionContext) {
-    if (data.myPort === 0) {
-      return { success: false };
-    }
-    if (!IP.isAllowed(context.ip)) {
-      return { success: false };
-    }
-
-    const request: ping.IRequest = {};
-    const writer = new BufferStreamWriter(Buffer.alloc(0));
-    ping.Writer.request(writer, request);
-    const response = await this.invoke(ping, writer.getBuffer());
-    return { success: true, response };
   }
 
   public async initIncoming(
@@ -249,7 +234,9 @@ export class LevinProtocol extends EventEmitter {
             this.socket.removeListener('data', onData);
             resovle(response);
           } catch (e) {
-            logger.error('Error processing handshake response data!');
+            logger.error(
+              'Error processing command ' + t.ID.ID + ' invoke response data!'
+            );
             this.socket.destroy();
             this.state = LevinState.NORMAL;
             this.socket.removeListener('data', onData);
@@ -314,7 +301,7 @@ export class LevinProtocol extends EventEmitter {
         this.onTimedSync(cmd, context);
         break;
       case ping.ID.ID:
-        this.onPing(cmd, context);
+        ping.Handler.process(cmd, context, this);
         break;
       default:
         const cryptonoteCmd = handler.onCommand(
@@ -383,32 +370,7 @@ export class LevinProtocol extends EventEmitter {
     this.socket.write(data);
   }
 
-  public onPing(cmd: ILevinCommand, context: P2pConnectionContext) {
-    const reader = new BufferStreamReader(cmd.buffer);
-    if (cmd.isResponse) {
-      const response: ping.IResponse = ping.Reader.response(reader);
-      assert(String(response.status) === ping.PING_OK_RESPONSE_STATUS_TEXT);
-      this.emit(PING, response);
-      return;
-    } else {
-      ping.Reader.request(reader);
-    }
-
-    if (this.isReply(cmd)) {
-      const response: ping.IResponse = {
-        status: ping.PING_OK_RESPONSE_STATUS_TEXT,
-        // tslint:disable-next-line:object-literal-sort-keys
-        peerId: context.peerId,
-      };
-      const writer = new BufferStreamWriter(Buffer.alloc(0));
-      ping.Writer.response(writer, response);
-      const data = LevinProtocol.response(cmd.command, writer.getBuffer(), 1);
-      this.socket.write(data);
-    }
-    this.emit(PROCESSED, 'ping');
-  }
-
-  private isReply(cmd: ILevinCommand) {
+  public isReply(cmd: ILevinCommand) {
     return !(cmd.isNotify || cmd.isResponse);
   }
 }

@@ -136,5 +136,6 @@ export class P2pConnectionContext extends ConnectionContext {
   public stop() {
     this.socket.end();
     this.socket.destroy();
+    this.socket = null;
   }
 }
