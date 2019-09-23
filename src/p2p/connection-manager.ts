@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { Socket } from 'net';
-import { BLOCK_HEIGHT_UPDATED } from '../config/events';
+import { BLOCK_HEIGHT_UPDATED, TIMED_SYNC } from '../config/events';
 import {
   ICoreSyncData,
   INetwork,
@@ -10,7 +10,6 @@ import {
   IPeerNodeData,
   Version,
 } from '../cryptonote/p2p';
-import { BufferStreamWriter } from '../cryptonote/serialize/writer';
 import { uint8 } from '../cryptonote/types';
 import { logger } from '../logger';
 import { P2PConfig } from './config';
@@ -216,6 +215,9 @@ export class ConnectionManager extends EventEmitter {
       s = null;
       this.remove(context);
     }
+    levin.on(TIMED_SYNC, (resp: timedsync.IResponse) => {
+      timedsync.Handler.onMainTimedSync(resp, context, pm, this.handler, peer);
+    });
     return { context, levin };
   }
 

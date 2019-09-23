@@ -37,13 +37,14 @@ describe('test p2p ping', () => {
     server.listen(port);
     const client = createConnection({ port }, async () => {
       const context = new P2pConnectionContext(client);
-
       ping.Handler.onTry(response, data, context, pm);
       response.status = '00';
       ping.Handler.onTry(response, data, context, pm);
       response.status = ping.PING_OK_RESPONSE_STATUS_TEXT;
       response.peerId = randomBytes(32);
       ping.Handler.onTry(response, data, context, pm);
+      client.destroy();
+      server.close();
       done();
     });
   });

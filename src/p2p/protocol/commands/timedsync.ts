@@ -1,11 +1,14 @@
 import { randomBytes } from 'crypto';
 import { PROCESSED, TIMED_SYNC } from '../../../config/events';
-import { ICoreSyncData, IPeerEntry } from '../../../cryptonote/p2p';
+import { ICoreSyncData, IPeer, IPeerEntry } from '../../../cryptonote/p2p';
 import { BufferStreamReader } from '../../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../../cryptonote/serialize/writer';
-import { P2pConnectionContext } from '../../connection';
+import { ConnectionState, P2pConnectionContext } from '../../connection';
 import { ILevinCommand, LevinProtocol } from '../../levin';
+import { PeerManager } from '../../peer-manager';
+import { Handler as ProtocolHandler } from '../../protocol/handler';
 import { P2P_COMMAND_ID_BASE } from '../defines';
+
 import {
   readJSON,
   readJSONIPeerEntryList,
@@ -39,16 +42,51 @@ export namespace timedsync {
       Writer.request(writer, request);
       return LevinProtocol.request(ID.ID, writer.getBuffer(), 0, false);
     }
+
+    public static onMainTimedSync(
+      response: IResponse,
+      context: P2pConnectionContext,
+      pm: PeerManager,
+      handler: ProtocolHandler,
+      peer: IPeer
+    ) {
+      pm.handleRemotePeerList(response.localTime, response.localPeerList);
+      if (!context.isIncoming) {
+        const pe: IPeerEntry = {
+          id: context.peerId,
+          lastSeen: new Date(),
+          peer,
+        };
+        pm.appendWhite(pe);
+        handler.processPayLoad(context, response.payload, false);
+      }
+    }
+
+    public static handleTimedSyncResponse(
+      cmd: ILevinCommand,
+      context: P2pConnectionContext,
+      levin: LevinProtocol
+    ) {
+      try {
+        const response: IResponse = Reader.response(
+          new BufferStreamReader(cmd.buffer)
+        );
+        levin.emit(TIMED_SYNC, response);
+      } catch (e) {
+        return false;
+      }
+    }
     public static process(
       cmd: ILevinCommand,
       context: P2pConnectionContext,
       levin: LevinProtocol
     ) {
       if (cmd.isResponse) {
-        const response: IResponse = Reader.response(
-          new BufferStreamReader(cmd.buffer)
-        );
-        levin.emit(TIMED_SYNC, response);
+        if (!Handler.handleTimedSyncResponse(cmd, context, levin)) {
+          context.state = ConnectionState.SHUTDOWN;
+          return;
+        }
+
         return;
       }
 
