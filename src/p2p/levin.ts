@@ -290,7 +290,7 @@ export class LevinProtocol extends EventEmitter {
         handshake.Handler.process(cmd, context, handler, this);
         break;
       case timedsync.ID.ID:
-        timedsync.Handler.process(cmd, context, this);
+        timedsync.Handler.process(cmd, context, handler, this);
         break;
       case ping.ID.ID:
         ping.Handler.process(cmd, context, this);

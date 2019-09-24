@@ -1,5 +1,3 @@
-import { randomBytes } from 'crypto';
-import { PROCESSED, TIMED_SYNC } from '../../../config/events';
 import { ICoreSyncData, IPeer, IPeerEntry } from '../../../cryptonote/p2p';
 import { BufferStreamReader } from '../../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../../cryptonote/serialize/writer';
@@ -9,6 +7,8 @@ import { PeerManager } from '../../peer-manager';
 import { Handler as ProtocolHandler } from '../../protocol/handler';
 import { P2P_COMMAND_ID_BASE } from '../defines';
 
+import { PROCESSED, TIMED_SYNC } from '../../../config/events';
+import { logger } from '../../../logger';
 import {
   readJSON,
   readJSONIPeerEntryList,
@@ -65,13 +65,32 @@ export namespace timedsync {
     public static handleTimedSyncResponse(
       cmd: ILevinCommand,
       context: P2pConnectionContext,
+      handler: ProtocolHandler,
       levin: LevinProtocol
     ) {
       try {
         const response: IResponse = Reader.response(
           new BufferStreamReader(cmd.buffer)
         );
+        context.pm.handleRemotePeerList(
+          response.localTime,
+          response.localPeerList
+        );
+        if (!context.isIncoming) {
+          const peer: IPeer = {
+            ip: context.ip,
+            port: context.port,
+          };
+          const pe: IPeerEntry = {
+            id: context.peerId,
+            lastSeen: new Date(),
+            peer,
+          };
+          context.pm.appendWhite(pe);
+        }
+        handler.processPayLoad(context, response.payload, false);
         levin.emit(TIMED_SYNC, response);
+        return true;
       } catch (e) {
         return false;
       }
@@ -79,36 +98,37 @@ export namespace timedsync {
     public static process(
       cmd: ILevinCommand,
       context: P2pConnectionContext,
+      handler: ProtocolHandler,
       levin: LevinProtocol
     ) {
       if (cmd.isResponse) {
-        if (!Handler.handleTimedSyncResponse(cmd, context, levin)) {
+        if (!Handler.handleTimedSyncResponse(cmd, context, handler, levin)) {
           context.state = ConnectionState.SHUTDOWN;
           return;
         }
+        return;
+      }
+      const reader = new BufferStreamReader(cmd.buffer);
+      const request = Reader.request(reader);
 
+      if (handler.processPayLoad(context, request.payload, false)) {
+        logger.info(
+          'Failed to process_payload_sync_data(), dropping connection'
+        );
+        context.state = ConnectionState.SHUTDOWN;
         return;
       }
 
-      const reader = new BufferStreamReader(cmd.buffer);
-      timedsync.Reader.request(reader);
+      const response: IResponse = {
+        localPeerList: context.pm.getLocalPeerList(),
+        localTime: new Date(),
+        payload: handler.getPayLoad(),
+      };
 
-      if (levin.isReply(cmd)) {
-        // TODO: update to correct data
-        const response: timedsync.IResponse = {
-          localTime: new Date(),
-          payload: {
-            currentHeight: Math.floor(Math.random() * 10000),
-            hash: randomBytes(32),
-          },
-          // tslint:disable-next-line:object-literal-sort-keys
-          localPeerList: [],
-        };
-        const writer = new BufferStreamWriter(Buffer.alloc(0));
-        timedsync.Writer.response(writer, response);
-        const data = LevinProtocol.response(cmd.command, writer.getBuffer(), 0);
-        levin.socket.write(data);
-      }
+      const writer = new BufferStreamWriter(Buffer.alloc(0));
+      Writer.response(writer, response);
+      const data = LevinProtocol.response(cmd.command, writer.getBuffer(), 0);
+      levin.socket.write(data);
       levin.emit(PROCESSED, 'timedsync');
     }
   }

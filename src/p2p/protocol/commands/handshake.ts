@@ -1,7 +1,9 @@
 import * as assert from 'assert';
+import { Socket } from 'net';
 import { HANDSHAKE, PROCESSED, TIMED_SYNC } from '../../../config/events';
 import {
   ICoreSyncData,
+  IPeer,
   IPeerEntry,
   IPeerNodeData,
 } from '../../../cryptonote/p2p';
@@ -9,13 +11,11 @@ import { BufferStreamReader } from '../../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../../cryptonote/serialize/writer';
 import { logger } from '../../../logger';
 import { P2pConnectionContext } from '../../connection';
+import { ConnectionManager } from '../../connection-manager';
 import { ILevinCommand, LevinProtocol } from '../../levin';
+import { PeerManager } from '../../peer-manager';
 import { Handler as ProtocolHandler } from '../../protocol/handler';
 import { P2P_COMMAND_ID_BASE } from '../defines';
-import { IPeer } from '../../../cryptonote/p2p';
-import { PeerManager } from '../../peer-manager';
-import { Socket } from 'net';
-import { ConnectionManager } from '../../connection-manager';
 
 import {
   readJSON,
@@ -26,8 +26,8 @@ import {
   writeJSONVarint,
   writeKVBlockHeader,
 } from '../json';
-import { timedsync } from './timedsync';
 import { ping } from './ping';
+import { timedsync } from './timedsync';
 
 // tslint:disable-next-line:no-namespace
 export namespace handshake {

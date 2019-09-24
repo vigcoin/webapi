@@ -6,6 +6,8 @@ import { INetwork, IPeer, IPeerIDType } from '../cryptonote/p2p';
 import { uint32, uint8 } from '../cryptonote/types';
 import { logger } from '../logger';
 import { IP } from '../util/ip';
+import { PeerManager } from './peer-manager';
+import { ConnectionManager } from './connection-manager';
 
 export enum ConnectionState {
   BEFORE_HANDSHAKE = 0,
@@ -48,6 +50,9 @@ export class ConnectionContext extends EventEmitter {
   public id: Buffer; // boost::uuids::uuid, uint8[16]
   public ip: uint32 = 0; // uint32
   public port: uint32 = 0; // uint32
+
+  public pm: PeerManager;
+  public cm: ConnectionManager;
 
   protected version: uint8; // unit8
   // tslint:disable-next-line:variable-name

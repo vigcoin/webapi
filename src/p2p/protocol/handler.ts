@@ -33,10 +33,10 @@ import { Command } from './command';
 export class Handler extends EventEmitter {
   public peers: uint32 = 0;
   public observedHeight: number = 0;
+  public cm: ConnectionManager;
 
   private blockchain: BlockChain;
   private memPool: MemoryPool;
-  private cm: ConnectionManager;
 
   constructor(blockchain: BlockChain, memPool: MemoryPool) {
     super();
@@ -166,7 +166,8 @@ export class Handler extends EventEmitter {
 
   public onConnectionSynchronized() {
     logger.info(
-      `**********************************************************************
+      `
+**********************************************************************
 You are now synchronized with the network. You may now start simplewallet.
 
 Please note, that the blockchain will be saved only after you quit the daemon with \"exit\" command or if you use \"save\" command.

@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events';
 import { Socket } from 'net';
-import { TIMED_SYNC } from '../config/events';
 import {
   INetwork,
   IPeer,
@@ -15,7 +14,7 @@ import { P2PConfig } from './config';
 import { ConnectionState, P2pConnectionContext } from './connection';
 import { LevinProtocol } from './levin';
 import { PeerManager } from './peer-manager';
-import { handshake, ping, timedsync } from './protocol';
+import { handshake, timedsync } from './protocol';
 import { Handler } from './protocol/handler';
 
 export class ConnectionManager extends EventEmitter {
@@ -168,6 +167,8 @@ export class ConnectionManager extends EventEmitter {
     }
     const context = new P2pConnectionContext(s);
     context.isIncoming = inComing;
+    context.pm = pm;
+    context.cm = this;
     const levin = new LevinProtocol(s);
     return this.initLevin(s, context, levin, pm);
   }
