@@ -6,8 +6,8 @@ import { INetwork, IPeer, IPeerIDType } from '../cryptonote/p2p';
 import { uint32, uint8 } from '../cryptonote/types';
 import { logger } from '../logger';
 import { IP } from '../util/ip';
-import { PeerManager } from './peer-manager';
 import { ConnectionManager } from './connection-manager';
+import { PeerManager } from './peer-manager';
 
 export enum ConnectionState {
   BEFORE_HANDSHAKE = 0,

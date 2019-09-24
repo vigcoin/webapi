@@ -173,6 +173,11 @@ export class LevinProtocol extends EventEmitter {
       logger.error(e);
     });
     s.on('data', buffer => {
+      if (context.state === ConnectionState.SHUTDOWN) {
+        context.cm.remove(context);
+        s.destroy();
+        return;
+      }
       logger.info('buffer size: ' + buffer.length);
       this.chunks.push(buffer);
       if (!this.isFinished()) {
