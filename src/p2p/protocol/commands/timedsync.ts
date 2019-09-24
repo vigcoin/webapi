@@ -58,8 +58,8 @@ export namespace timedsync {
           peer,
         };
         pm.appendWhite(pe);
-        handler.processPayLoad(context, response.payload, false);
       }
+      handler.processPayLoad(context, response.payload, false);
     }
 
     public static handleTimedSyncResponse(

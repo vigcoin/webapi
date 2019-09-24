@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import { EventEmitter } from 'events';
 import { Socket } from 'net';
 import { cryptonote } from '../config';
-import { HANDSHAKE, PROCESSED } from '../config/events';
+import { PROCESSED } from '../config/events';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../cryptonote/serialize/writer';
 import { int32, uint32, uint64, UINT64 } from '../cryptonote/types';
@@ -287,8 +287,7 @@ export class LevinProtocol extends EventEmitter {
     logger.info('On command : ' + cmd.command);
     switch (cmd.command) {
       case handshake.ID.ID:
-        logger.info('Inside on hand shaking');
-        this.onHandshake(cmd, context, handler);
+        handshake.Handler.process(cmd, context, handler, this);
         break;
       case timedsync.ID.ID:
         timedsync.Handler.process(cmd, context, this);
@@ -304,29 +303,6 @@ export class LevinProtocol extends EventEmitter {
         );
         this.emit(PROCESSED, cryptonoteCmd);
     }
-  }
-
-  public onHandshake(
-    cmd: ILevinCommand,
-    context: P2pConnectionContext,
-    handler: Handler
-  ) {
-    logger.info('Inside on hand shake');
-    const reader = new BufferStreamReader(cmd.buffer);
-    const request: handshake.IRequest = handshake.Reader.request(reader);
-    assert(
-      Buffer.from(request.node.networkId).equals(
-        Buffer.from(LevinProtocol.networkId)
-      )
-    );
-
-    // assert(context.isIncoming);
-    assert(!context.peerId.length);
-    assert(handler.processPayLoad(context, request.payload, true));
-
-    context.peerId = request.node.peerId;
-    this.emit(HANDSHAKE, request);
-    this.emit(PROCESSED, 'handshake');
   }
 
   public writeResponse(cmd: number, buffer: Buffer, response: boolean) {

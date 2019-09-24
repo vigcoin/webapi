@@ -20,7 +20,7 @@ import { handshake, ping, timedsync } from './protocol';
 import { Handler } from './protocol/handler';
 
 export class ConnectionManager extends EventEmitter {
-  public observedHeight: number = 0;
+  // public observedHeight: number = 0;
 
   private connections: Map<string, P2pConnectionContext> = new Map();
   private peerId: IPeerIDType;
@@ -39,13 +39,7 @@ export class ConnectionManager extends EventEmitter {
     this.networkId = networkId;
     this.p2pConfig = p2pConfig;
     this.handler = handler;
-
-    this.handler.on(
-      BLOCK_HEIGHT_UPDATED,
-      (height: number, context: P2pConnectionContext) => {
-        this.updateObservedHeight(height, context);
-      }
-    );
+    handler.setCM(this);
   }
 
   public stop() {
@@ -126,41 +120,6 @@ export class ConnectionManager extends EventEmitter {
     return height;
   }
 
-  public updateObservedHeight(
-    newHeight: number,
-    context: P2pConnectionContext
-  ) {
-    let observedHeight = this.observedHeight;
-    const height = observedHeight;
-    if (newHeight > context.remoteBlockchainHeight) {
-      if (newHeight > observedHeight) {
-        observedHeight = newHeight;
-        this.emit(BLOCK_HEIGHT_UPDATED, observedHeight);
-        return observedHeight;
-      }
-    } else {
-      // newHeight is less than remote height
-      if (newHeight !== context.remoteBlockchainHeight) {
-        if (context.remoteBlockchainHeight === observedHeight) {
-          // The client switched to alternative chain and had maximum observed height.
-          // Need to recalculate max height
-          observedHeight = this.recalculateMaxObservedHeight();
-          if (height !== observedHeight) {
-            this.emit(BLOCK_HEIGHT_UPDATED, observedHeight);
-            return observedHeight;
-          }
-        }
-      }
-    }
-    return 0;
-  }
-
-  public recalculateMaxObservedHeight(): number {
-    const peerHeight = this.getHeight();
-    const blockHeight = this.handler.height;
-    return peerHeight > blockHeight ? peerHeight : blockHeight;
-  }
-
   get size() {
     return this.connections.size;
   }
@@ -200,7 +159,7 @@ export class ConnectionManager extends EventEmitter {
       return { context, levin };
     }
     logger.info('Processing pay load!');
-    this.processPayLoad(context, response.payload, true);
+    this.handler.processPayLoad(context, response.payload, true);
     logger.info('Pay load processed!');
     context.peerId = response.node.peerId;
     const pe: IPeerEntry = {
@@ -324,20 +283,20 @@ export class ConnectionManager extends EventEmitter {
     };
   }
 
-  private processPayLoad(
-    context: P2pConnectionContext,
-    data: ICoreSyncData,
-    isInitial: boolean
-  ) {
-    this.handler.processPayLoad(context, data, isInitial);
+  // private processPayLoad(
+  //   context: P2pConnectionContext,
+  //   data: ICoreSyncData,
+  //   isInitial: boolean
+  // ) {
+  //   this.handler.processPayLoad(context, data, isInitial);
 
-    this.updateObservedHeight(data.currentHeight, context);
+  //   // this.updateObservedHeight(data.currentHeight, context);
 
-    context.remoteBlockchainHeight = data.currentHeight;
-    if (isInitial) {
-      this.handler.notifyPeerCount(this.size);
-    }
-  }
+  //   // context.remoteBlockchainHeight = data.currentHeight;
+  //   if (isInitial) {
+  //     this.handler.notifyPeerCount(this.size);
+  //   }
+  // }
 
   private getLocalPeerData(): IPeerNodeData {
     return {

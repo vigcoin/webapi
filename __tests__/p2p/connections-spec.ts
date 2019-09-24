@@ -148,27 +148,28 @@ describe('test connections', () => {
       p2pConfig.dataDir = path.resolve(__dirname, '../vigcoin');
       const dir = p2pConfig.dataDir ? p2pConfig.dataDir : getDefaultAppDir();
       const h = getHandler(dir, config);
-      const reHeight = cm.recalculateMaxObservedHeight();
+      h.setCM(cm);
+      const reHeight = h.recalculateMaxObservedHeight();
 
       assert(reHeight === 49);
 
       context.remoteBlockchainHeight = 50;
-      const reHeight1 = cm.recalculateMaxObservedHeight();
+      const reHeight1 = h.recalculateMaxObservedHeight();
       assert(reHeight1 === 50);
 
-      cm.observedHeight = 10;
+      h.observedHeight = 10;
 
-      assert(cm.updateObservedHeight(100, context) === 100);
-      assert(cm.updateObservedHeight(20, context) === 0);
-      cm.observedHeight = 60;
-      assert(cm.updateObservedHeight(51, context) === 0);
-      cm.observedHeight = 50;
-      assert(cm.updateObservedHeight(49, context) === 0);
-      assert(cm.updateObservedHeight(50, context) === 0);
+      assert(h.updateObservedHeight(100, context) === 100);
+      assert(h.updateObservedHeight(20, context) === 0);
+      h.observedHeight = 60;
+      assert(h.updateObservedHeight(51, context) === 0);
+      h.observedHeight = 50;
+      assert(h.updateObservedHeight(49, context) === 0);
+      assert(h.updateObservedHeight(50, context) === 0);
       cm.set(context1);
 
       context1.remoteBlockchainHeight = 1000;
-      assert(cm.updateObservedHeight(49, context) === 1000);
+      assert(h.updateObservedHeight(49, context) === 1000);
       cm.stop();
       cm.remove(context);
       cm.remove(context1);

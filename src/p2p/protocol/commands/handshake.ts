@@ -1,3 +1,5 @@
+import * as assert from 'assert';
+import { HANDSHAKE, PROCESSED } from '../../../config/events';
 import {
   ICoreSyncData,
   IPeerEntry,
@@ -6,8 +8,11 @@ import {
 import { BufferStreamReader } from '../../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../../cryptonote/serialize/writer';
 import { logger } from '../../../logger';
-import { LevinProtocol } from '../../levin';
+import { P2pConnectionContext } from '../../connection';
+import { ILevinCommand, LevinProtocol } from '../../levin';
+import { Handler as ProtocolHandler } from '../../protocol/handler';
 import { P2P_COMMAND_ID_BASE } from '../defines';
+
 import {
   readJSON,
   readJSONIPeerEntryList,
@@ -59,6 +64,29 @@ export namespace handshake {
       const writer = new BufferStreamWriter(Buffer.alloc(0));
       Writer.response(writer, response);
       levin.writeResponse(ID.ID, writer.getBuffer(), true);
+    }
+
+    public static process(
+      cmd: ILevinCommand,
+      context: P2pConnectionContext,
+      handler: ProtocolHandler,
+      levin: LevinProtocol
+    ) {
+      logger.info('Inside on handshake');
+      const reader = new BufferStreamReader(cmd.buffer);
+      const request: IRequest = Reader.request(reader);
+      assert(
+        Buffer.from(request.node.networkId).equals(
+          Buffer.from(LevinProtocol.networkId)
+        )
+      );
+      // assert(context.isIncoming);
+      assert(!context.peerId.length);
+      assert(handler.processPayLoad(context, request.payload, true));
+
+      context.peerId = request.node.peerId;
+      levin.emit(HANDSHAKE, request);
+      levin.emit(PROCESSED, 'handshake');
     }
   }
 

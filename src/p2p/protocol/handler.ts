@@ -27,18 +27,25 @@ import { TransactionValidator } from '../../cryptonote/transaction/validator';
 import { IBlock, ITransaction, uint32 } from '../../cryptonote/types';
 import { logger } from '../../logger';
 import { ConnectionState, P2pConnectionContext } from '../connection';
+import { ConnectionManager } from '../connection-manager';
 import { Command } from './command';
 
 export class Handler extends EventEmitter {
   public peers: uint32 = 0;
+  public observedHeight: number = 0;
 
   private blockchain: BlockChain;
   private memPool: MemoryPool;
+  private cm: ConnectionManager;
 
   constructor(blockchain: BlockChain, memPool: MemoryPool) {
     super();
     this.blockchain = blockchain;
     this.memPool = memPool;
+  }
+
+  public setCM(cm: ConnectionManager) {
+    this.cm = cm;
   }
 
   public getPayLoad(): ICoreSyncData {
@@ -74,8 +81,8 @@ export class Handler extends EventEmitter {
         logger.info('Block found!');
         if (isInitial) {
           logger.info('BLOCKCHAIN_SYNCHRONZIED event emitted!');
-          logger.info('State changed into POOL_SYNC_REQUIRED!');
-          this.emit(BLOCKCHAIN_SYNCHRONZIED); //
+          logger.info('State changed PRETTY_AMOUNTSinto POOL_SYNC_REQUIRED!');
+          this.onConnectionSynchronized();
           context.state = ConnectionState.POOL_SYNC_REQUIRED;
         } else {
           context.state = ConnectionState.NORMAL;
@@ -86,16 +93,90 @@ export class Handler extends EventEmitter {
         const diff = data.currentHeight - this.blockchain.height;
         context.state = ConnectionState.SYNC_REQURIED;
         logger.info('State changed into SYNC_REQUIRED!');
-        if (diff > 0) {
-          logger.info('New block height found: ' + data.currentHeight);
-        } else {
-          logger.info('Old block height found: ' + data.currentHeight);
-        }
-        logger.info('Current block height is: ' + this.blockchain.height);
-        logger.info('Synchronization required!');
+        logger.info(
+          'Sync data returned unknown top block: ' +
+            this.blockchain.height +
+            ' -> ' +
+            data.currentHeight
+        );
+        logger.info(
+          ' [' +
+            diff +
+            ' blocks (' +
+            Math.floor(diff / ((24 * 60 * 60) / parameters.DIFFICULTY_TARGET)) +
+            ' days) ' +
+            (diff > 0)
+            ? 'behind'
+            : 'ahead' + ' ]'
+        );
+        logger.info('SYNCHRONIZATION started.');
+        logger.info(
+          'Remote top block height: ' +
+            data.currentHeight +
+            ', id: ' +
+            data.hash.toString('hex')
+        );
+        // let the socket to send response to handshake, but request callback, to let send request data after response
+        logger.info('requesting synchronization');
+        context.state = ConnectionState.SYNC_REQURIED;
       }
     }
+    this.updateObservedHeight(data.currentHeight, context);
+    context.remoteBlockchainHeight = data.currentHeight;
+    if (isInitial) {
+      this.notifyPeerCount(this.cm.size);
+    }
     return true;
+  }
+
+  public updateObservedHeight(
+    newHeight: number,
+    context: P2pConnectionContext
+  ) {
+    let observedHeight = this.observedHeight;
+    const height = observedHeight;
+    if (newHeight > context.remoteBlockchainHeight) {
+      if (newHeight > observedHeight) {
+        observedHeight = newHeight;
+        this.emit(BLOCK_HEIGHT_UPDATED, observedHeight);
+        return observedHeight;
+      }
+    } else {
+      // newHeight is less than remote height
+      if (newHeight !== context.remoteBlockchainHeight) {
+        if (context.remoteBlockchainHeight === observedHeight) {
+          // The client switched to alternative chain and had maximum observed height.
+          // Need to recalculate max height
+          observedHeight = this.recalculateMaxObservedHeight();
+          if (height !== observedHeight) {
+            this.emit(BLOCK_HEIGHT_UPDATED, observedHeight);
+            return observedHeight;
+          }
+        }
+      }
+    }
+    return 0;
+  }
+
+  public recalculateMaxObservedHeight(): number {
+    const peerHeight = this.cm.getHeight();
+    const blockHeight = this.height;
+    return peerHeight > blockHeight ? peerHeight : blockHeight;
+  }
+
+  public onConnectionSynchronized() {
+    logger.info(
+      `**********************************************************************
+You are now synchronized with the network. You may now start simplewallet.
+
+Please note, that the blockchain will be saved only after you quit the daemon with \"exit\" command or if you use \"save\" command.
+Otherwise, you will possibly need to synchronize the blockchain again.
+
+Use \"help\" command to see the list of available commands.
+**********************************************************************
+    `
+    );
+    this.emit(BLOCKCHAIN_SYNCHRONZIED, this.blockchain.height);
   }
 
   public haveBlock(hash: Buffer) {
