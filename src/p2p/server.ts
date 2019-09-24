@@ -16,7 +16,6 @@ import { uint8 } from '../cryptonote/types';
 import { logger } from '../logger';
 import { getDefaultAppDir } from '../util/fs';
 import { P2PConfig } from './config';
-import { P2pConnectionContext } from './connection';
 import { ConnectionManager } from './connection-manager';
 import { PeerManager } from './peer-manager';
 import { Handler } from './protocol/handler';

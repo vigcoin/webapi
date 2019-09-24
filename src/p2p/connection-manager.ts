@@ -1,8 +1,7 @@
 import { EventEmitter } from 'events';
 import { Socket } from 'net';
-import { BLOCK_HEIGHT_UPDATED, TIMED_SYNC } from '../config/events';
+import { TIMED_SYNC } from '../config/events';
 import {
-  ICoreSyncData,
   INetwork,
   IPeer,
   IPeerEntry,
@@ -20,13 +19,12 @@ import { handshake, ping, timedsync } from './protocol';
 import { Handler } from './protocol/handler';
 
 export class ConnectionManager extends EventEmitter {
-  // public observedHeight: number = 0;
+  public handler: Handler;
+  public peerId: IPeerIDType;
 
   private connections: Map<string, P2pConnectionContext> = new Map();
-  private peerId: IPeerIDType;
   private networkId: uint8[];
   private p2pConfig: P2PConfig;
-  private handler: Handler;
 
   constructor(
     peerId: IPeerIDType,
@@ -132,78 +130,7 @@ export class ConnectionManager extends EventEmitter {
     takePeerListOnly: boolean
   ) {
     const s = await P2pConnectionContext.createConnection(peer, network);
-    return this.handshake(peer, pm, s, takePeerListOnly);
-  }
-
-  // Commands
-
-  // HANDSHAKE
-  // request
-  public async handshake(
-    peer: IPeer,
-    pm: PeerManager,
-    s: Socket,
-    takePeerListOnly: boolean = false
-  ) {
-    const buffer = handshake.Handler.getBuffer(
-      this.getLocalPeerData(),
-      this.handler.getPayLoad()
-    );
-    const { context, levin } = this.initContext(pm, s, false);
-    const response: any = await levin.invoke(handshake, buffer);
-    context.version = response.node.version;
-    logger.info('Handling peer list');
-    pm.handleRemotePeerList(response.node.localTime, response.localPeerList);
-    if (takePeerListOnly) {
-      logger.info('Handshake take peer list only!');
-      return { context, levin };
-    }
-    logger.info('Processing pay load!');
-    this.handler.processPayLoad(context, response.payload, true);
-    logger.info('Pay load processed!');
-    context.peerId = response.node.peerId;
-    const pe: IPeerEntry = {
-      id: context.peerId,
-      lastSeen: new Date(),
-      peer,
-    };
-    pm.appendWhite(pe);
-    if (context.peerId.equals(this.peerId)) {
-      logger.info('Connection to self detected, dropping connection!');
-      s.destroy();
-      s = null;
-      this.remove(context);
-    }
-    levin.on(TIMED_SYNC, (resp: timedsync.IResponse) => {
-      timedsync.Handler.onMainTimedSync(resp, context, pm, this.handler, peer);
-    });
-    return { context, levin };
-  }
-
-  // response
-  public async onHandshake(
-    pm: PeerManager,
-    data: handshake.IRequest,
-    context: P2pConnectionContext,
-    levin: LevinProtocol
-  ) {
-    logger.info('on connection manager handshake!');
-    if (!data.node.peerId.equals(this.peerId) && data.node.myPort !== 0) {
-      const { success, response: res } = await ping.Handler.try(
-        data.node,
-        context,
-        levin
-      );
-      if (success) {
-        ping.Handler.onTry(res as ping.IResponse, data, context, pm);
-      }
-    }
-    handshake.Handler.sendResponse(
-      levin,
-      pm.getLocalPeerList(),
-      this.getLocalPeerData(),
-      this.handler.getPayLoad()
-    );
+    return handshake.Handler.request(this, peer, pm, s, takePeerListOnly);
   }
 
   // TIMEDSYNC
@@ -245,7 +172,7 @@ export class ConnectionManager extends EventEmitter {
     return this.initLevin(s, context, levin, pm);
   }
 
-  protected initLevin(
+  public initLevin(
     s: Socket,
     context: P2pConnectionContext,
     levin: LevinProtocol,
@@ -273,32 +200,16 @@ export class ConnectionManager extends EventEmitter {
     });
     levin.on('handshake', async (data: handshake.IRequest) => {
       logger.info('Receiving handshaking command!');
-      await this.onHandshake(pm, data, context, levin);
+      await handshake.Handler.onCmd(this, pm, data, context, levin);
     });
     levin.initIncoming(s, context, this.handler);
-
     return {
       context,
       levin,
     };
   }
 
-  // private processPayLoad(
-  //   context: P2pConnectionContext,
-  //   data: ICoreSyncData,
-  //   isInitial: boolean
-  // ) {
-  //   this.handler.processPayLoad(context, data, isInitial);
-
-  //   // this.updateObservedHeight(data.currentHeight, context);
-
-  //   // context.remoteBlockchainHeight = data.currentHeight;
-  //   if (isInitial) {
-  //     this.handler.notifyPeerCount(this.size);
-  //   }
-  // }
-
-  private getLocalPeerData(): IPeerNodeData {
+  public getLocalPeerData(): IPeerNodeData {
     return {
       localTime: new Date(),
       myPort: this.p2pConfig.getMyPort(),

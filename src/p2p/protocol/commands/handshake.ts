@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { HANDSHAKE, PROCESSED } from '../../../config/events';
+import { HANDSHAKE, PROCESSED, TIMED_SYNC } from '../../../config/events';
 import {
   ICoreSyncData,
   IPeerEntry,
@@ -12,6 +12,10 @@ import { P2pConnectionContext } from '../../connection';
 import { ILevinCommand, LevinProtocol } from '../../levin';
 import { Handler as ProtocolHandler } from '../../protocol/handler';
 import { P2P_COMMAND_ID_BASE } from '../defines';
+import { IPeer } from '../../../cryptonote/p2p';
+import { PeerManager } from '../../peer-manager';
+import { Socket } from 'net';
+import { ConnectionManager } from '../../connection-manager';
 
 import {
   readJSON,
@@ -22,6 +26,8 @@ import {
   writeJSONVarint,
   writeKVBlockHeader,
 } from '../json';
+import { timedsync } from './timedsync';
+import { ping } from './ping';
 
 // tslint:disable-next-line:no-namespace
 export namespace handshake {
@@ -64,6 +70,75 @@ export namespace handshake {
       const writer = new BufferStreamWriter(Buffer.alloc(0));
       Writer.response(writer, response);
       levin.writeResponse(ID.ID, writer.getBuffer(), true);
+    }
+
+    public static async onCmd(
+      cm: ConnectionManager,
+      pm: PeerManager,
+      data: handshake.IRequest,
+      context: P2pConnectionContext,
+      levin: LevinProtocol
+    ) {
+      logger.info('on connection manager handshake!');
+      if (!data.node.peerId.equals(cm.peerId) && data.node.myPort !== 0) {
+        const { success, response: res } = await ping.Handler.try(
+          data.node,
+          context,
+          levin
+        );
+        if (success) {
+          ping.Handler.onTry(res as ping.IResponse, data, context, pm);
+        }
+      }
+      handshake.Handler.sendResponse(
+        levin,
+        pm.getLocalPeerList(),
+        cm.getLocalPeerData(),
+        cm.handler.getPayLoad()
+      );
+    }
+
+    public static async request(
+      cm: ConnectionManager,
+      peer: IPeer,
+      pm: PeerManager,
+      s: Socket,
+      takePeerListOnly: boolean = false
+    ) {
+      const buffer = handshake.Handler.getBuffer(
+        cm.getLocalPeerData(),
+        cm.handler.getPayLoad()
+      );
+      const { context, levin } = cm.initContext(pm, s, false);
+      const response: any = await levin.invoke(handshake, buffer);
+      context.version = response.node.version;
+      logger.info('Handling peer list');
+      pm.handleRemotePeerList(response.node.localTime, response.localPeerList);
+      if (takePeerListOnly) {
+        logger.info('Handshake take peer list only!');
+        return { context, levin };
+      }
+      logger.info('Processing pay load!');
+      cm.handler.processPayLoad(context, response.payload, true);
+      logger.info('Pay load processed!');
+      context.peerId = response.node.peerId;
+      const pe: IPeerEntry = {
+        id: context.peerId,
+        lastSeen: new Date(),
+        peer,
+      };
+      pm.appendWhite(pe);
+      logger.info('COMMAND_HANDSHAKE INVOKED OK');
+      levin.on(TIMED_SYNC, (resp: timedsync.IResponse) => {
+        timedsync.Handler.onMainTimedSync(resp, context, pm, cm.handler, peer);
+      });
+      if (context.peerId.equals(cm.peerId)) {
+        logger.info('Connection to self detected, dropping connection!');
+        s.destroy();
+        s = null;
+        cm.remove(context);
+      }
+      return true;
     }
 
     public static process(

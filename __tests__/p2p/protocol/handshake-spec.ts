@@ -3,10 +3,7 @@ import { randomBytes } from 'crypto';
 import { createConnection, createServer } from 'net';
 import * as path from 'path';
 import { cryptonote } from '../../../src/config';
-import {
-  BLOCK_HEIGHT_UPDATED,
-  PEERS_COUNT_UPDATED,
-} from '../../../src/config/events';
+import { PEERS_COUNT_UPDATED } from '../../../src/config/events';
 import { Configuration } from '../../../src/config/types';
 import { BlockChain } from '../../../src/cryptonote/block/blockchain';
 import { IPeer } from '../../../src/cryptonote/p2p';
@@ -17,6 +14,7 @@ import { data as testnet } from '../../../src/init/net-types/testnet';
 import { getDefaultPeerManager, getP2PServer } from '../../../src/init/p2p';
 import { P2PConfig } from '../../../src/p2p/config';
 import { ConnectionManager } from '../../../src/p2p/connection-manager';
+import { handshake } from '../../../src/p2p/protocol';
 import { Handler } from '../../../src/p2p/protocol/handler';
 import { P2PStore } from '../../../src/p2p/store';
 import { getBlockFile } from '../../../src/util/fs';
@@ -61,7 +59,7 @@ describe('test p2p handshake', () => {
     const client = createConnection(
       { host: IP.toString(ip), port },
       async () => {
-        assert(await cm.handshake(peer, pm, client, true));
+        assert(await handshake.Handler.request(cm, peer, pm, client, true));
         assert(pm.gray.length > 0);
         assert(pm.white.length === 0);
         client.destroy();
@@ -76,8 +74,6 @@ describe('test p2p handshake', () => {
     assert(pm1.white.length === 0);
     const peer: IPeer = mainnet.seeds[0];
     const { ip, port } = peer;
-    // let blockHeightUpdated = false;
-    let peersCountUpdated = false;
     function close() {
       client.destroy();
       done();
@@ -85,20 +81,10 @@ describe('test p2p handshake', () => {
     const client = createConnection(
       { host: IP.toString(ip), port },
       async () => {
-        // cm.on(BLOCK_HEIGHT_UPDATED, height => {
-        //   // assert(height > 30000);
-        //   blockHeightUpdated = true;
-        //   if (peersCountUpdated) {
-        //     close();
-        //   }
-        // });
         handler.on(PEERS_COUNT_UPDATED, count => {
-          peersCountUpdated = true;
-          // if (blockHeightUpdated) {
           close();
-          // }
         });
-        assert(await cm.handshake(peer, pm1, client, false));
+        assert(await handshake.Handler.request(cm, peer, pm1, client, false));
         assert(pm1.gray.length > 0);
         assert(pm1.white.length === 1);
       }
@@ -127,7 +113,7 @@ describe('test p2p handshake', () => {
     server.listen(port);
     const client = createConnection({ port }, async () => {
       const peer = { port, ip: IP.toNumber('127.0.0.1') };
-      assert(await cm.handshake(peer, pm2, client, true));
+      assert(await handshake.Handler.request(cm, peer, pm2, client, true));
       assert(processed);
       assert(pm2.gray.length >= 0);
       client.destroy();
@@ -160,7 +146,7 @@ describe('test p2p handshake', () => {
     server.listen(port);
     const client = createConnection({ port }, async () => {
       const peer = { port, ip: IP.toNumber('127.0.0.1') };
-      assert(await cm.handshake(peer, pm2, client));
+      assert(await handshake.Handler.request(cm, peer, pm2, client));
       assert(processed);
       assert(pm2.gray.length >= 0);
       client.destroy();
