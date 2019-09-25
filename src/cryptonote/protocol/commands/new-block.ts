@@ -1,3 +1,8 @@
+import { parameters } from '../../../config';
+import { BLOCK_HEIGHT_UPDATED } from '../../../config/events';
+import { logger } from '../../../logger';
+import { ConnectionState, P2pConnectionContext } from '../../../p2p/connection';
+import { Handler as ProtocolHandler } from '../../../p2p/protocol/handler';
 import {
   BIN_KV_SERIALIZE_TYPE_OBJECT,
   BIN_KV_SERIALIZE_TYPE_STRING,
@@ -8,9 +13,10 @@ import {
   writeJSONVarint,
   writeKVBlockHeader,
 } from '../../../p2p/protocol/json';
+import { Block } from '../../block/block';
 import { BufferStreamReader } from '../../serialize/reader';
 import { BufferStreamWriter } from '../../serialize/writer';
-import { uint32 } from '../../types';
+import { IBlock, uint32 } from '../../types';
 import { CN_COMMANDS_POOL_BASE, IBlockCompletEntry } from '../defines';
 
 // tslint:disable-next-line:no-namespace
@@ -24,6 +30,51 @@ export namespace NSNewBlock {
     hop: uint32;
   }
 
+  export class Handler {
+    public static process(
+      buffer: Buffer,
+      context: P2pConnectionContext,
+      handler: ProtocolHandler
+    ) {
+      logger.info('on Notify New Block');
+      const request: IRequest = Reader.request(new BufferStreamReader(buffer));
+      logger.info('-->>NOTIFY_NEW_BLOCK<<--');
+      logger.info('hop : ' + request.hop);
+      handler.updateObservedHeight(request.currentBlockHeight, context);
+      context.remoteBlockchainHeight = request.currentBlockHeight;
+      if (context.state !== ConnectionState.NORMAL) {
+        return false;
+      }
+      if (request.blockCompleteEntry.txs) {
+        for (const tx of request.blockCompleteEntry.txs) {
+        }
+      }
+
+      if (
+        request.blockCompleteEntry.block.length >
+        parameters.CRYPTONOTE_MAX_BLOCK_BLOB_SIZE
+      ) {
+        logger.info(
+          'WRONG BLOCK BLOB, too big size ' +
+            request.blockCompleteEntry.block.length +
+            ', rejected'
+        );
+        return;
+      }
+      try {
+        const block: IBlock = Block.readBlock(
+          new BufferStreamReader(request.blockCompleteEntry.block)
+        );
+        handler.blockchain.addNew(block);
+      } catch (e) {
+        logger.info('Failed to parse and validate new block');
+      }
+
+      return true;
+    }
+  }
+
+  // tslint:disable-next-line:max-classes-per-file
   export class Reader {
     public static request(reader: BufferStreamReader): IRequest {
       const json = readJSON(reader);

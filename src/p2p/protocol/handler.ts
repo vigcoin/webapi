@@ -27,25 +27,19 @@ import { TransactionValidator } from '../../cryptonote/transaction/validator';
 import { IBlock, ITransaction, uint32 } from '../../cryptonote/types';
 import { logger } from '../../logger';
 import { ConnectionState, P2pConnectionContext } from '../connection';
-import { ConnectionManager } from '../connection-manager';
 import { Command } from './command';
 
 export class Handler extends EventEmitter {
   public peers: uint32 = 0;
   public observedHeight: number = 0;
-  public cm: ConnectionManager;
+  public blockchain: BlockChain;
 
-  private blockchain: BlockChain;
-  private memPool: MemoryPool;
+  public memPool: MemoryPool;
 
   constructor(blockchain: BlockChain, memPool: MemoryPool) {
     super();
     this.blockchain = blockchain;
     this.memPool = memPool;
-  }
-
-  public setCM(cm: ConnectionManager) {
-    this.cm = cm;
   }
 
   public getPayLoad(): ICoreSyncData {
@@ -124,7 +118,7 @@ export class Handler extends EventEmitter {
     this.updateObservedHeight(data.currentHeight, context);
     context.remoteBlockchainHeight = data.currentHeight;
     if (isInitial) {
-      this.notifyPeerCount(this.cm.size);
+      this.notifyPeerCount(context.cm.size);
     }
     return true;
   }
@@ -147,7 +141,7 @@ export class Handler extends EventEmitter {
         if (context.remoteBlockchainHeight === observedHeight) {
           // The client switched to alternative chain and had maximum observed height.
           // Need to recalculate max height
-          observedHeight = this.recalculateMaxObservedHeight();
+          observedHeight = this.recalculateMaxObservedHeight(context);
           if (height !== observedHeight) {
             this.emit(BLOCK_HEIGHT_UPDATED, observedHeight);
             return observedHeight;
@@ -158,8 +152,8 @@ export class Handler extends EventEmitter {
     return 0;
   }
 
-  public recalculateMaxObservedHeight(): number {
-    const peerHeight = this.cm.getHeight();
+  public recalculateMaxObservedHeight(context: P2pConnectionContext): number {
+    const peerHeight = context.cm.getHeight();
     const blockHeight = this.height;
     return peerHeight > blockHeight ? peerHeight : blockHeight;
   }
@@ -200,8 +194,8 @@ Use \"help\" command to see the list of available commands.
     logger.info('buffer size: ' + buffer.length);
     switch (cmd) {
       case Command.NOTIFY_NEW_BLOCK:
-        logger.info('on Notify New Block');
-        this.onNewBlock(buffer, context);
+        // this.onNewBlock(buffer, context);
+        NSNewBlock.Handler.process(buffer, context, this);
         break;
       case Command.NOTIFY_NEW_TRANSACTIONS:
         logger.info('on Notify New Transactions');
@@ -236,44 +230,44 @@ Use \"help\" command to see the list of available commands.
     // TODO
   }
 
-  public onNewBlock(buffer: Buffer, context: P2pConnectionContext) {
-    const request: NSNewBlock.IRequest = NSNewBlock.Reader.request(
-      new BufferStreamReader(buffer)
-    );
-    logger.info('-->>NOTIFY_NEW_BLOCK<<--');
-    logger.info('hop : ' + request.hop);
-    this.emit(BLOCK_HEIGHT_UPDATED, request.currentBlockHeight, context);
-    context.remoteBlockchainHeight = request.currentBlockHeight;
-    if (context.state !== ConnectionState.NORMAL) {
-      return false;
-    }
-    if (request.blockCompleteEntry.txs) {
-      for (const tx of request.blockCompleteEntry.txs) {
-      }
-    }
+  // public onNewBlock(buffer: Buffer, context: P2pConnectionContext) {
+  //   const request: NSNewBlock.IRequest = NSNewBlock.Reader.request(
+  //     new BufferStreamReader(buffer)
+  //   );
+  //   logger.info('-->>NOTIFY_NEW_BLOCK<<--');
+  //   logger.info('hop : ' + request.hop);
+  //   this.emit(BLOCK_HEIGHT_UPDATED, request.currentBlockHeight, context);
+  //   context.remoteBlockchainHeight = request.currentBlockHeight;
+  //   if (context.state !== ConnectionState.NORMAL) {
+  //     return false;
+  //   }
+  //   if (request.blockCompleteEntry.txs) {
+  //     for (const tx of request.blockCompleteEntry.txs) {
+  //     }
+  //   }
 
-    if (
-      request.blockCompleteEntry.block.length >
-      parameters.CRYPTONOTE_MAX_BLOCK_BLOB_SIZE
-    ) {
-      logger.info(
-        'WRONG BLOCK BLOB, too big size ' +
-          request.blockCompleteEntry.block.length +
-          ', rejected'
-      );
-      return;
-    }
-    try {
-      const block: IBlock = Block.readBlock(
-        new BufferStreamReader(request.blockCompleteEntry.block)
-      );
-      this.blockchain.addNew(block);
-    } catch (e) {
-      logger.info('Failed to parse and validate new block');
-    }
+  //   if (
+  //     request.blockCompleteEntry.block.length >
+  //     parameters.CRYPTONOTE_MAX_BLOCK_BLOB_SIZE
+  //   ) {
+  //     logger.info(
+  //       'WRONG BLOCK BLOB, too big size ' +
+  //         request.blockCompleteEntry.block.length +
+  //         ', rejected'
+  //     );
+  //     return;
+  //   }
+  //   try {
+  //     const block: IBlock = Block.readBlock(
+  //       new BufferStreamReader(request.blockCompleteEntry.block)
+  //     );
+  //     this.blockchain.addNew(block);
+  //   } catch (e) {
+  //     logger.info('Failed to parse and validate new block');
+  //   }
 
-    return true;
-  }
+  //   return true;
+  // }
 
   public onNewTransactions(buffer: Buffer, context: P2pConnectionContext) {
     if (context.state !== ConnectionState.NORMAL) {

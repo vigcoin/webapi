@@ -148,13 +148,13 @@ describe('test connections', () => {
       p2pConfig.dataDir = path.resolve(__dirname, '../vigcoin');
       const dir = p2pConfig.dataDir ? p2pConfig.dataDir : getDefaultAppDir();
       const h = getHandler(dir, config);
-      h.setCM(cm);
-      const reHeight = h.recalculateMaxObservedHeight();
+      context.cm = cm;
+      const reHeight = h.recalculateMaxObservedHeight(context);
 
       assert(reHeight === 49);
 
       context.remoteBlockchainHeight = 50;
-      const reHeight1 = h.recalculateMaxObservedHeight();
+      const reHeight1 = h.recalculateMaxObservedHeight(context);
       assert(reHeight1 === 50);
 
       h.observedHeight = 10;
@@ -174,6 +174,7 @@ describe('test connections', () => {
       cm.remove(context);
       cm.remove(context1);
     } catch (e) {
+      console.log(e);
       caught = true;
     }
     assert(!caught);

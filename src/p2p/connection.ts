@@ -2,12 +2,15 @@ import { randomBytes } from 'crypto';
 import { EventEmitter } from 'events';
 import { createConnection, Socket } from 'net';
 import { IHash } from '../crypto/types';
+import { BlockChain } from '../cryptonote/block/blockchain';
+import { MemoryPool } from '../cryptonote/mem-pool';
 import { INetwork, IPeer, IPeerIDType } from '../cryptonote/p2p';
 import { uint32, uint8 } from '../cryptonote/types';
 import { logger } from '../logger';
 import { IP } from '../util/ip';
 import { ConnectionManager } from './connection-manager';
 import { PeerManager } from './peer-manager';
+import { Handler } from './protocol/handler';
 
 export enum ConnectionState {
   BEFORE_HANDSHAKE = 0,
@@ -50,9 +53,6 @@ export class ConnectionContext extends EventEmitter {
   public id: Buffer; // boost::uuids::uuid, uint8[16]
   public ip: uint32 = 0; // uint32
   public port: uint32 = 0; // uint32
-
-  public pm: PeerManager;
-  public cm: ConnectionManager;
 
   protected version: uint8; // unit8
   // tslint:disable-next-line:variable-name
@@ -114,6 +114,11 @@ export class P2pConnectionContext extends ConnectionContext {
     });
   }
 
+  public pm: PeerManager;
+  public cm: ConnectionManager;
+  public handler: Handler;
+  public blockchain: BlockChain;
+  public mempool: MemoryPool;
   public socket: Socket;
   public version: uint32;
 

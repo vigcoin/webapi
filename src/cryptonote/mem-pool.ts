@@ -219,7 +219,7 @@ export class MemoryPool extends EventEmitter {
     return false;
   }
 
-  public addTx(tx: ITransaction, txBuffer: Buffer, keptByBlock: boolean) {
+  public addTx(tx: ITransaction, hash: IHash, keptByBlock: boolean) {
     if (!TransactionValidator.checkInputsTypes(tx.prefix)) {
       return false;
     }
@@ -229,7 +229,7 @@ export class MemoryPool extends EventEmitter {
     }
 
     const fee = TransactionAmount.getFee(tx);
-    const isFusion = TransactionValidator.isFusion(tx, txBuffer);
+    const isFusion = TransactionValidator.isFusion(tx, hash);
     if (!keptByBlock && !isFusion && fee < parameters.MINIMUM_FEE) {
       logger.info(
         'transaction fee is not enough: ' + TransactionAmount.format(fee)
@@ -245,12 +245,13 @@ export class MemoryPool extends EventEmitter {
       if (this.haveSpentInputs(tx)) {
         logger.info(
           'transaction_t with id= ' +
-            txBuffer.toString('hex') +
+            hash.toString('hex') +
             ' used already spent inputs'
         );
         return false;
       }
     }
+    return true;
   }
 
   public haveSpentInputs(transaction: ITransaction) {

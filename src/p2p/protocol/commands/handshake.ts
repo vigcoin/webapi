@@ -138,7 +138,7 @@ export namespace handshake {
         s = null;
         cm.remove(context);
       }
-      return true;
+      return { context, levin };
     }
 
     public static process(

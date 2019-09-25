@@ -36,7 +36,6 @@ export class ConnectionManager extends EventEmitter {
     this.networkId = networkId;
     this.p2pConfig = p2pConfig;
     this.handler = handler;
-    handler.setCM(this);
   }
 
   public stop() {
@@ -167,8 +166,13 @@ export class ConnectionManager extends EventEmitter {
     }
     const context = new P2pConnectionContext(s);
     context.isIncoming = inComing;
+    // Assign global objects to context
     context.pm = pm;
     context.cm = this;
+    context.handler = this.handler;
+    context.blockchain = this.handler.blockchain;
+    context.mempool = this.handler.memPool;
+
     const levin = new LevinProtocol(s);
     return this.initLevin(s, context, levin, pm);
   }

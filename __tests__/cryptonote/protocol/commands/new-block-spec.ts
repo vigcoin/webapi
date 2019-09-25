@@ -523,9 +523,9 @@ describe('serialize new block', () => {
     assert(request.blockCompleteEntry.block.length === 388);
     assert(request.currentBlockHeight === 347274);
     assert(request.hop === 1);
-    assert(!handler.onNewBlock(buffer, context));
+    assert(!NSNewBlock.Handler.process(buffer, context, handler));
     context.state = ConnectionState.NORMAL;
-    assert(handler.onNewBlock(buffer, context));
+    assert(NSNewBlock.Handler.process(buffer, context, handler));
     socket.destroy();
   });
 });
