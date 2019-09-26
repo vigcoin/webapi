@@ -1,18 +1,17 @@
 import * as assert from 'assert';
+import { parameters } from '../../config';
 import { Configuration } from '../../config/types';
-import { HASH_LENGTH, IHash, IKeyImage, ISignature } from '../../crypto/types';
+import { IHash, IKeyImage } from '../../crypto/types';
 import { logger } from '../../logger';
 import { MultiMap } from '../../util/map';
+import { unixNow } from '../../util/time';
 import { Transaction } from '../transaction/index';
-import { TransactionPrefix } from '../transaction/prefix';
-import { isTxUnlock } from '../transaction/util';
 import {
   ETransactionIOType,
   IBlock,
   IBlockEntry,
   IInputKey,
   IInputSignature,
-  IOutputKey,
   ITransaction,
   ITransactionEntry,
   ITransactionIndex,
@@ -405,5 +404,30 @@ export class BlockChain {
   }
   public hasOutput(amount: uint64) {
     return this.outputs.has(amount);
+  }
+  public getOutput(amount: uint64) {
+    return this.outputs.get(amount);
+  }
+
+  public isSpendtimeUnlocked(unlockTime: uint64) {
+    if (unlockTime < parameters.CRYPTONOTE_MAX_BLOCK_NUMBER) {
+      if (
+        this.height +
+          parameters.CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS -
+          1 >=
+        unlockTime
+      ) {
+        return true;
+      }
+    } else {
+      const now = unixNow();
+      if (
+        now + parameters.CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS >=
+        unlockTime
+      ) {
+        return true;
+      }
+    }
+    return false;
   }
 }

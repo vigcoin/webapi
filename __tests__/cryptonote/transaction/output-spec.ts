@@ -1,6 +1,5 @@
 import * as assert from 'assert';
 import { TransactionOutput } from '../../../src/cryptonote/transaction/output';
-import { buffer } from '../../data/response-chain';
 
 describe('transaction output test', () => {
   it('should be able to convert from relative to absolute and vise verse', () => {

@@ -1,5 +1,4 @@
 import { parameters } from '../../../config';
-import { BLOCK_HEIGHT_UPDATED } from '../../../config/events';
 import { logger } from '../../../logger';
 import { ConnectionState, P2pConnectionContext } from '../../../p2p/connection';
 import { Handler as ProtocolHandler } from '../../../p2p/protocol/handler';
@@ -16,9 +15,9 @@ import {
 import { Block } from '../../block/block';
 import { BufferStreamReader } from '../../serialize/reader';
 import { BufferStreamWriter } from '../../serialize/writer';
+import { TransactionProtocol } from '../../transaction/protocol';
 import { IBlock, uint32 } from '../../types';
 import { CN_COMMANDS_POOL_BASE, IBlockCompletEntry } from '../defines';
-import { TransactionProtocol } from '../../transaction/protocol';
 
 // tslint:disable-next-line:no-namespace
 export namespace NSNewBlock {

@@ -1,6 +1,6 @@
 import * as crypto from 'crypto';
 import { parameters } from '../../config';
-import { IHash, ISignature, IsPublicKey } from '../../crypto/types';
+import { IHash, IsPublicKey } from '../../crypto/types';
 import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
 import {
@@ -10,11 +10,14 @@ import {
   IOutputKey,
   IOutputSignature,
   ITransaction,
+  ITransactionOutput,
   ITransactionPrefix,
   uint32,
 } from '../types';
 import { TransactionAmount } from './amount';
 import { Transaction } from './index';
+import { TransactionInput } from './input';
+import { TransactionOutput } from './output';
 
 export class TransactionValidator {
   // Check Transaction Overflow
@@ -206,17 +209,60 @@ export class TransactionValidator {
   public static checkKeyInput(
     context: P2pConnectionContext,
     input: IInputKey,
-    prefix: IHash,
-    signatures: ISignature[]
-    // maxBlockheight: uint32
+    outKeys: ITransactionOutput[]
   ): boolean {
     if (!context.blockchain.hasOutput(input.amount)) {
-      logger.info('Input amount not found!');
+      logger.error('Input amount not found!');
       return false;
     }
     if (!input.outputIndexes.length) {
-      logger.info('No output found!');
+      logger.error('No output found!');
       return;
+    }
+    const absoluteOffsets = TransactionOutput.toAbsolute(input.outputIndexes);
+    const pair = context.blockchain.getOutput(input.amount);
+    let count = 0;
+    for (const offset of absoluteOffsets) {
+      if (offset >= pair.length) {
+        logger.error(
+          'Wrong index in transaction inputs:' +
+            offset +
+            ', expected maximum ' +
+            (pair.length - 1)
+        );
+        return false;
+      }
+      const txe = context.blockchain.getTransactionEntryByIndex(
+        pair[offset].txIdx
+      );
+      const idx = pair[offset].outputIdx;
+      const len = txe.tx.prefix.outputs.length;
+      if (idx >= len) {
+        logger.error(
+          'Wrong index in transaction outputs: ' +
+            idx +
+            ', expected less then ' +
+            len
+        );
+        return false;
+      }
+      if (
+        TransactionInput.isValidKeyOutput(
+          context,
+          txe.tx,
+          txe.tx.prefix.outputs[idx]
+        )
+      ) {
+        logger.info(
+          'Failed to handle_output for output no = ' +
+            count +
+            ', with absolute offset ' +
+            offset
+        );
+        return false;
+      }
+      outKeys.push(txe.tx.prefix.outputs[idx]);
+      count++;
     }
     return true;
   }
@@ -247,15 +293,29 @@ export class TransactionValidator {
               );
               return false;
             }
-            if (
-              !TransactionValidator.checkKeyInput(
-                context,
-                key,
-                prehash,
-                tx.signatures[inputIndex]
-              )
-            ) {
+            const outputKeys = [];
+            if (!TransactionValidator.checkKeyInput(context, key, outputKeys)) {
               logger.info('Failed to check ring signature for tx ' + hash);
+              return false;
+            }
+            if (key.outputIndexes.length !== outputKeys.length) {
+              logger.info(
+                'Output keys for tx with amount = ' +
+                  key.amount +
+                  ' and count indexes ' +
+                  key.outputIndexes.length +
+                  ' returned wrong keys count ' +
+                  outputKeys.length
+              );
+              return false;
+            }
+            if (tx.signatures.length !== outputKeys.length) {
+              logger.error(
+                'internal error: tx signatures count=' +
+                  tx.signatures.length +
+                  ' mismatch with outputs keys count for inputs=' +
+                  outputKeys.length
+              );
               return false;
             }
           }
