@@ -14,6 +14,7 @@ import { TimeStamp } from './transaction/timestamp';
 import { TransactionValidator } from './transaction/validator';
 
 import { parameters } from '../config';
+import { P2pConnectionContext } from '../p2p/connection';
 import {
   ETransactionIOType,
   IGlobalOut,
@@ -219,7 +220,13 @@ export class MemoryPool extends EventEmitter {
     return false;
   }
 
-  public addTx(tx: ITransaction, hash: IHash, keptByBlock: boolean) {
+  public addTx(
+    context: P2pConnectionContext,
+    tx: ITransaction,
+    hash: IHash,
+    prehash: IHash,
+    keptByBlock: boolean
+  ): boolean {
     if (!TransactionValidator.checkInputsTypes(tx.prefix)) {
       return false;
     }
@@ -251,6 +258,7 @@ export class MemoryPool extends EventEmitter {
         return false;
       }
     }
+
     return true;
   }
 

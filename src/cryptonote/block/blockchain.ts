@@ -189,6 +189,10 @@ export class BlockChain {
     return this.blockHashes.has(hash);
   }
 
+  public hasKeyImage(keyImage: IHash) {
+    return this.spendKeys.has(keyImage);
+  }
+
   public have(hash: IHash): IBlockEntry {
     // logger.info('trying to found hash: ' + hash.toString('hex'));
     // logger.info('currenty height is ' + this.height);
@@ -261,122 +265,122 @@ export class BlockChain {
     return be.transactions[index.transaction];
   }
 
-  public checkTxInput(
-    key: IInputKey,
-    prefixHash: IHash,
-    signatures: ISignature[],
-    maxUsedBlockHeight: number
-  ) {
-    const output = this.outputs.get(key.amount);
-    if (!output || output.length < 1) {
-      if (key.outputIndexes.length < 1) {
-        return false;
-      }
-    }
-    const offsets = BlockChain.offsetsToAbsolute(key.outputIndexes);
-    const keys = [];
-    let count = 0;
-    for (const offset of offsets) {
-      if (offset >= output.length) {
-        logger.info('Wrong index in transaction inputs: ' + offset);
-        logger.info('expected maximum : ' + (output.length - 1));
-        return false;
-      }
-      const te = this.getTransactionEntryByIndex(output[offset].txIdx);
-      if (output[offset].outputIdx >= te.tx.prefix.outputs.length) {
-        logger.error(
-          'Wrong index in transaction outputs: ' + output[offset].outputIdx
-        );
-        logger.error('Expected less than: ' + te.tx.prefix.outputs.length);
-        return false;
-      }
-      // Check tx unlock time
-      if (isTxUnlock(te.tx.prefix.unlockTime, this.height)) {
-        logger.info(
-          'One of outputs for one of inputs have wrong tx.unlockTime = ' +
-            te.tx.prefix.unlockTime
-        );
-        return false;
-      }
+  // public checkTxInput(
+  //   key: IInputKey,
+  //   prefixHash: IHash,
+  //   signatures: ISignature[],
+  //   maxUsedBlockHeight: number
+  // ) {
+  //   const output = this.outputs.get(key.amount);
+  //   if (!output || output.length < 1) {
+  //     if (key.outputIndexes.length < 1) {
+  //       return false;
+  //     }
+  //   }
+  //   const offsets = BlockChain.offsetsToAbsolute(key.outputIndexes);
+  //   const keys = [];
+  //   let count = 0;
+  //   for (const offset of offsets) {
+  //     if (offset >= output.length) {
+  //       logger.info('Wrong index in transaction inputs: ' + offset);
+  //       logger.info('expected maximum : ' + (output.length - 1));
+  //       return false;
+  //     }
+  //     const te = this.getTransactionEntryByIndex(output[offset].txIdx);
+  //     if (output[offset].outputIdx >= te.tx.prefix.outputs.length) {
+  //       logger.error(
+  //         'Wrong index in transaction outputs: ' + output[offset].outputIdx
+  //       );
+  //       logger.error('Expected less than: ' + te.tx.prefix.outputs.length);
+  //       return false;
+  //     }
+  //     // Check tx unlock time
+  //     if (isTxUnlock(te.tx.prefix.unlockTime, this.height)) {
+  //       logger.info(
+  //         'One of outputs for one of inputs have wrong tx.unlockTime = ' +
+  //           te.tx.prefix.unlockTime
+  //       );
+  //       return false;
+  //     }
 
-      if (
-        te.tx.prefix.outputs[output[offset].outputIdx].tag ===
-        ETransactionIOType.KEY
-      ) {
-        logger.error(
-          'Output have wrong type id, which ' +
-            te.tx.prefix.outputs[output[offset].outputIdx].tag
-        );
-        return false;
-      }
-      const target = te.tx.prefix.outputs[output[offset].outputIdx]
-        .target as IOutputKey;
-      keys.push(target.key);
+  //     if (
+  //       te.tx.prefix.outputs[output[offset].outputIdx].tag ===
+  //       ETransactionIOType.KEY
+  //     ) {
+  //       logger.error(
+  //         'Output have wrong type id, which ' +
+  //           te.tx.prefix.outputs[output[offset].outputIdx].tag
+  //       );
+  //       return false;
+  //     }
+  //     const target = te.tx.prefix.outputs[output[offset].outputIdx]
+  //       .target as IOutputKey;
+  //     keys.push(target.key);
 
-      if (count === offsets.length - 1) {
-        if (maxUsedBlockHeight < output[offset].txIdx.block) {
-          maxUsedBlockHeight = output[offset].txIdx.block;
-        }
-      }
-      count++;
-    }
+  //     if (count === offsets.length - 1) {
+  //       if (maxUsedBlockHeight < output[offset].txIdx.block) {
+  //         maxUsedBlockHeight = output[offset].txIdx.block;
+  //       }
+  //     }
+  //     count++;
+  //   }
 
-    if (key.outputIndexes.length !== keys.length) {
-      logger.info('Output keys for tx with amount: ' + key.amount);
-      logger.info(' and count indexes: ' + key.outputIndexes.length);
-      logger.info(' returned wrong keys count :' + keys.length);
-      return false;
-    }
-  }
+  //   if (key.outputIndexes.length !== keys.length) {
+  //     logger.info('Output keys for tx with amount: ' + key.amount);
+  //     logger.info(' and count indexes: ' + key.outputIndexes.length);
+  //     logger.info(' returned wrong keys count :' + keys.length);
+  //     return false;
+  //   }
+  // }
 
-  public checkTransactionInputs(
-    transaction: ITransaction,
-    maxUsedBlockHeight: number
-  ): boolean {
-    const preHash = TransactionPrefix.hash(transaction.prefix);
-    const hash = Transaction.hash(transaction);
-    const height = 0;
-    const id = Buffer.alloc(HASH_LENGTH);
+  // public checkTransactionInputs(
+  //   transaction: ITransaction,
+  //   maxUsedBlockHeight: number
+  // ): boolean {
+  //   const preHash = TransactionPrefix.hash(transaction.prefix);
+  //   const hash = Transaction.hash(transaction);
+  //   const height = 0;
+  //   const id = Buffer.alloc(HASH_LENGTH);
 
-    let inputIndex = 0;
+  //   let inputIndex = 0;
 
-    for (const input of transaction.prefix.inputs) {
-      assert(inputIndex < transaction.signatures.length);
-      switch (input.tag) {
-        case ETransactionIOType.KEY:
-          {
-            const key = input.target as IInputKey;
-            if (key.outputIndexes.length === 0) {
-              logger.error(
-                'Empty outputIndexes in transaction with id' +
-                  hash.toString('hex')
-              );
-              return false;
-            }
-            if (this.spendKeys.has(key.keyImage)) {
-              logger.info(
-                'Key image already spent in blockchain: ' +
-                  key.keyImage.toString('hex')
-              );
-              return false;
-            }
-            if (
-              this.checkTxInput(
-                key,
-                preHash,
-                transaction.signatures[inputIndex],
-                maxUsedBlockHeight
-              )
-            ) {
-              logger.info('Failed to check ring signature for tx ' + preHash);
-              return false;
-            }
-            inputIndex++;
-          }
-          break;
-      }
-    }
-  }
+  //   for (const input of transaction.prefix.inputs) {
+  //     assert(inputIndex < transaction.signatures.length);
+  //     switch (input.tag) {
+  //       case ETransactionIOType.KEY:
+  //         {
+  //           const key = input.target as IInputKey;
+  //           if (key.outputIndexes.length === 0) {
+  //             logger.error(
+  //               'Empty outputIndexes in transaction with id' +
+  //                 hash.toString('hex')
+  //             );
+  //             return false;
+  //           }
+  //           if (this.spendKeys.has(key.keyImage)) {
+  //             logger.info(
+  //               'Key image already spent in blockchain: ' +
+  //                 key.keyImage.toString('hex')
+  //             );
+  //             return false;
+  //           }
+  //           if (
+  //             this.checkTxInput(
+  //               key,
+  //               preHash,
+  //               transaction.signatures[inputIndex],
+  //               maxUsedBlockHeight
+  //             )
+  //           ) {
+  //             logger.info('Failed to check ring signature for tx ' + preHash);
+  //             return false;
+  //           }
+  //           inputIndex++;
+  //         }
+  //         break;
+  //     }
+  //   }
+  // }
 
   // public loadTransactions(block: IBlock): ITransaction[] {
   //   for (const txHash of block.transactionHashes) {
@@ -398,5 +402,8 @@ export class BlockChain {
       return false;
     }
     return true;
+  }
+  public hasOutput(amount: uint64) {
+    return this.outputs.has(amount);
   }
 }

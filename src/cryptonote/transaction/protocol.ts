@@ -29,19 +29,20 @@ export class TransactionProtocol {
         context,
         transaction,
         hash,
+        preHash,
         keptByBlock
       );
     } catch (e) {
       logger.info('WRONG TRANSACTION BLOB, Failed to parse, rejected!');
       return false;
     }
-    return true;
   }
 
   public static onIncomingSecond(
     context: P2pConnectionContext,
     tx: ITransaction,
     hash: IHash,
+    prehash: IHash,
     keptByBlock: boolean
   ): boolean {
     // if (!check_tx_syntax(tx)) {
@@ -58,12 +59,14 @@ export class TransactionProtocol {
       );
       return false;
     }
+    return this.addNewTx(context, tx, hash, prehash, keptByBlock);
   }
 
   public static addNewTx(
     context: P2pConnectionContext,
     tx: ITransaction,
     hash: IHash,
+    prehash: IHash,
     keptByBlock: boolean
   ): boolean {
     if (context.blockchain.haveTransaction(hash)) {
@@ -74,6 +77,6 @@ export class TransactionProtocol {
       logger.info('tx ' + hash + ' is already in already in transaction pool');
       return true;
     }
-    return context.mempool.addTx(tx, hash, keptByBlock);
+    return context.mempool.addTx(context, tx, hash, prehash, keptByBlock);
   }
 }

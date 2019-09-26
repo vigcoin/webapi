@@ -18,6 +18,7 @@ import { BufferStreamReader } from '../../serialize/reader';
 import { BufferStreamWriter } from '../../serialize/writer';
 import { IBlock, uint32 } from '../../types';
 import { CN_COMMANDS_POOL_BASE, IBlockCompletEntry } from '../defines';
+import { TransactionProtocol } from '../../transaction/protocol';
 
 // tslint:disable-next-line:no-namespace
 export namespace NSNewBlock {
@@ -47,6 +48,12 @@ export namespace NSNewBlock {
       }
       if (request.blockCompleteEntry.txs) {
         for (const tx of request.blockCompleteEntry.txs) {
+          if (!TransactionProtocol.onIncoming(context, tx, true)) {
+            logger.info(
+              'Block verification failed: transaction verification failed, dropping connection'
+            );
+            return false;
+          }
         }
       }
 

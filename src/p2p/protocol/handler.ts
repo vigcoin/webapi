@@ -277,64 +277,63 @@ Use \"help\" command to see the list of available commands.
       new BufferStreamReader(buffer)
     );
     logger.info('-->>NOTIFY_NEW_TRANSACTIONS<<--');
-    if (request.txs) {
-      for (const tx of request.txs) {
-        if (!this.handIncomingTx(tx)) {
-        }
-      }
-    }
+    // if (request.txs) {
+    //   for (const tx of request.txs) {
+    //     if (!this.handIncomingTx(tx)) {
+    //     }
+    //   }
+    // }
   }
 
   public handIncomingTx(txBuffer: Buffer, keptByBlock: boolean = false) {
-    if (txBuffer.length > parameters.CRYPTONOTE_MAX_TX_SIZE) {
-      logger.error('WRONG TRANSACTION BLOB, too big size: ' + txBuffer.length);
-      return false;
-    }
-    try {
-      const transaction: ITransaction = Transaction.read(
-        new BufferStreamReader(txBuffer)
-      );
-      const hash = Transaction.hash(transaction);
-      const directHash = CNFashHash(txBuffer);
-      assert(hash.equals(directHash));
-      const prefixHash = TransactionPrefix.hash(transaction.prefix);
-
-      if (!TransactionValidator.checkSematic(transaction)) {
-        logger.error(
-          'WRONG TRANSACTION BLOB, Failed to check tx ' +
-            hash +
-            ' semantic, rejected!'
-        );
-        return false;
-      }
-      return this.handNewTransaction(transaction, hash, txBuffer);
-    } catch (e) {
-      logger.error('WRONG TRANSACTION BLOB, Failed to parse, rejected!');
-      return false;
-    }
+    // if (txBuffer.length > parameters.CRYPTONOTE_MAX_TX_SIZE) {
+    //   logger.error('WRONG TRANSACTION BLOB, too big size: ' + txBuffer.length);
+    //   return false;
+    // }
+    // try {
+    //   const transaction: ITransaction = Transaction.read(
+    //     new BufferStreamReader(txBuffer)
+    //   );
+    //   const hash = Transaction.hash(transaction);
+    //   const directHash = CNFashHash(txBuffer);
+    //   assert(hash.equals(directHash));
+    //   const prefixHash = TransactionPrefix.hash(transaction.prefix);
+    //   if (!TransactionValidator.checkSematic(transaction)) {
+    //     logger.error(
+    //       'WRONG TRANSACTION BLOB, Failed to check tx ' +
+    //         hash +
+    //         ' semantic, rejected!'
+    //     );
+    //     return false;
+    //   }
+    //   return this.handNewTransaction(transaction, hash, txBuffer);
+    // } catch (e) {
+    //   logger.error('WRONG TRANSACTION BLOB, Failed to parse, rejected!');
+    //   return false;
+    // }
   }
 
-  public handNewTransaction(
-    transaction: ITransaction,
-    txHash: IHash,
-    txBuffer: Buffer
-  ) {}
+  // public handNewTransaction(
+  //   transaction: ITransaction,
+  //   txHash: IHash,
+  //   txBuffer: Buffer
+  // ) {}
 
-  public addNewTransaction(
-    transaction: ITransaction,
-    txHash: IHash,
-    txBuffer: Buffer
-  ) {
-    if (this.blockchain.haveTransaction(txHash)) {
-      logger.info('tx ' + txHash + ' is already in blockchain');
-      return true;
-    }
-    if (this.memPool.haveTx(txHash)) {
-      logger.info('tx ' + txHash + ' is already in transaction pool');
-      return true;
-    }
-    return this.memPool.addTx(transaction, txBuffer, false);
-  }
+  // public addNewTransaction(
+  //   transaction: ITransaction,
+  //   txHash: IHash,
+  //   txBuffer: Buffer
+  // ) {
+  //   if (this.blockchain.haveTransaction(txHash)) {
+  //     logger.info('tx ' + txHash + ' is already in blockchain');
+  //     return true;
+  //   }
+  //   if (this.memPool.haveTx(txHash)) {
+  //     logger.info('tx ' + txHash + ' is already in transaction pool');
+  //     return true;
+  //   }
+  //   return this.memPool.addTx(transaction, txBuffer, false);
+  // }
 
   public onRequestObjects(buffer: Buffer, context: P2pConnectionContext) {
     const request = NSRequestGetObjects.Reader.request(

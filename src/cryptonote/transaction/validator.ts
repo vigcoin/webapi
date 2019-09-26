@@ -2,6 +2,7 @@ import * as crypto from 'crypto';
 import { parameters } from '../../config';
 import { IHash, ISignature, IsPublicKey } from '../../crypto/types';
 import { logger } from '../../logger';
+import { P2pConnectionContext } from '../../p2p/connection';
 import {
   ETransactionIOType,
   IInputKey,
@@ -203,11 +204,66 @@ export class TransactionValidator {
   }
 
   public static checkKeyInput(
+    context: P2pConnectionContext,
     input: IInputKey,
     prefix: IHash,
-    signatures: ISignature[],
-    maxBlockheight: uint32
+    signatures: ISignature[]
+    // maxBlockheight: uint32
   ): boolean {
+    if (!context.blockchain.hasOutput(input.amount)) {
+      logger.info('Input amount not found!');
+      return false;
+    }
+    if (!input.outputIndexes.length) {
+      logger.info('No output found!');
+      return;
+    }
+    return true;
+  }
+
+  public static checkInputs(
+    context: P2pConnectionContext,
+    tx: ITransaction,
+    hash: IHash,
+    prehash: IHash,
+    keptByBlock: boolean
+  ): boolean {
+    const inputIndex = 0;
+    for (const input of tx.prefix.inputs) {
+      switch (input.tag) {
+        case ETransactionIOType.KEY:
+          {
+            const key = input.target as IInputKey;
+            if (!key.outputIndexes.length) {
+              logger.info(
+                'empty in_to_key.outputIndexes in transaction with id ' + hash
+              );
+              return false;
+            }
+            if (context.blockchain.hasKeyImage(key.keyImage)) {
+              logger.info(
+                'Key image already spent in blockchain: ' +
+                  key.keyImage.toString('hex')
+              );
+              return false;
+            }
+            if (
+              !TransactionValidator.checkKeyInput(
+                context,
+                key,
+                prehash,
+                tx.signatures[inputIndex]
+              )
+            ) {
+              logger.info('Failed to check ring signature for tx ' + hash);
+              return false;
+            }
+          }
+          break;
+        case ETransactionIOType.SIGNATURE: {
+        }
+      }
+    }
     return true;
   }
 }
