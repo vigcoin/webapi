@@ -27,7 +27,7 @@ export = {
       const { spend, view } = scope.extracted.body;
       try {
         const wallet = new Wallet('', '');
-        wallet.setPrivateKeys(prefix, spend, view);
+        wallet.setPrivateKeys(spend, view);
         const newFile = resolve(tmpdir(), generated);
         wallet.save(newFile, '');
         res.setHeader(

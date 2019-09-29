@@ -76,7 +76,7 @@ test("Should don't file a wallet", done => {
       assert(!err);
       assert.deepEqual(
         res.body.data,
-        'internal error in Neon module: Wrong secret key!'
+        'internal error in Neon module: Wrong spend keys!'
       );
       done(err);
     });
@@ -166,7 +166,6 @@ test('Should export a wallet from private keys', done => {
     )
     .expect(200)
     .end((err, res) => {
-      assert(!err);
       assert(!err);
       const outFile = path.resolve(__dirname, './wallets/exported.wallet');
 
