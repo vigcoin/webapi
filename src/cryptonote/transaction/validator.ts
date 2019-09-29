@@ -1,6 +1,12 @@
+import * as assert from 'assert';
 import * as crypto from 'crypto';
 import { parameters } from '../../config';
-import { IHash, IsPublicKey } from '../../crypto/types';
+import {
+  CryptoSignature,
+  IHash,
+  ISignature,
+  IsPublicKey,
+} from '../../crypto/types';
 import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
 import {
@@ -206,10 +212,41 @@ export class TransactionValidator {
     return TransactionAmount.isFusion(transaction);
   }
 
+  public static checkSignatureInput(
+    context: P2pConnectionContext,
+    input: IInputSignature,
+    hash: IHash,
+    preHash: IHash,
+    signatures: ISignature[][]
+  ): boolean {
+    assert(input.count === signatures.length);
+    if (!context.blockchain.hasSignature(input.amount)) {
+      logger.info(
+        'transaction :  ' +
+          hash +
+          ' contains multisignature input with invalid amount.'
+      );
+      return false;
+    }
+    const outputs = context.blockchain.getSignature(input.amount);
+    if (input.outputIndex >= outputs.length) {
+      logger.info(
+        'transaction : ' +
+          hash +
+          ' contains multisignature input with invalid outputIndex.'
+      );
+      return false;
+    }
+
+    return true;
+  }
+
   public static checkKeyInput(
     context: P2pConnectionContext,
     input: IInputKey,
-    outKeys: ITransactionOutput[]
+    preHash: IHash,
+    outKeys: ITransactionOutput[],
+    signatures: ISignature[][]
   ): boolean {
     if (!context.blockchain.hasOutput(input.amount)) {
       logger.error('Input amount not found!');
@@ -261,20 +298,52 @@ export class TransactionValidator {
         );
         return false;
       }
+      if (input.outputIndexes.length !== outKeys.length) {
+        logger.info(
+          'Output keys for tx with amount = ' +
+            input.amount +
+            ' and count indexes ' +
+            input.outputIndexes.length +
+            ' returned wrong keys count ' +
+            outKeys.length
+        );
+        return false;
+      }
+      if (signatures.length !== outKeys.length) {
+        logger.error(
+          'internal error: tx signatures count=' +
+            signatures.length +
+            ' mismatch with outputs keys count for inputs=' +
+            outKeys.length
+        );
+        return false;
+      }
       outKeys.push(txe.tx.prefix.outputs[idx]);
       count++;
     }
-    return true;
+    let sigBuffer = Buffer.alloc(0);
+    for (const signature of signatures) {
+      for (const buffer of signature) {
+        sigBuffer = Buffer.concat([sigBuffer, buffer]);
+      }
+    }
+    return CryptoSignature.checkRing(
+      preHash,
+      input.keyImage,
+      outKeys,
+      outKeys.length,
+      sigBuffer
+    );
   }
 
   public static checkInputs(
     context: P2pConnectionContext,
     tx: ITransaction,
     hash: IHash,
-    prehash: IHash,
+    preHash: IHash,
     keptByBlock: boolean
   ): boolean {
-    const inputIndex = 0;
+    let inputIndex = 0;
     for (const input of tx.prefix.inputs) {
       switch (input.tag) {
         case ETransactionIOType.KEY:
@@ -286,7 +355,7 @@ export class TransactionValidator {
               );
               return false;
             }
-            if (context.blockchain.hasKeyImage(key.keyImage)) {
+            if (context.blockchain.hasKeyImageAsSpend(key.keyImage)) {
               logger.info(
                 'Key image already spent in blockchain: ' +
                   key.keyImage.toString('hex')
@@ -294,33 +363,41 @@ export class TransactionValidator {
               return false;
             }
             const outputKeys = [];
-            if (!TransactionValidator.checkKeyInput(context, key, outputKeys)) {
+            if (
+              !TransactionValidator.checkKeyInput(
+                context,
+                key,
+                preHash,
+                outputKeys,
+                tx.signatures
+              )
+            ) {
               logger.info('Failed to check ring signature for tx ' + hash);
               return false;
             }
-            if (key.outputIndexes.length !== outputKeys.length) {
-              logger.info(
-                'Output keys for tx with amount = ' +
-                  key.amount +
-                  ' and count indexes ' +
-                  key.outputIndexes.length +
-                  ' returned wrong keys count ' +
-                  outputKeys.length
-              );
-              return false;
-            }
-            if (tx.signatures.length !== outputKeys.length) {
-              logger.error(
-                'internal error: tx signatures count=' +
-                  tx.signatures.length +
-                  ' mismatch with outputs keys count for inputs=' +
-                  outputKeys.length
-              );
-              return false;
-            }
+            inputIndex++;
           }
           break;
-        case ETransactionIOType.SIGNATURE: {
+        case ETransactionIOType.SIGNATURE:
+          {
+            const key = input.target as IInputSignature;
+            if (
+              !TransactionValidator.checkSignatureInput(
+                context,
+                key,
+                hash,
+                preHash,
+                tx.signatures
+              )
+            ) {
+              return false;
+            }
+            inputIndex++;
+          }
+          break;
+        default: {
+          logger.info('tx : ' + hash + ' contains input of unsupported type.');
+          return false;
         }
       }
     }

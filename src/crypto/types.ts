@@ -1,4 +1,4 @@
-import { Hash, Key } from '@vigcoin/neon';
+import { Hash, Key, Signature } from '@vigcoin/neon';
 
 export const HASH_LENGTH = 32;
 export const SIGNATURE_LENGTH = 64;
@@ -14,3 +14,6 @@ export type ISignature = IHash;
 
 export const CNFashHash = Hash.fast;
 export const IsPublicKey = Key.check;
+
+export const CryptoHash = Hash;
+export const CryptoSignature = Signature;

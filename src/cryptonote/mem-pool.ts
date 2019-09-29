@@ -258,7 +258,6 @@ export class MemoryPool extends EventEmitter {
         return false;
       }
     }
-
     return true;
   }
 

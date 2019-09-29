@@ -26,4 +26,8 @@ export class MultiMap<KEY, VALUE> {
   public clear() {
     this.map.clear();
   }
+
+  public has(k: KEY) {
+    return this.map.has(k);
+  }
 }
