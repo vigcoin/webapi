@@ -237,7 +237,70 @@ export class TransactionValidator {
       );
       return false;
     }
+    const outputIndex = outputs[input.outputIndex];
 
+    if (outputIndex.isUsed) {
+      logger.info(
+        ' tx ：' + hash + ' contains double spending multisignature input.'
+      );
+      return false;
+    }
+
+    const outTx = context.blockchain.getTransactionEntryByIndex(
+      outputIndex.transactionIndex
+    );
+    if (!context.blockchain.isSpendtimeUnlocked(outTx.tx.prefix.unlockTime)) {
+      logger.info(
+        'tx : ' +
+          hash +
+          ' contains multisignature input which points to a locked transaction.'
+      );
+
+      return false;
+    }
+
+    assert(
+      outTx.tx.prefix.outputs[outputIndex.outputIndex].amount === input.amount
+    );
+    assert(
+      outTx.tx.prefix.outputs[outputIndex.outputIndex].tag ===
+        ETransactionIOType.SIGNATURE
+    );
+
+    const output = outTx.tx.prefix.outputs[outputIndex.outputIndex]
+      .target as IOutputSignature;
+    if (input.count !== output.count) {
+      logger.info(
+        'tx << ' +
+          hash +
+          ' contains multisignature input with invalid signature count.'
+      );
+      return false;
+    }
+
+    let inputSignatureIndex = 0;
+    let outputKeyIndex = 0;
+
+    while (inputSignatureIndex < input.count) {
+      if (outputKeyIndex === output.keys.length) {
+        logger.info(
+          'tx : ' +
+            hash +
+            ' contains multisignature input with invalid signatures.'
+        );
+        return false;
+      }
+      if (
+        CryptoSignature.check(
+          preHash,
+          output.keys[outputKeyIndex],
+          signatures[inputSignatureIndex]
+        )
+      ) {
+        ++inputSignatureIndex;
+      }
+      ++outputKeyIndex;
+    }
     return true;
   }
 
@@ -256,6 +319,7 @@ export class TransactionValidator {
       logger.error('No output found!');
       return;
     }
+    let maxBlockHeight = 0;
     const absoluteOffsets = TransactionOutput.toAbsolute(input.outputIndexes);
     const pair = context.blockchain.getOutput(input.amount);
     let count = 0;
@@ -320,6 +384,11 @@ export class TransactionValidator {
       }
       outKeys.push(txe.tx.prefix.outputs[idx]);
       count++;
+      if (count === absoluteOffsets.length) {
+        if (maxBlockHeight < pair[offset].txIdx.block) {
+          maxBlockHeight = pair[offset].txIdx.block;
+        }
+      }
     }
     let sigBuffer = Buffer.alloc(0);
     for (const signature of signatures) {
