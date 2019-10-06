@@ -27,6 +27,7 @@ export class TransactionProtocol {
 
       return TransactionProtocol.onIncomingSecond(
         context,
+        tx,
         transaction,
         hash,
         preHash,
@@ -40,6 +41,7 @@ export class TransactionProtocol {
 
   public static onIncomingSecond(
     context: P2pConnectionContext,
+    txBuffer: Buffer,
     tx: ITransaction,
     hash: IHash,
     prehash: IHash,
@@ -59,11 +61,12 @@ export class TransactionProtocol {
       );
       return false;
     }
-    return this.addNewTx(context, tx, hash, prehash, keptByBlock);
+    return this.addNewTx(context, txBuffer, tx, hash, prehash, keptByBlock);
   }
 
   public static addNewTx(
     context: P2pConnectionContext,
+    txBuffer: Buffer,
     tx: ITransaction,
     hash: IHash,
     prehash: IHash,
@@ -77,6 +80,13 @@ export class TransactionProtocol {
       logger.info('tx ' + hash + ' is already in already in transaction pool');
       return true;
     }
-    return context.mempool.addTx(context, tx, hash, prehash, keptByBlock);
+    return context.mempool.addTx(
+      context,
+      txBuffer,
+      tx,
+      hash,
+      prehash,
+      keptByBlock
+    );
   }
 }

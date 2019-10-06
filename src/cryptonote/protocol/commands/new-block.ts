@@ -51,6 +51,7 @@ export namespace NSNewBlock {
             logger.info(
               'Block verification failed: transaction verification failed, dropping connection'
             );
+            context.state = ConnectionState.SHUTDOWN;
             return false;
           }
         }

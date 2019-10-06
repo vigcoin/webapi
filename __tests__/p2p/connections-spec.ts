@@ -174,7 +174,7 @@ describe('test connections', () => {
       cm.remove(context);
       cm.remove(context1);
     } catch (e) {
-      console.log(e);
+      // console.log(e);
       caught = true;
     }
     assert(!caught);

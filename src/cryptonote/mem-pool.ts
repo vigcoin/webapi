@@ -222,12 +222,14 @@ export class MemoryPool extends EventEmitter {
 
   public addTx(
     context: P2pConnectionContext,
+    txBuffer: Buffer,
     tx: ITransaction,
     hash: IHash,
     prehash: IHash,
     keptByBlock: boolean
   ): boolean {
     if (!TransactionValidator.checkInputsTypes(tx.prefix)) {
+      logger.info('Input type not supported!');
       return false;
     }
 
@@ -255,6 +257,22 @@ export class MemoryPool extends EventEmitter {
             hash.toString('hex') +
             ' used already spent inputs'
         );
+        return false;
+      }
+    }
+
+    if (
+      !TransactionValidator.checkInputs(context, tx, hash, prehash, keptByBlock)
+    ) {
+      if (!keptByBlock) {
+        logger.info('tx used wrong inputs, rejected');
+        return false;
+      }
+      logger.info('Impossible to validate');
+    }
+    if (!keptByBlock) {
+      if (!TransactionValidator.checkSize(context, txBuffer.length)) {
+        logger.info('tx too big, rejected');
         return false;
       }
     }

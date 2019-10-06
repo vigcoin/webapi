@@ -18,7 +18,7 @@ import {
   ITransaction,
   ITransactionOutput,
   ITransactionPrefix,
-  uint32,
+  usize,
 } from '../types';
 import { TransactionAmount } from './amount';
 import { Transaction } from './index';
@@ -469,6 +469,22 @@ export class TransactionValidator {
           return false;
         }
       }
+    }
+    return true;
+  }
+
+  public static checkSize(context: P2pConnectionContext, size: usize): boolean {
+    const maxSize =
+      context.blockchain.getCurrentCumulativeBlockSizeLimit() -
+      parameters.CRYPTONOTE_COINBASE_BLOB_RESERVED_SIZE;
+    if (size > maxSize) {
+      logger.info(
+        'transaction is too big : ' +
+          size +
+          ', maximun allowed size is ' +
+          maxSize
+      );
+      return false;
     }
     return true;
   }

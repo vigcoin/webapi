@@ -194,7 +194,6 @@ Use \"help\" command to see the list of available commands.
     logger.info('buffer size: ' + buffer.length);
     switch (cmd) {
       case Command.NOTIFY_NEW_BLOCK:
-        // this.onNewBlock(buffer, context);
         NSNewBlock.Handler.process(buffer, context, this);
         break;
       case Command.NOTIFY_NEW_TRANSACTIONS:
@@ -229,45 +228,6 @@ Use \"help\" command to see the list of available commands.
   public onIdle() {
     // TODO
   }
-
-  // public onNewBlock(buffer: Buffer, context: P2pConnectionContext) {
-  //   const request: NSNewBlock.IRequest = NSNewBlock.Reader.request(
-  //     new BufferStreamReader(buffer)
-  //   );
-  //   logger.info('-->>NOTIFY_NEW_BLOCK<<--');
-  //   logger.info('hop : ' + request.hop);
-  //   this.emit(BLOCK_HEIGHT_UPDATED, request.currentBlockHeight, context);
-  //   context.remoteBlockchainHeight = request.currentBlockHeight;
-  //   if (context.state !== ConnectionState.NORMAL) {
-  //     return false;
-  //   }
-  //   if (request.blockCompleteEntry.txs) {
-  //     for (const tx of request.blockCompleteEntry.txs) {
-  //     }
-  //   }
-
-  //   if (
-  //     request.blockCompleteEntry.block.length >
-  //     parameters.CRYPTONOTE_MAX_BLOCK_BLOB_SIZE
-  //   ) {
-  //     logger.info(
-  //       'WRONG BLOCK BLOB, too big size ' +
-  //         request.blockCompleteEntry.block.length +
-  //         ', rejected'
-  //     );
-  //     return;
-  //   }
-  //   try {
-  //     const block: IBlock = Block.readBlock(
-  //       new BufferStreamReader(request.blockCompleteEntry.block)
-  //     );
-  //     this.blockchain.addNew(block);
-  //   } catch (e) {
-  //     logger.info('Failed to parse and validate new block');
-  //   }
-
-  //   return true;
-  // }
 
   public onNewTransactions(buffer: Buffer, context: P2pConnectionContext) {
     if (context.state !== ConnectionState.NORMAL) {

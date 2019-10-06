@@ -3,7 +3,7 @@ import { parameters } from '../../config';
 import { Configuration } from '../../config/types';
 import { IHash, IKeyImage } from '../../crypto/types';
 import { logger } from '../../logger';
-import { MultiMap } from '../../util/map';
+import { medianValue } from '../../util/math';
 import { unixNow } from '../../util/time';
 import { Transaction } from '../transaction/index';
 import {
@@ -18,6 +18,7 @@ import {
   ITransactionMultisignatureOutputUsage,
   uint16,
   uint64,
+  usize,
 } from '../types';
 import { Block } from './block';
 import { BlockIndex } from './block-index';
@@ -56,6 +57,7 @@ export class BlockChain {
   private blockIndex: BlockIndex;
   private block: Block;
   private offsets: uint64[];
+  private cumulativeBlockSizeLimit: usize = 0;
 
   // caches
   private blockHashes: Set<IHash> = new Set();
@@ -324,5 +326,50 @@ export class BlockChain {
       }
     }
     return false;
+  }
+
+  public getCurrentCumulativeBlockSizeLimit() {
+    return this.cumulativeBlockSizeLimit;
+  }
+
+  public getBackwardBlocks(height: uint64, count: usize) {
+    if (height >= this.height) {
+      logger.error(
+        'Internal error: get_backward_blocks_sizes called with from_height=' +
+          height +
+          ', blockchain height = ' +
+          this.height
+      );
+      return;
+    }
+
+    const minor = height + 1 < count ? height + 1 : count;
+
+    const start = height + 1 - minor;
+    const blocks = [];
+    for (let i = start; i < height + 1; i++) {
+      blocks.push(this.get(i).size);
+    }
+    return blocks;
+  }
+
+  public getLastNBlocks(n: usize) {
+    if (!this.height) {
+      return;
+    }
+    return this.getBackwardBlocks(this.height - 1, n);
+  }
+
+  public updateNextCumulativeBlockSizeLimit() {
+    const blocks = this.getLastNBlocks(
+      parameters.CRYPTONOTE_REWARD_BLOCKS_WINDOW
+    );
+
+    let median = medianValue(blocks);
+    if (median <= parameters.CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE) {
+      median = parameters.CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE;
+    }
+    this.cumulativeBlockSizeLimit = median * 2;
+    return true;
   }
 }
