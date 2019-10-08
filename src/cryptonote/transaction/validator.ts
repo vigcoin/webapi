@@ -16,6 +16,7 @@ import {
   IOutputKey,
   IOutputSignature,
   ITransaction,
+  ITransactionCheckInfo,
   ITransactionOutput,
   ITransactionPrefix,
   usize,
@@ -309,7 +310,8 @@ export class TransactionValidator {
     input: IInputKey,
     preHash: IHash,
     outKeys: ITransactionOutput[],
-    signatures: ISignature[][]
+    signatures: ISignature[][],
+    checkInfo: ITransactionCheckInfo
   ): boolean {
     if (!context.blockchain.hasOutput(input.amount)) {
       logger.error('Input amount not found!');
@@ -362,6 +364,12 @@ export class TransactionValidator {
         );
         return false;
       }
+      if (count === absoluteOffsets.length - 1) {
+        if (checkInfo.maxUsedBlock.height < pair[offset].txIdx.block) {
+          checkInfo.maxUsedBlock.height = pair[offset].txIdx.block;
+        }
+      }
+
       if (input.outputIndexes.length !== outKeys.length) {
         logger.info(
           'Output keys for tx with amount = ' +
@@ -410,7 +418,8 @@ export class TransactionValidator {
     tx: ITransaction,
     hash: IHash,
     preHash: IHash,
-    keptByBlock: boolean
+    keptByBlock: boolean,
+    checkInfo: ITransactionCheckInfo
   ): boolean {
     let inputIndex = 0;
     for (const input of tx.prefix.inputs) {
@@ -438,7 +447,8 @@ export class TransactionValidator {
                 key,
                 preHash,
                 outputKeys,
-                tx.signatures
+                tx.signatures,
+                checkInfo
               )
             ) {
               logger.info('Failed to check ring signature for tx ' + hash);

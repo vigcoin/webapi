@@ -121,7 +121,7 @@ export interface IBlockEntry {
 // Verification Context
 
 // tslint:disable-next-line: no-namespace
-export interface IVCTx {
+export interface ITxVerificationContext {
   shouldBeRelayed: boolean;
   verifivationFailed: boolean;
   verifivationImpossible: boolean;
@@ -129,7 +129,7 @@ export interface IVCTx {
   txFeeTooSmall: boolean;
 }
 
-export interface IVCBlock {
+export interface IBlockVerificationContext {
   addedToMainChain: boolean;
   verificationFailed: boolean;
   markedAsOrphaned: boolean;
@@ -158,7 +158,7 @@ export interface ITransactionDetails {
   receiveTime: Date;
 }
 
-export type IGlobalOut = Map<uint64, uint64>;
+export type IGlobalOut = string;
 
 export interface ITransactionIndex {
   block: uint32;

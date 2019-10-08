@@ -3,12 +3,35 @@ import { parameters } from '../../config';
 import { IHash } from '../../crypto/types';
 import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
+import { Block } from '../block/block';
 import { BufferStreamReader } from '../serialize/reader';
-import { ITransaction } from '../types';
+import { IBlock, IBlockVerificationContext, ITransaction } from '../types';
 import { TransactionPrefix } from './prefix';
 import { TransactionValidator } from './validator';
 
 export class TransactionProtocol {
+  public static onIncomingBlob(
+    context: P2pConnectionContext,
+    blockBuffer: Buffer,
+    bvc: IBlockVerificationContext,
+    keptByBlock: boolean
+  ): boolean {
+    if (blockBuffer.length > parameters.CRYPTONOTE_MAX_BLOCK_BLOB_SIZE) {
+      logger.info(
+        'WRONG BLOCK BLOB, too big size ' + blockBuffer.length + ', rejected'
+      );
+      return false;
+    }
+    try {
+      const block: IBlock = Block.readBlock(
+        new BufferStreamReader(blockBuffer)
+      );
+      context.blockchain.addNew(block, bvc);
+    } catch (e) {
+      logger.info('Failed to parse and validate new block');
+      return false;
+    }
+  }
   public static onIncoming(
     context: P2pConnectionContext,
     tx: Buffer,

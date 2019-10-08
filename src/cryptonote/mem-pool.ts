@@ -21,6 +21,7 @@ import {
   IInputKey,
   IInputSignature,
   ITransaction,
+  ITransactionCheckInfo,
   ITransactionDetails,
   uint64,
   uint8,
@@ -38,7 +39,10 @@ export class MemoryPool extends EventEmitter {
   private fd: number;
   private version: uint8 = 0;
 
-  private transactions: ITransactionDetails[] = [];
+  private transactions: Map<IHash, ITransactionDetails> = new Map<
+    IHash,
+    ITransactionDetails
+  >();
   private spendKeyImages: Map<IHash, Set<IKeyImage>> = new Map<
     IHash,
     Set<IKeyImage>
@@ -85,10 +89,9 @@ export class MemoryPool extends EventEmitter {
 
   public readTransaction(reader: BufferStreamReader) {
     const length = reader.readVarint();
-    this.transactions = [];
     for (let i = 0; i < length; i++) {
       const transactionDetails = this.readTransactionDetails(reader);
-      this.transactions.push(transactionDetails);
+      this.transactions.set(transactionDetails.id, transactionDetails);
     }
   }
 
@@ -121,9 +124,7 @@ export class MemoryPool extends EventEmitter {
     for (let i = 0; i < length; i++) {
       const key = reader.readVarint();
       const value = reader.readVarint();
-      const map: IGlobalOut = new Map();
-      map.set(key, value);
-      this.spendOutputs.add(map);
+      this.spendOutputs.add(key + '+' + value);
     }
   }
 
@@ -138,10 +139,10 @@ export class MemoryPool extends EventEmitter {
   }
 
   public buildIndices() {
-    for (const transaction of this.transactions) {
+    this.transactions.forEach((transaction, key) => {
       this.payment.add(transaction.tx);
       this.timestamp.add(transaction.receiveTime, transaction.id);
-    }
+    });
   }
 
   public removeExpiredTransactions() {
@@ -152,22 +153,23 @@ export class MemoryPool extends EventEmitter {
         item.delete(key);
       }
     });
-    for (let i = 0; i < this.transactions.length; i++) {
-      const td = this.transactions[i];
-      const age = now - toUnixTimeStamp(td.receiveTime);
-      if (age > getLiveTime(td.keptByBlock)) {
+    this.transactions.forEach((transaction, key) => {
+      const age = now - toUnixTimeStamp(transaction.receiveTime);
+      if (age > getLiveTime(transaction.keptByBlock)) {
         logger.info(
-          'Tx :' + td.id + ' removed from tx pool due to outdated, age: ' + age
+          'Tx :' +
+            transaction.id.toString('hex') +
+            ' removed from tx pool due to outdated, age: ' +
+            age
         );
-        this.recentDeletedTransactions.set(td.id, now);
-        this.removeTransactionInputs(td);
-        this.payment.remove(td.tx);
-        this.timestamp.remove(td.receiveTime, td.id);
-        this.transactions.splice(i, 1);
-        i--;
-        this.emit(TX_REMOVED_FROM_POOL, td);
+        this.recentDeletedTransactions.set(transaction.id, now);
+        this.removeTransactionInputs(transaction);
+        this.payment.remove(transaction.tx);
+        this.timestamp.remove(transaction.receiveTime, transaction.id);
+        this.transactions.delete(key);
+        this.emit(TX_REMOVED_FROM_POOL, transaction);
       }
-    }
+    });
   }
 
   public removeTransactionInputs(td: ITransactionDetails) {
@@ -178,17 +180,17 @@ export class MemoryPool extends EventEmitter {
           const images = this.spendKeyImages.get(key.keyImage);
           if (!images) {
             logger.info('Failed to find transaction input in key images!');
-            logger.info('Transaction id: ' + td.id);
+            logger.info('Transaction id: ' + td.id.toString('hex'));
             return false;
           }
           if (!images.size) {
             logger.info('Empty key image set!');
-            logger.info('Transaction id: ' + td.id);
+            logger.info('Transaction id: ' + td.id.toString('hex'));
             return false;
           }
           if (!images.has(td.id)) {
             logger.info('Transaction id not found in key_image set!');
-            logger.info('Transaction id: ' + td.id);
+            logger.info('Transaction id: ' + td.id.toString('hex'));
             return false;
           }
 
@@ -201,10 +203,10 @@ export class MemoryPool extends EventEmitter {
         case ETransactionIOType.SIGNATURE:
           if (!td.keptByBlock) {
             const signature = input.target as IInputSignature;
-            const output: IGlobalOut = new Map();
-            output.set(signature.amount, signature.outputIndex);
-            assert(this.spendOutputs.has(output));
-            this.spendOutputs.delete(output);
+            // output.set(signature.amount, signature.outputIndex);
+            const spendOutput = signature.amount + '+' + signature.outputIndex;
+            assert(this.spendOutputs.has(spendOutput));
+            this.spendOutputs.delete(spendOutput);
           }
           break;
       }
@@ -212,12 +214,7 @@ export class MemoryPool extends EventEmitter {
   }
 
   public haveTx(tx: IHash) {
-    for (const details of this.transactions) {
-      if (tx.equals(details.id)) {
-        return true;
-      }
-    }
-    return false;
+    return this.transactions.has(tx);
   }
 
   public addTx(
@@ -261,8 +258,26 @@ export class MemoryPool extends EventEmitter {
       }
     }
 
+    const checkInfo: ITransactionCheckInfo = {
+      lastFailedBlock: {
+        height: 0,
+        id: Buffer.alloc(0),
+      },
+      maxUsedBlock: {
+        height: 0,
+        id: Buffer.alloc(0),
+      },
+    };
+
     if (
-      !TransactionValidator.checkInputs(context, tx, hash, prehash, keptByBlock)
+      !TransactionValidator.checkInputs(
+        context,
+        tx,
+        hash,
+        prehash,
+        keptByBlock,
+        checkInfo
+      )
     ) {
       if (!keptByBlock) {
         logger.info('tx used wrong inputs, rejected');
@@ -275,6 +290,37 @@ export class MemoryPool extends EventEmitter {
         logger.info('tx too big, rejected');
         return false;
       }
+
+      if (this.recentDeletedTransactions.has(hash)) {
+        logger.info(
+          'Trying to add recently deleted transaction. Ignore: ' +
+            hash.toString('hex')
+        );
+        return true;
+      }
+    }
+
+    if (this.transactions.has(hash)) {
+      logger.error('transaction already exists at inserting in memory pool');
+      return true;
+    }
+    const tdx: ITransactionDetails = {
+      blobSize: txBuffer.length,
+      checkInfo,
+      fee,
+      id: hash,
+      keptByBlock,
+      receiveTime: new Date(),
+      tx,
+    };
+
+    this.transactions.set(hash, tdx);
+    this.payment.add(tdx.tx);
+    this.timestamp.add(tdx.receiveTime, hash);
+    logger.info('tx added: ' + hash);
+    this.emit('updated', hash);
+    if (this.addTransactionInputs(hash, tx, keptByBlock)) {
+      return false;
     }
     return true;
   }
@@ -294,9 +340,8 @@ export class MemoryPool extends EventEmitter {
         case ETransactionIOType.SIGNATURE:
           {
             const signature = input.target as IInputSignature;
-            const map = new Map();
-            map.set(signature.amount, signature.outputIndex);
-            const found = this.spendOutputs.has(map);
+            const spendOutput = signature.amount + '+' + signature.outputIndex;
+            const found = this.spendOutputs.has(spendOutput);
             if (found) {
               return true;
             }
@@ -309,9 +354,55 @@ export class MemoryPool extends EventEmitter {
 
   public getTransactions(): ITransaction[] {
     const transactions = [];
-    for (const transaction of this.transactions) {
+    this.transactions.forEach(transaction => {
       transactions.push(transaction.tx);
-    }
+    });
     return transactions;
+  }
+
+  public addTransactionInputs(
+    id: IHash,
+    tx: ITransaction,
+    keptByBlock: boolean
+  ): boolean {
+    for (const input of tx.prefix.inputs) {
+      switch (input.tag) {
+        case ETransactionIOType.KEY:
+          const keyInput = input.target as IInputKey;
+          const keyImageSet = this.spendKeyImages.get(keyInput.keyImage);
+          if (!keptByBlock && keyImageSet.size !== 0) {
+            logger.error(
+              'Internal error: keptByBlock =' +
+                keptByBlock +
+                ',  keyImageSet.size =' +
+                keyImageSet.size
+            );
+            logger.error(
+              'keyInput.keyImage =' + keyInput.keyImage.toString('hex')
+            );
+            logger.error('tx id = ' + id);
+            return false;
+          }
+
+          if (keyImageSet.has(id)) {
+            logger.error(
+              'Internal error: try to insert duplicate iterator in key image set'
+            );
+            return false;
+          }
+          keyImageSet.add(id);
+          break;
+        case ETransactionIOType.SIGNATURE:
+          if (!keptByBlock) {
+            const signature = input.target as IInputSignature;
+            const spendOutput = signature.amount + '+' + signature.outputIndex;
+            assert(!this.spendOutputs.has(spendOutput));
+            this.spendOutputs.add(spendOutput);
+          }
+          break;
+      }
+    }
+
+    return true;
   }
 }

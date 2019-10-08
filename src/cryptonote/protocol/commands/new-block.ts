@@ -1,4 +1,3 @@
-import { parameters } from '../../../config';
 import { logger } from '../../../logger';
 import { ConnectionState, P2pConnectionContext } from '../../../p2p/connection';
 import { Handler as ProtocolHandler } from '../../../p2p/protocol/handler';
@@ -12,11 +11,10 @@ import {
   writeJSONVarint,
   writeKVBlockHeader,
 } from '../../../p2p/protocol/json';
-import { Block } from '../../block/block';
 import { BufferStreamReader } from '../../serialize/reader';
 import { BufferStreamWriter } from '../../serialize/writer';
 import { TransactionProtocol } from '../../transaction/protocol';
-import { IBlock, uint32 } from '../../types';
+import { IBlockVerificationContext, uint32 } from '../../types';
 import { CN_COMMANDS_POOL_BASE, IBlockCompletEntry } from '../defines';
 
 // tslint:disable-next-line:no-namespace
@@ -56,25 +54,22 @@ export namespace NSNewBlock {
           }
         }
       }
+      const bvc: IBlockVerificationContext = {
+        addedToMainChain: false,
+        alreadyExists: false,
+        markedAsOrphaned: false,
+        switchedToAltChain: false,
+        verificationFailed: true,
+      };
 
       if (
-        request.blockCompleteEntry.block.length >
-        parameters.CRYPTONOTE_MAX_BLOCK_BLOB_SIZE
+        !TransactionProtocol.onIncomingBlob(
+          context,
+          request.blockCompleteEntry.block,
+          bvc,
+          true
+        )
       ) {
-        logger.info(
-          'WRONG BLOCK BLOB, too big size ' +
-            request.blockCompleteEntry.block.length +
-            ', rejected'
-        );
-        return;
-      }
-      try {
-        const block: IBlock = Block.readBlock(
-          new BufferStreamReader(request.blockCompleteEntry.block)
-        );
-        handler.blockchain.addNew(block);
-      } catch (e) {
-        logger.info('Failed to parse and validate new block');
       }
 
       return true;

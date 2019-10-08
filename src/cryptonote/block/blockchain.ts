@@ -10,6 +10,8 @@ import {
   ETransactionIOType,
   IBlock,
   IBlockEntry,
+  IBlockVerificationContext,
+  IInputBase,
   IInputKey,
   IInputSignature,
   ITransaction,
@@ -250,6 +252,17 @@ export class BlockChain {
     return this.transactionPairs.get(hash);
   }
 
+  public getHeightByBlock(block: IBlock) {
+    if (block.transaction.prefix.inputs.length !== 1) {
+      return 0;
+    }
+    const input = block.transaction.prefix.inputs[0];
+    if (input.tag !== ETransactionIOType.BASE) {
+      return 0;
+    }
+    return (input.target as IInputBase).blockIndex;
+  }
+
   public getTransactionsWithMissed(
     txs: IHash[],
     missed: IHash[]
@@ -275,13 +288,39 @@ export class BlockChain {
     return be.transactions[index.transaction];
   }
 
-  public addNew(block: IBlock): boolean {
+  public getTailId() {
+    if (this.blockHashes.size === 0) {
+      return Buffer.alloc(0);
+    }
+    const be = this.get(this.height - 1);
+    return Block.hash(be.block);
+  }
+
+  public addNew(block: IBlock, bvc: IBlockVerificationContext): boolean {
     try {
       const id: IHash = Block.hash(block);
       if (this.have(id)) {
         logger.info('Block with id = ' + id + ' already exists');
+        bvc.alreadyExists = true;
         return false;
       }
+      if (block.header.preHash.equals(this.getTailId())) {
+        bvc.addedToMainChain = false;
+        // result =
+      } else {
+        // result = pushBlock()
+      }
+      // check that block refers to chain tail
+      // if (!(bl.previousBlockHash == getTailId())) {
+      //   //chain switching or wrong block
+      //   bvc.m_added_to_main_chain = false;
+      //   add_result = handle_alternative_block(bl, id, bvc);
+      // } else {
+      //   add_result = pushBlock(bl, bvc);
+      //   if (add_result) {
+      //     sendMessage(BlockchainMessage(NewBlockMessage(id)));
+      //   }
+      // }
       // block.
     } catch (e) {
       logger.info(
