@@ -27,7 +27,7 @@ const p2pConfig = new P2PConfig();
 const dir = path.resolve(__dirname, '../../vigcoin');
 const p2pFile = path.resolve(__dirname, '../../vigcoin/p2pstate.bin');
 
-const config: Configuration.ICurrency = {
+const config: Configuration.ICCurrency = {
   block: {
     genesisCoinbaseTxHex: '111',
     version: {

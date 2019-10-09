@@ -6,9 +6,9 @@ export class Hardfork {
     return b.header.version.major >= 7 ? b.header.version.major - 6 : 0;
   }
 
-  private items: Configuration.IHardfork[];
+  private items: Configuration.ICHardfork[];
 
-  constructor(items: Configuration.IHardfork[]) {
+  constructor(items: Configuration.ICHardfork[]) {
     this.items = items;
   }
 }

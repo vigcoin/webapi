@@ -31,7 +31,7 @@ const network: INetwork = {
 };
 
 const dir = path.resolve(__dirname, '../../../vigcoin');
-const config: Configuration.ICurrency = {
+const config: Configuration.ICCurrency = {
   block: {
     genesisCoinbaseTxHex: '111',
     version: {

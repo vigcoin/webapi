@@ -38,7 +38,7 @@ describe('test connections', () => {
   const p2pConfig = new P2PConfig();
 
   const gDir = path.resolve(__dirname, '../vigcoin');
-  const currencyConfig: Configuration.ICurrency = {
+  const currencyConfig: Configuration.ICCurrency = {
     block: {
       genesisCoinbaseTxHex: mainnet.block.genesisCoinbaseTxHex,
       version: {

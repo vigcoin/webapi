@@ -3,6 +3,7 @@ import { parameters } from '../../config';
 import { Configuration } from '../../config/types';
 import { IHash, IKeyImage } from '../../crypto/types';
 import { logger } from '../../logger';
+import { P2pConnectionContext } from '../../p2p/connection';
 import { medianValue } from '../../util/math';
 import { unixNow } from '../../util/time';
 import { Transaction } from '../transaction/index';
@@ -15,13 +16,16 @@ import {
   IInputKey,
   IInputSignature,
   ITransaction,
+  ITransactionDetails,
   ITransactionEntry,
   ITransactionIndex,
   ITransactionMultisignatureOutputUsage,
+  ITxVerificationContext,
   uint16,
   uint64,
   usize,
 } from '../types';
+import { AlternativeBlockchain } from './alternative';
 import { Block } from './block';
 import { BlockIndex } from './block-index';
 
@@ -31,7 +35,7 @@ interface IOutputIndexPair {
 }
 
 export class BlockChain {
-  public static genesis(block: Configuration.IBlock): Configuration.IGenesis {
+  public static genesis(block: Configuration.ICBlock): Configuration.IGenesis {
     const genesisBlock = Block.genesis(block);
     const genesisBlockHash = Block.hash(genesisBlock);
     return {
@@ -54,8 +58,8 @@ export class BlockChain {
     return result;
   }
 
-  private files: Configuration.IBlockFile;
-  private currency: Configuration.ICurrency;
+  private files: Configuration.ICBlockFile;
+  private currency: Configuration.ICCurrency;
   private blockIndex: BlockIndex;
   private block: Block;
   private offsets: uint64[];
@@ -74,7 +78,7 @@ export class BlockChain {
 
   private initialized = false;
 
-  constructor(config: Configuration.ICurrency) {
+  constructor(config: Configuration.ICCurrency) {
     this.currency = config;
     this.files = config.blockFiles;
     this.blockIndex = new BlockIndex(this.files.index);
@@ -296,7 +300,11 @@ export class BlockChain {
     return Block.hash(be.block);
   }
 
-  public addNew(block: IBlock, bvc: IBlockVerificationContext): boolean {
+  public addNew(
+    context: P2pConnectionContext,
+    block: IBlock,
+    bvc: IBlockVerificationContext
+  ): boolean {
     try {
       const id: IHash = Block.hash(block);
       if (this.have(id)) {
@@ -304,9 +312,10 @@ export class BlockChain {
         bvc.alreadyExists = true;
         return false;
       }
-      if (block.header.preHash.equals(this.getTailId())) {
+      let result = false;
+      if (!block.header.preHash.equals(this.getTailId())) {
         bvc.addedToMainChain = false;
-        // result =
+        result = AlternativeBlockchain.handle(context, id, block, bvc);
       } else {
         // result = pushBlock()
       }
@@ -410,5 +419,44 @@ export class BlockChain {
     }
     this.cumulativeBlockSizeLimit = median * 2;
     return true;
+  }
+
+  public loadTransactions(
+    context: P2pConnectionContext,
+    block: IBlock
+  ): ITransaction[] {
+    const transactions = Array(block.transactionHashes.length);
+    for (let i = 0; i < block.transactionHashes.length; i++) {
+      const txe: ITransactionDetails = context.mempool.takeTx(
+        block.transactionHashes[i]
+      );
+      if (!txe) {
+        const tvc: ITxVerificationContext = {
+          addedToPool: false,
+          shouldBeRelayed: false,
+          txFeeTooSmall: false,
+          verifivationFailed: false,
+          verifivationImpossible: false,
+        };
+        for (let j = 0; j < i; j++) {
+          if (
+            !context.mempool.addTx(
+              context,
+              transactions[i - 1 - j],
+              txe.blobSize,
+              tvc,
+              true
+            )
+          ) {
+            throw new Error(
+              'Blockchain::loadTransactions, failed to add transaction to pool'
+            );
+          }
+        }
+        return;
+      }
+      transactions[i] = txe.tx;
+    }
+    return transactions;
   }
 }

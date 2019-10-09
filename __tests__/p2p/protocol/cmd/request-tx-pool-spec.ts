@@ -21,7 +21,7 @@ import { Handler } from '../../../../src/p2p/protocol/handler';
 import { getBlockFile } from '../../../../src/util/fs';
 
 const dir = path.resolve(__dirname, '../../../vigcoin');
-const config: Configuration.ICurrency = {
+const config: Configuration.ICCurrency = {
   block: {
     genesisCoinbaseTxHex: '111',
     version: {

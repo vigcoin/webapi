@@ -102,7 +102,7 @@ export class Block {
   }
 
   // Generate genesis block
-  public static genesis(conf: Configuration.IBlock): IBlock {
+  public static genesis(conf: Configuration.ICBlock): IBlock {
     const genesis = Buffer.from(conf.genesisCoinbaseTxHex, 'hex');
     const reader: BufferStreamReader = new BufferStreamReader(genesis);
     const transaction: ITransaction = Transaction.read(reader);

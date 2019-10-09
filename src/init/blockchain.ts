@@ -3,7 +3,7 @@ import { BlockChain } from '../cryptonote/block/blockchain';
 import { getBlockFile } from '../util/fs';
 
 export function getBlockChain(
-  config: Configuration.ICurrency
+  config: Configuration.ICCurrency
   // files: Configuration.IBlockFile = getBlockFile(getDefaultAppDir())
 ) {
   return new BlockChain(config);
@@ -13,8 +13,8 @@ export function getBlockChainInitialized(
   dir: string,
   config: Configuration.IConfig
 ) {
-  const files: Configuration.IBlockFile = getBlockFile(dir, config);
-  const currency: Configuration.ICurrency = {
+  const files: Configuration.ICBlockFile = getBlockFile(dir, config);
+  const currency: Configuration.ICCurrency = {
     block: {
       genesisCoinbaseTxHex: config.block.genesisCoinbaseTxHex,
       version: {

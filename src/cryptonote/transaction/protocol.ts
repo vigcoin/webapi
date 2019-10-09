@@ -5,7 +5,12 @@ import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
 import { Block } from '../block/block';
 import { BufferStreamReader } from '../serialize/reader';
-import { IBlock, IBlockVerificationContext, ITransaction } from '../types';
+import {
+  IBlock,
+  IBlockVerificationContext,
+  ITransaction,
+  ITxVerificationContext,
+} from '../types';
 import { TransactionPrefix } from './prefix';
 import { TransactionValidator } from './validator';
 
@@ -26,7 +31,7 @@ export class TransactionProtocol {
       const block: IBlock = Block.readBlock(
         new BufferStreamReader(blockBuffer)
       );
-      context.blockchain.addNew(block, bvc);
+      context.blockchain.addNew(context, block, bvc);
     } catch (e) {
       logger.info('Failed to parse and validate new block');
       return false;
@@ -44,18 +49,7 @@ export class TransactionProtocol {
       return false;
     }
     try {
-      const transaction = Transaction.read(new BufferStreamReader(tx));
-      const hash = Transaction.hash(transaction);
-      const preHash = TransactionPrefix.hash(transaction.prefix);
-
-      return TransactionProtocol.onIncomingSecond(
-        context,
-        tx,
-        transaction,
-        hash,
-        preHash,
-        keptByBlock
-      );
+      return TransactionProtocol.onIncomingSecond(context, tx, keptByBlock);
     } catch (e) {
       logger.info('WRONG TRANSACTION BLOB, Failed to parse, rejected!');
       return false;
@@ -65,9 +59,6 @@ export class TransactionProtocol {
   public static onIncomingSecond(
     context: P2pConnectionContext,
     txBuffer: Buffer,
-    tx: ITransaction,
-    hash: IHash,
-    prehash: IHash,
     keptByBlock: boolean
   ): boolean {
     // if (!check_tx_syntax(tx)) {
@@ -76,7 +67,9 @@ export class TransactionProtocol {
     //   return false;
     // }
 
-    if (!TransactionValidator.checkSematic(tx)) {
+    const transaction = Transaction.read(new BufferStreamReader(txBuffer));
+    const hash = Transaction.hash(transaction);
+    if (!TransactionValidator.checkSematic(transaction)) {
       logger.info(
         'WRONG TRANSACTION BLOB, Failed to check tx ' +
           hash +
@@ -84,15 +77,13 @@ export class TransactionProtocol {
       );
       return false;
     }
-    return this.addNewTx(context, txBuffer, tx, hash, prehash, keptByBlock);
+    return this.addNewTx(context, txBuffer, hash, keptByBlock);
   }
 
   public static addNewTx(
     context: P2pConnectionContext,
     txBuffer: Buffer,
-    tx: ITransaction,
     hash: IHash,
-    prehash: IHash,
     keptByBlock: boolean
   ): boolean {
     if (context.blockchain.haveTransaction(hash)) {
@@ -103,13 +94,13 @@ export class TransactionProtocol {
       logger.info('tx ' + hash + ' is already in already in transaction pool');
       return true;
     }
-    return context.mempool.addTx(
-      context,
-      txBuffer,
-      tx,
-      hash,
-      prehash,
-      keptByBlock
-    );
+    const tvc: ITxVerificationContext = {
+      addedToPool: false,
+      shouldBeRelayed: false,
+      txFeeTooSmall: false,
+      verifivationFailed: false,
+      verifivationImpossible: false,
+    };
+    return context.mempool.addTxBuffer(context, txBuffer, tvc, keptByBlock);
   }
 }

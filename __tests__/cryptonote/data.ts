@@ -9,7 +9,7 @@ export namespace haveFiles {
   const chainFile = path.resolve(__dirname, '../vigcoin/blockchainindices.dat');
   const cacheFile = path.resolve(__dirname, '../vigcoin/blockscache.dat');
 
-  export const files: Configuration.IBlockFile = {
+  export const files: Configuration.ICBlockFile = {
     data: blockFile,
     index: indexFile,
     // tslint:disable-next-line:object-literal-sort-keys
@@ -28,7 +28,7 @@ export namespace emptyFiles {
   );
   const cacheFile = path.resolve(__dirname, '../vigcoinempty/blockscache.dat');
 
-  export const files: Configuration.IBlockFile = {
+  export const files: Configuration.ICBlockFile = {
     data: blockFile,
     index: indexFile,
     // tslint:disable-next-line:object-literal-sort-keys

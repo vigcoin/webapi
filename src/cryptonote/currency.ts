@@ -5,10 +5,10 @@ import { BlockChain } from './block/blockchain';
 export class Currency {
   // tslint:disable-next-line:variable-name
   private _genesis: Configuration.IGenesis;
-  private config: Configuration.ICurrency;
+  private config: Configuration.ICCurrency;
   private blockchain: BlockChain;
 
-  constructor(config: Configuration.ICurrency) {
+  constructor(config: Configuration.ICCurrency) {
     this.config = config;
     this.blockchain = new BlockChain(config);
     this.init();

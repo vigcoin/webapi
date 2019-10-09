@@ -15,6 +15,8 @@ import { TransactionValidator } from './transaction/validator';
 
 import { parameters } from '../config';
 import { P2pConnectionContext } from '../p2p/connection';
+import { Transaction } from './transaction/index';
+import { TransactionPrefix } from './transaction/prefix';
 import {
   ETransactionIOType,
   IGlobalOut,
@@ -23,8 +25,10 @@ import {
   ITransaction,
   ITransactionCheckInfo,
   ITransactionDetails,
+  ITxVerificationContext,
   uint64,
   uint8,
+  usize,
 } from './types';
 
 const CURRENT_MEMPOOL_ARCHIVE_VER = 1;
@@ -217,20 +221,35 @@ export class MemoryPool extends EventEmitter {
     return this.transactions.has(tx);
   }
 
-  public addTx(
+  public addTxBuffer(
     context: P2pConnectionContext,
     txBuffer: Buffer,
+    tvc: ITxVerificationContext,
+    keptByBlock: boolean
+  ) {
+    const tx = Transaction.read(new BufferStreamReader(txBuffer));
+    return this.addTx(context, tx, txBuffer.length, tvc, keptByBlock);
+  }
+
+  public addTx(
+    context: P2pConnectionContext,
     tx: ITransaction,
-    hash: IHash,
-    prehash: IHash,
+    size: usize,
+    tvc: ITxVerificationContext,
     keptByBlock: boolean
   ): boolean {
+    // const tx = Transaction.read(new BufferStreamReader(txBuffer));
+    const hash = Transaction.hash(tx);
+    const preHash = TransactionPrefix.hash(tx.prefix);
+
     if (!TransactionValidator.checkInputsTypes(tx.prefix)) {
       logger.info('Input type not supported!');
+      tvc.verifivationFailed = true;
       return false;
     }
 
     if (!TransactionAmount.check(tx)) {
+      tvc.verifivationFailed = true;
       return false;
     }
 
@@ -243,6 +262,8 @@ export class MemoryPool extends EventEmitter {
       logger.info(
         'minimum fee: ' + TransactionAmount.format(parameters.MINIMUM_FEE)
       );
+      tvc.verifivationFailed = true;
+      tvc.txFeeTooSmall = true;
       return false;
     }
 
@@ -254,6 +275,7 @@ export class MemoryPool extends EventEmitter {
             hash.toString('hex') +
             ' used already spent inputs'
         );
+        tvc.verifivationFailed = true;
         return false;
       }
     }
@@ -274,20 +296,22 @@ export class MemoryPool extends EventEmitter {
         context,
         tx,
         hash,
-        prehash,
+        preHash,
         keptByBlock,
         checkInfo
       )
     ) {
       if (!keptByBlock) {
         logger.info('tx used wrong inputs, rejected');
+        tvc.verifivationFailed = true;
         return false;
       }
       logger.info('Impossible to validate');
     }
     if (!keptByBlock) {
-      if (!TransactionValidator.checkSize(context, txBuffer.length)) {
+      if (!TransactionValidator.checkSize(context, size)) {
         logger.info('tx too big, rejected');
+        tvc.verifivationFailed = true;
         return false;
       }
 
@@ -296,6 +320,9 @@ export class MemoryPool extends EventEmitter {
           'Trying to add recently deleted transaction. Ignore: ' +
             hash.toString('hex')
         );
+        tvc.verifivationFailed = false;
+        tvc.shouldBeRelayed = false;
+        tvc.addedToPool = false;
         return true;
       }
     }
@@ -305,7 +332,7 @@ export class MemoryPool extends EventEmitter {
       return true;
     }
     const tdx: ITransactionDetails = {
-      blobSize: txBuffer.length,
+      blobSize: size,
       checkInfo,
       fee,
       id: hash,
@@ -317,11 +344,16 @@ export class MemoryPool extends EventEmitter {
     this.transactions.set(hash, tdx);
     this.payment.add(tdx.tx);
     this.timestamp.add(tdx.receiveTime, hash);
+    tvc.addedToPool = true;
+    tvc.shouldBeRelayed = fee > 0 || isFusion;
+    tvc.verifivationFailed = true;
+
     logger.info('tx added: ' + hash);
     this.emit('updated', hash);
     if (this.addTransactionInputs(hash, tx, keptByBlock)) {
       return false;
     }
+    tvc.verifivationFailed = true;
     return true;
   }
 
@@ -404,5 +436,9 @@ export class MemoryPool extends EventEmitter {
     }
 
     return true;
+  }
+
+  public takeTx(id: IHash): ITransactionDetails {
+    return this.transactions.get(id);
   }
 }

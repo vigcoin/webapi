@@ -10,63 +10,63 @@ import { IPeer } from '../p2p';
 
 // tslint:disable-next-line: no-namespace
 export namespace Configuration {
-  export interface IVersion {
+  export interface ICVersion {
     major: number;
     minor: number;
     patch: number;
   }
 
-  export interface IBlock {
+  export interface ICBlock {
     genesisCoinbaseTxHex: string;
-    version: IVersion;
+    version: ICVersion;
   }
 
-  export interface ITransaction {
-    version: IVersion;
+  export interface ICTransaction {
+    version: ICVersion;
   }
 
-  export interface INet {
+  export interface ICNet {
     pubKey: string;
     p2pPort: uint16;
     rpcPort: uint16;
     walletPort: uint16;
-    version: IVersion;
+    version: ICVersion;
   }
 
-  export interface ICheckPoint {
+  export interface ICCheckPoint {
     height: uint32;
     blockId: string;
   }
 
-  export interface IBlockFile {
+  export interface ICBlockFile {
     data: string;
     index: string;
     cache: string;
     chain: string;
   }
 
-  export interface IExtFile {
+  export interface ICExtFile {
     pool: string;
     p2p: string;
     miner: string;
   }
 
-  export interface IHardfork {
+  export interface ICHardfork {
     version: uint8;
     height: uint64;
     threshold: uint8;
     time: Date;
   }
 
-  export interface IStorageVersion {
-    blockCacheArchive: IVersion;
-    blockCacheIndicesArchive: IVersion;
+  export interface ICStorageVersion {
+    blockCacheArchive: ICVersion;
+    blockCacheIndicesArchive: ICVersion;
   }
 
-  export interface ICurrency {
-    block: IBlock;
-    blockFiles: IBlockFile;
-    hardfork: IHardfork[];
+  export interface ICCurrency {
+    block: ICBlock;
+    blockFiles: ICBlockFile;
+    hardfork: ICHardfork[];
   }
 
   export interface IGenesis {
@@ -77,15 +77,15 @@ export namespace Configuration {
   export interface IConfig {
     name: string;
     createTime: Date;
-    block: IBlock;
-    transaction: ITransaction;
-    net: INet;
+    block: ICBlock;
+    transaction: ICTransaction;
+    net: ICNet;
     seeds: IPeer[];
-    checkpoints: ICheckPoint[];
-    hardforks: IHardfork[];
-    storageVersions: IStorageVersion;
-    blockFiles: IBlockFile;
-    extFiles: IExtFile;
+    checkpoints: ICCheckPoint[];
+    hardforks: ICHardfork[];
+    storageVersions: ICStorageVersion;
+    blockFiles: ICBlockFile;
+    extFiles: ICExtFile;
   }
 
   export enum ENetType {

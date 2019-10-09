@@ -6,7 +6,7 @@ import { Configuration } from '../config/types';
 export function getBlockFile(
   dir: string,
   config: Configuration.IConfig
-): Configuration.IBlockFile {
+): Configuration.ICBlockFile {
   if (!existsSync(dir)) {
     mkdirSync(dir);
   }
