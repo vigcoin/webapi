@@ -392,6 +392,23 @@ export class MemoryPool extends EventEmitter {
     return transactions;
   }
 
+  public getTransactionsByIds(hashes: IHash[]) {
+    const blockTxs: ITransaction[] = [];
+    const missedTxs: IHash[] = [];
+    for (const hash of hashes) {
+      const txe = this.transactions.get(hash);
+      if (txe) {
+        blockTxs.push(txe.tx);
+      } else {
+        missedTxs.push(hash);
+      }
+    }
+    return {
+      blockTxs,
+      missedTxs,
+    };
+  }
+
   public addTransactionInputs(
     id: IHash,
     tx: ITransaction,

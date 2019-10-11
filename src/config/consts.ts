@@ -65,6 +65,11 @@ export namespace parameters {
     'Bad DIFFICULTY_WINDOW or DIFFICULTY_CUT'
   );
 
+  export const MAX_BLOCK_SIZE_INITIAL = 20 * 1024;
+  export const MAX_BLOCK_SIZE_GROWTH_SPEED_NUMERATOR = 100 * 1024;
+  export const MAX_BLOCK_SIZE_GROWTH_SPEED_DENOMINATOR =
+    (365 * 24 * 60 * 60) / DIFFICULTY_TARGET;
+
   // Transaction related
 
   export const CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS = 1;

@@ -66,7 +66,6 @@ export class BlockChain {
   private cumulativeBlockSizeLimit: usize = 0;
 
   // caches
-  private blockHashes: Set<IHash> = new Set();
   private transactionPairs: Map<IHash, ITransactionIndex> = new Map();
   private spendKeys: Set<IKeyImage> = new Set();
   private outputs: Map<uint64, IOutputIndexPair[]> = new Map();
@@ -109,7 +108,7 @@ export class BlockChain {
     for (let i = 0; i < this.height; i++) {
       const be = this.get(i);
       const hash = Block.hash(be.block);
-      this.blockHashes.add(hash);
+      this.blockIndex.push(hash);
       for (let j = 0; j < be.transactions.length; j++) {
         const te = be.transactions[j];
         const txHash = Transaction.hash(te.tx);
@@ -201,12 +200,12 @@ export class BlockChain {
     return be.generatedCoins;
   }
 
-  public has(hash: IHash) {
-    return this.blockHashes.has(hash);
-  }
-
   public hasKeyImageAsSpend(keyImage: IHash) {
     return this.spendKeys.has(keyImage);
+  }
+
+  public has(hash: IHash) {
+    return this.blockIndex.has(hash);
   }
 
   public have(hash: IHash): IBlockEntry {
@@ -293,11 +292,10 @@ export class BlockChain {
   }
 
   public getTailId() {
-    if (this.blockHashes.size === 0) {
+    if (this.blockIndex.height === 0) {
       return Buffer.alloc(0);
     }
-    const be = this.get(this.height - 1);
-    return Block.hash(be.block);
+    return this.blockIndex.getTailHash();
   }
 
   public addNew(
@@ -458,5 +456,79 @@ export class BlockChain {
       transactions[i] = txe.tx;
     }
     return transactions;
+  }
+
+  public getTransactions(
+    context: P2pConnectionContext,
+    hashes: IHash[],
+    checkPool: boolean = false
+  ) {
+    let blockTxs: ITransaction[] = [];
+    let missedTxs: IHash[] = [];
+    for (const hash of hashes) {
+      const tidx = this.transactionPairs.get(hash);
+      if (tidx) {
+        const txe = this.getTransactionEntryByIndex(tidx);
+        blockTxs.push(txe.tx);
+      } else {
+        missedTxs.push(hash);
+      }
+    }
+    if (checkPool) {
+      const extra = context.mempool.getTransactionsByIds(missedTxs);
+      blockTxs = blockTxs.concat(extra.blockTxs);
+      missedTxs = extra.missedTxs;
+    }
+    return {
+      blockTxs,
+      missedTxs,
+    };
+  }
+
+  public getCumulativeSize(context: P2pConnectionContext, block: IBlock) {
+    const { blockTxs, missedTxs } = this.getTransactions(
+      context,
+      block.transactionHashes,
+      true
+    );
+    let cumulativeSize = Transaction.size(block.transaction);
+    for (const tx of blockTxs) {
+      cumulativeSize += Transaction.size(tx);
+    }
+    if (!missedTxs.length) {
+      return false;
+    }
+    return cumulativeSize;
+  }
+
+  public checkCumulativeSize(hash: IHash, size: usize, height: uint64) {
+    const maxCumulativeSize = this.maxCumulativeSize(height);
+    if (size > maxCumulativeSize) {
+      logger.info(
+        'Block ' +
+          hash.toString('hex') +
+          ' is too big: ' +
+          size +
+          ' bytes, ' +
+          'exptected no more than ' +
+          maxCumulativeSize +
+          ' bytes'
+      );
+      return false;
+    }
+    return true;
+  }
+
+  public maxCumulativeSize(size: uint64) {
+    const sizedSpeedNumberator =
+      size * parameters.MAX_BLOCK_SIZE_GROWTH_SPEED_NUMERATOR;
+    assert(sizedSpeedNumberator < Number.MAX_SAFE_INTEGER);
+    const maxSize = Math.floor(
+      parameters.MAX_BLOCK_SIZE_INITIAL +
+        sizedSpeedNumberator /
+          parameters.MAX_BLOCK_SIZE_GROWTH_SPEED_DENOMINATOR
+    );
+    assert(maxSize >= parameters.MAX_BLOCK_SIZE_INITIAL);
+    return maxSize;
   }
 }

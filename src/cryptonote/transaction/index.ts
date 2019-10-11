@@ -126,4 +126,8 @@ export class Transaction {
     const hash = Buffer.from(hashStr, 'hex');
     return hash;
   }
+
+  public static size(transaction: ITransaction): usize {
+    return Transaction.toBuffer(transaction).length;
+  }
 }
