@@ -28,6 +28,7 @@ import {
 import { AlternativeBlockchain } from './alternative';
 import { Block } from './block';
 import { BlockIndex } from './block-index';
+import { CheckPoint } from './checkpoint';
 
 interface IOutputIndexPair {
   txIdx: ITransactionIndex;
@@ -57,6 +58,9 @@ export class BlockChain {
     }
     return result;
   }
+
+  public alternativeChain: Map<IHash, IBlockEntry> = new Map();
+  public checkpoint: CheckPoint = new CheckPoint();
 
   private files: Configuration.ICBlockFile;
   private currency: Configuration.ICCurrency;
@@ -249,6 +253,10 @@ export class BlockChain {
 
   public haveTransaction(transaction: IHash): boolean {
     return !!this.transactionPairs.get(transaction);
+  }
+
+  public getHeightByIndex(hash: IHash) {
+    return this.blockIndex.getHeight(hash);
   }
 
   public getHeightByHash(hash: IHash): ITransactionIndex {

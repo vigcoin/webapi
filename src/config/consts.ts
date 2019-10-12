@@ -47,6 +47,8 @@ export namespace parameters {
 
   export const CRYPTONOTE_COINBASE_BLOB_RESERVED_SIZE = 600;
 
+  export const BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW = 60;
+
   // Difficulty
 
   // TODO: Define preferred block's target time
