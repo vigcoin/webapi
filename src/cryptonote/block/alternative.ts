@@ -4,6 +4,7 @@ import { IBlock, IBlockVerificationContext } from '../../cryptonote/types';
 import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
 import { medianValue } from '../../util/math';
+import { Difficulty } from '../difficulty';
 import { IBlockEntry, uint64, usize } from '../types';
 import { Block } from './block';
 
@@ -139,7 +140,10 @@ export class AlternativeBlockchain {
     }
 
     const height = alterChain.length ? iter.height + 1 : mainHeight + 1;
-
+    // const be : IBlockEntry = {
+    //   block,
+    //   height
+    // }
     if (!context.blockchain.checkpoint.check(height, id)) {
       logger.error('CHECKPOINT VALIDATION FAILED');
       bvc.verificationFailed = true;
@@ -148,16 +152,18 @@ export class AlternativeBlockchain {
 
     // Always check PoW for alternative blocks
 
-    // const currentDifficulty =
-
-    // block_entry_t bei = boost:: value_initialized<block_entry_t>();
-    // bei.bl = b;
-    // bei.height = static_cast<uint32_t>(alt_chain.size() ? it_prev -> second.height + 1 : mainPrevHeight + 1);
+    const currentDifficulty = Difficulty.nextDifficultyForAlternativeChain(
+      context,
+      alterChain,
+      height
+    );
+    if (!currentDifficulty) {
+      logger.error('!!!!!!! DIFFICULTY OVERHEAD !!!!!!!');
+      return false;
+    }
 
     // // Always check PoW for alternative blocks
     // m_is_in_checkpoint_zone = false;
-    // difficulty_t current_diff = get_next_difficulty_for_alternative_chain(alt_chain, bei);
-    // if (!(current_diff)) { logger(ERROR, BRIGHT_RED) << "!!!!!!! DIFFICULTY OVERHEAD !!!!!!!"; return false; }
     // hash_t proof_of_work = NULL_HASH;
     // if (!Block:: checkProofOfWork(bei.bl, current_diff, proof_of_work)) {
     //   logger(INFO, BRIGHT_RED) <<

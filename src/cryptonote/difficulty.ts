@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import { parameters } from '../config';
+import { CryptonoteDifficulty } from '../crypto/types';
 import { logger } from '../logger';
 import { P2pConnectionContext } from '../p2p/connection';
 import { IBlockEntry, uint64 } from './types';
@@ -11,7 +12,7 @@ export class Difficulty {
   public static nextDifficultyForAlternativeChain(
     context: P2pConnectionContext,
     alterChain: IBlockEntry[],
-    be: IBlockEntry
+    height: uint64
   ) {
     const timestamps: uint64[] = [];
     const cumulativeDifficulties: uint64[] = [];
@@ -19,7 +20,7 @@ export class Difficulty {
 
     if (alterChain.length < blocksCount) {
       const front = alterChain[alterChain.length - 1];
-      const mainChainStopOffset = alterChain.length ? front.height : be.height;
+      const mainChainStopOffset = alterChain.length ? front.height : height;
       let mainChainCount =
         blocksCount -
         (blocksCount > alterChain.length ? alterChain.length : blocksCount);
@@ -74,59 +75,13 @@ export class Difficulty {
         }
       }
     }
-    return Difficulty.next(timestamps, cumulativeDifficulties);
-  }
 
-  public static next(timestamps: uint64[], cumulativeDifficulties: uint64[]) {
-    assert(parameters.DIFFICULTY_WINDOW >= 2);
-    if (timestamps.length > parameters.DIFFICULTY_WINDOW) {
-      timestamps.splice(parameters.DIFFICULTY_WINDOW);
-      cumulativeDifficulties.splice(parameters.DIFFICULTY_WINDOW);
-    }
-    const length = timestamps.length;
-    assert(length === cumulativeDifficulties.length);
-    assert(length <= parameters.DIFFICULTY_WINDOW);
-    if (length <= 1) {
-      return 1;
-    }
-    timestamps.sort();
-    let cutBegin = 0;
-    let cutEnd = 0;
-    assert(2 * parameters.DIFFICULTY_CUT <= parameters.DIFFICULTY_WINDOW - 2);
-    if (
-      length <=
-      parameters.DIFFICULTY_WINDOW - 2 * parameters.DIFFICULTY_CUT
-    ) {
-      cutBegin = 0;
-      cutEnd = length;
-    } else {
-      cutBegin = Math.floor(
-        (length -
-          (parameters.DIFFICULTY_WINDOW - 2 * parameters.DIFFICULTY_CUT) +
-          1) /
-          2
-      );
-      cutEnd =
-        cutBegin +
-        (parameters.DIFFICULTY_WINDOW - 2 * parameters.DIFFICULTY_CUT);
-    }
+    const target = parameters.DIFFICULTY_TARGET;
+    const win = parameters.DIFFICULTY_WINDOW;
+    const cut = parameters.DIFFICULTY_CUT;
+    const lag = parameters.DIFFICULTY_LAG;
 
-    assert(cutBegin + 2 <= cutEnd && cutEnd <= length);
-    let timeSpan = timestamps[cutEnd - 1] - timestamps[cutBegin];
-    if (timeSpan === 0) {
-      timeSpan = 1;
-    }
-    const totalWork =
-      cumulativeDifficulties[cutEnd - 1] - cumulativeDifficulties[cutBegin];
-    assert(totalWork > 0);
-    const low = 0;
-    const high = 0;
-    // TODO: mul128
-    // low = 0;
-    if (high !== 0 || low + timeSpan - 1 < low) {
-      return 0;
-    }
-
-    return (low + timeSpan - 1) / timeSpan;
+    const diff = new CryptonoteDifficulty(target, cut, lag, win);
+    return diff.next(timestamps, cumulativeDifficulties);
   }
 }
