@@ -142,7 +142,6 @@ export class Block {
     }
   }
 
-  private blocks;
   private filename: string;
 
   constructor(filename: string) {

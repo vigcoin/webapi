@@ -13,6 +13,8 @@ export type IKeyImage = IHash;
 export type ISignature = IHash;
 
 export const CNFashHash = Hash.fast;
+export const CNSlowHash = Hash.slow;
+export const CNCheckHash = Hash.check;
 export const IsPublicKey = Key.check;
 
 export const CryptoHash = Hash;

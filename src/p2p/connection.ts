@@ -3,6 +3,7 @@ import { EventEmitter } from 'events';
 import { createConnection, Socket } from 'net';
 import { IHash } from '../crypto/types';
 import { BlockChain } from '../cryptonote/block/blockchain';
+import { Hardfork } from '../cryptonote/block/hardfork';
 import { MemoryPool } from '../cryptonote/mem-pool';
 import { INetwork, IPeer, IPeerIDType } from '../cryptonote/p2p';
 import { uint32, uint8 } from '../cryptonote/types';
@@ -121,6 +122,8 @@ export class P2pConnectionContext extends ConnectionContext {
   public mempool: MemoryPool;
   public socket: Socket;
   public version: uint32;
+
+  public hardfork: Hardfork;
 
   // tslint:disable-next-line:variable-name
   private _peerId: IPeerIDType;

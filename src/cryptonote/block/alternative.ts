@@ -54,7 +54,7 @@ export class AlternativeBlockchain {
 
     const alternativeBlock = context.blockchain.alternativeChain.get(id);
 
-    if (mainHeight === -1 || !alternativeBlock) {
+    if (mainHeight === -1 && !alternativeBlock) {
       // block orphaned
       bvc.markedAsOrphaned = true;
       logger.info('Block recognized as orphaned and rejected, id = ' + id);
@@ -162,17 +162,16 @@ export class AlternativeBlockchain {
       return false;
     }
 
-    // // Always check PoW for alternative blocks
-    // m_is_in_checkpoint_zone = false;
-    // hash_t proof_of_work = NULL_HASH;
-    // if (!Block:: checkProofOfWork(bei.bl, current_diff, proof_of_work)) {
-    //   logger(INFO, BRIGHT_RED) <<
-    //     "Block with id: " << id
-    //     << ENDL << " for alternative chain, have not enough proof of work: " << proof_of_work
-    //     << ENDL << " expected difficulty: " << current_diff;
-    //   bvc.m_verifivation_failed = true;
-    //   return false;
-    // }
+    if (!context.blockchain.checkProofOfWork(block, currentDifficulty)) {
+      logger.info('Block with id: ' + id);
+      logger.info(
+        ' for alternative chain, have not enough proof of work: ' +
+          context.blockchain.getLongHash(block)
+      );
+      logger.info(' expected difficulty: ' + currentDifficulty);
+      bvc.verificationFailed = true;
+      return false;
+    }
 
     // if (!prevalidate_miner_transaction(b, bei.height)) {
     //   logger(INFO, BRIGHT_RED) <<

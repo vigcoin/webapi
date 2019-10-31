@@ -49,7 +49,7 @@ export class P2PServer extends EventEmitter {
   private connectionManager: ConnectionManager;
   private handler: Handler;
   private network: INetwork;
-  private networkId: uint8[];
+  // private networkId: uint8[];
 
   // tslint:disable-next-line:variable-name
   private _version: uint8 = 1;
@@ -69,7 +69,7 @@ export class P2PServer extends EventEmitter {
     this.handler = handler;
 
     this.network = network;
-    this.networkId = networkId;
+    // this.networkId = networkId;
     this.pm = pm;
     this.peerId = randomBytes(8);
 

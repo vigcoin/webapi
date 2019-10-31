@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { parameters } from '../../config';
 import { Configuration } from '../../config/types';
-import { IHash, IKeyImage } from '../../crypto/types';
+import { CNCheckHash, CNSlowHash, IHash, IKeyImage } from '../../crypto/types';
 import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
 import { medianValue } from '../../util/math';
@@ -29,6 +29,7 @@ import { AlternativeBlockchain } from './alternative';
 import { Block } from './block';
 import { BlockIndex } from './block-index';
 import { CheckPoint } from './checkpoint';
+import { Hardfork } from './hardfork';
 
 interface IOutputIndexPair {
   txIdx: ITransactionIndex;
@@ -61,6 +62,7 @@ export class BlockChain {
 
   public alternativeChain: Map<IHash, IBlockEntry> = new Map();
   public checkpoint: CheckPoint = new CheckPoint();
+  public hardfork: Hardfork;
 
   private files: Configuration.ICBlockFile;
   private currency: Configuration.ICCurrency;
@@ -86,6 +88,7 @@ export class BlockChain {
     this.files = config.blockFiles;
     this.blockIndex = new BlockIndex(this.files.index);
     this.block = new Block(this.files.data);
+    this.hardfork = new Hardfork(config.hardfork);
     this.offsets = [0];
   }
 
@@ -538,5 +541,15 @@ export class BlockChain {
     );
     assert(maxSize >= parameters.MAX_BLOCK_SIZE_INITIAL);
     return maxSize;
+  }
+
+  public getLongHash(block: IBlock): IHash {
+    const buffer = Block.toBuffer(block);
+    return CNSlowHash(buffer, this.hardfork.getVariant(block));
+  }
+
+  public checkProofOfWork(block: IBlock, difficulty: uint64): boolean {
+    const hash = this.getLongHash(block);
+    return CNCheckHash(hash, difficulty);
   }
 }

@@ -1,10 +1,4 @@
-import {
-  IHash,
-  IKeyImage,
-  IPublicKey,
-  ISignature,
-  SIGNATURE_LENGTH,
-} from '../crypto/types';
+import { IHash, IKeyImage, IPublicKey, ISignature } from '../crypto/types';
 
 export type uint64 = number;
 export type uint32 = number;

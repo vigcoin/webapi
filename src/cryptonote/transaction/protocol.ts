@@ -37,6 +37,7 @@ export class TransactionProtocol {
       return false;
     }
   }
+
   public static onIncoming(
     context: P2pConnectionContext,
     tx: Buffer,
