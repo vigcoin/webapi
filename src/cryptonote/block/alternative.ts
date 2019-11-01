@@ -7,6 +7,7 @@ import { medianValue } from '../../util/math';
 import { Difficulty } from '../difficulty';
 import { IBlockEntry, uint64, usize } from '../types';
 import { Block } from './block';
+import { TransactionValidator } from '../transaction/validator';
 
 export class AlternativeBlockchain {
   public static handle(
@@ -140,10 +141,7 @@ export class AlternativeBlockchain {
     }
 
     const height = alterChain.length ? iter.height + 1 : mainHeight + 1;
-    // const be : IBlockEntry = {
-    //   block,
-    //   height
-    // }
+
     if (!context.blockchain.checkpoint.check(height, id)) {
       logger.error('CHECKPOINT VALIDATION FAILED');
       bvc.verificationFailed = true;
@@ -173,27 +171,33 @@ export class AlternativeBlockchain {
       return false;
     }
 
-    // if (!prevalidate_miner_transaction(b, bei.height)) {
-    //   logger(INFO, BRIGHT_RED) <<
-    //     "Block with id: " << hex:: podToString(id) << " (as alternative) have wrong miner transaction.";
-    //   bvc.m_verifivation_failed = true;
-    //   return false;
-    // }
+    if (!TransactionValidator.prevalidateMiner(block, height)) {
+      logger.info(
+        'Block with id: ' +
+          id.toString('hex') +
+          ' (as alternative) have wrong miner transaction.'
+      );
+      bvc.verificationFailed = true;
+      return false;
+    }
 
-    // bei.cumulative_difficulty = alt_chain.size() ? it_prev -> second.cumulative_difficulty : m_blocks[mainPrevHeight].cumulative_difficulty;
-    // bei.cumulative_difficulty += current_diff;
+    let cumulativeDifficulty = alterChain.length
+      ? iter.difficulty
+      : context.blockchain.get(mainHeight).difficulty;
+    cumulativeDifficulty += currentDifficulty;
 
-    // #ifdef _DEBUG
-    // auto i_dres = m_alternative_chains.find(id);
-    // if (!(i_dres == m_alternative_chains.end())) { logger(ERROR, BRIGHT_RED) << "insertion of new alternative block returned as it already exist"; return false; }
-    // #endif
+    const newBe: IBlockEntry = {
+      block,
+      height,
+      // tslint:disable-next-line:object-literal-sort-keys
+      difficulty: currentDifficulty,
+      generatedCoins: 0,
+      size: 0,
+      transactions: [],
+    };
 
-    // auto i_res = m_alternative_chains.insert(blocks_ext_by_hash_t:: value_type(id, bei));
-    // if (!(i_res.second)) { logger(ERROR, BRIGHT_RED) << "insertion of new alternative block returned as it already exist"; return false; }
-
-    // m_orthanBlocksIndex.add(bei.bl);
-
-    // alt_chain.push_back(i_res.first);
+    context.blockchain.alternativeChain.set(id, newBe);
+    alterChain.push(newBe);
 
     // if (is_a_checkpoint) {
     //   //do reorganize!

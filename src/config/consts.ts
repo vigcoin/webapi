@@ -39,6 +39,15 @@ export const cryptonote = {
 export namespace parameters {
   export const CRYPTONOTE_MAX_BLOCK_NUMBER = 500000000;
   export const CRYPTONOTE_MAX_BLOCK_BLOB_SIZE = 500000000;
+  export const CRYPTONOTE_MAX_TX_SIZE = 1000000000;
+  // TODO Currency-specific address prefix
+  export const CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 0x3d;
+
+  // TODO: Choose maturity period for your currency
+  export const CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW = 60;
+  export const CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT = 60 * 60 * 2;
+
+  export const BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW = 60;
 
   // TODO: Define number of blocks for block size median calculation
   export const CRYPTONOTE_REWARD_BLOCKS_WINDOW = 100;
@@ -46,8 +55,6 @@ export namespace parameters {
   export const CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE = 10000;
 
   export const CRYPTONOTE_COINBASE_BLOB_RESERVED_SIZE = 600;
-
-  export const BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW = 60;
 
   // Difficulty
 
@@ -77,10 +84,6 @@ export namespace parameters {
   export const CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS = 1;
   export const CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS =
     DIFFICULTY_TARGET * CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS;
-
-  export const CRYPTONOTE_MAX_TX_SIZE = 1000000000;
-
-  export const CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 0x3d;
 
   export const CRYPTONOTE_DISPLAY_DECIMAL_POINT = 8;
 

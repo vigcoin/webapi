@@ -9,8 +9,11 @@ import {
 } from '../../crypto/types';
 import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
+import { Block } from '../block/block';
 import {
   ETransactionIOType,
+  IBlock,
+  IInputBase,
   IInputKey,
   IInputSignature,
   IOutputKey,
@@ -19,6 +22,7 @@ import {
   ITransactionCheckInfo,
   ITransactionOutput,
   ITransactionPrefix,
+  uint64,
   usize,
 } from '../types';
 import { TransactionAmount } from './amount';
@@ -496,6 +500,50 @@ export class TransactionValidator {
       );
       return false;
     }
+    return true;
+  }
+
+  public static prevalidateMiner(block: IBlock, height: uint64) {
+    if (!block.transaction.prefix.inputs.length) {
+      logger.error('coinbase transaction in the block has no inputs!');
+      return false;
+    }
+    const input = block.transaction.prefix.inputs[0];
+    if (input.tag !== ETransactionIOType.BASE) {
+      logger.error('coinbase transaction in the block has the wrong type!');
+      return false;
+    }
+    const target = input.target as IInputBase;
+    if (target.blockIndex !== height) {
+      logger.info(
+        'The miner transaction in block has invalid height: ' +
+          target.blockIndex +
+          ', expected :' +
+          height
+      );
+      return false;
+    }
+    const expectedHeight =
+      height + parameters.CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW;
+    if (block.transaction.prefix.unlockTime !== expectedHeight) {
+      logger.info(
+        'coinbase transaction transaction have wrong unlock time = ' +
+          block.transaction.prefix.unlockTime +
+          ', expected : ' +
+          expectedHeight
+      );
+      return false;
+    }
+
+    if (
+      !TransactionValidator.checkMoneyOverflowOutputs(block.transaction.prefix)
+    ) {
+      logger.info(
+        'miner transaction have money overflow in block ' + Block.hash(block)
+      );
+      return false;
+    }
+
     return true;
   }
 }
