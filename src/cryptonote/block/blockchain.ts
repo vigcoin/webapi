@@ -61,7 +61,7 @@ export class BlockChain {
   }
 
   public alternativeChain: Map<IHash, IBlockEntry> = new Map();
-  public checkpoint: CheckPoint = new CheckPoint();
+  public checkpoint: CheckPoint;
   public hardfork: Hardfork;
 
   private files: Configuration.ICBlockFile;
@@ -88,7 +88,8 @@ export class BlockChain {
     this.files = config.blockFiles;
     this.blockIndex = new BlockIndex(this.files.index);
     this.block = new Block(this.files.data);
-    this.hardfork = new Hardfork(config.hardfork);
+    this.hardfork = new Hardfork(config.hardforks);
+    this.checkpoint = new CheckPoint(config.checkpoints);
     this.offsets = [0];
   }
 
@@ -324,7 +325,7 @@ export class BlockChain {
       let result = false;
       if (!block.header.preHash.equals(this.getTailId())) {
         bvc.addedToMainChain = false;
-        result = AlternativeBlockchain.handle(context, id, block, bvc);
+        result = AlternativeBlockchain.handle(context, id, block, bvc, true);
       } else {
         // result = pushBlock()
       }
@@ -348,6 +349,7 @@ export class BlockChain {
     }
     return true;
   }
+
   public hasOutput(amount: uint64) {
     return this.outputs.has(amount);
   }

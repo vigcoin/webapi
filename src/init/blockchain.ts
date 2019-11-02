@@ -24,7 +24,8 @@ export function getBlockChainInitialized(
       },
     },
     blockFiles: files,
-    hardfork: [],
+    checkpoints: config.checkpoints,
+    hardforks: config.hardforks,
   };
   const blc = getBlockChain(currency);
   blc.init();

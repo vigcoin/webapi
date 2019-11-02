@@ -18,7 +18,8 @@ describe('test currency', () => {
         },
       },
       blockFiles: haveFiles.files,
-      hardfork: [],
+      checkpoints: [],
+      hardforks: [],
     };
     currency = new Currency(config);
     assert(currency.genesis.block.header.version.major === 1);
@@ -37,7 +38,8 @@ describe('test currency', () => {
         },
       },
       blockFiles: emptyFiles.files,
-      hardfork: [],
+      checkpoints: [],
+      hardforks: [],
     };
     currency = new Currency(config);
     assert(currency.genesis.block.header.version.major === 1);

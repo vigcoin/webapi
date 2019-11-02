@@ -101,7 +101,8 @@ describe('read from empty file', () => {
       },
     },
     blockFiles,
-    hardfork: [],
+    checkpoints: [],
+    hardforks: [],
   };
 
   const blockChain: BlockChain = getBlockChain(config);

@@ -66,7 +66,8 @@ export namespace Configuration {
   export interface ICCurrency {
     block: ICBlock;
     blockFiles: ICBlockFile;
-    hardfork: ICHardfork[];
+    hardforks: ICHardfork[];
+    checkpoints: ICCheckPoint[];
   }
 
   export interface IGenesis {

@@ -48,7 +48,8 @@ describe('test connections', () => {
       },
     },
     blockFiles: getBlockFile(gDir, mainnet),
-    hardfork: [],
+    checkpoints: [],
+    hardforks: [],
   };
   const bc: BlockChain = getBlockChain(currencyConfig);
   bc.init();

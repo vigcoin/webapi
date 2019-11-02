@@ -1,9 +1,17 @@
+import * as assert from 'assert';
+import { Configuration } from '../../config/types';
 import { HASH_LENGTH, IHash } from '../../crypto/types';
 import { logger } from '../../logger';
 import { uint64 } from '../types';
 
 export class CheckPoint {
   private points: Map<uint64, IHash> = new Map();
+
+  constructor(checkpoints: Configuration.ICCheckPoint[]) {
+    for (const point of checkpoints) {
+      assert(this.add(point.height, point.blockId));
+    }
+  }
 
   public add(height: uint64, hashStr: string): boolean {
     const hash = Buffer.from(hashStr, 'hex');
@@ -35,7 +43,7 @@ export class CheckPoint {
       return false;
     }
     let mostMatchKey = 0;
-    let mostSmallDiff = 300000; // Init with max block height
+    let mostSmallDiff = Number.MAX_SAFE_INTEGER; // Init with max block height
     for (const [key] of this.points) {
       const diff = Math.abs(blockchainHeight - key);
       if (diff < mostSmallDiff) {

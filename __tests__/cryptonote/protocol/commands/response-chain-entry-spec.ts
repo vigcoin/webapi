@@ -41,7 +41,8 @@ const config: Configuration.ICCurrency = {
     },
   },
   blockFiles: getBlockFile(dir, mainnet),
-  hardfork: [],
+  checkpoints: [],
+  hardforks: [],
 };
 const bc: BlockChain = getBlockChain(config);
 bc.init();

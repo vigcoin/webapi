@@ -4,7 +4,7 @@ import { CheckPoint } from '../../../src/cryptonote/block/checkpoint';
 
 describe('checkpoint test', () => {
   test('should test checkpoint', () => {
-    const cp = new CheckPoint();
+    const cp = new CheckPoint([]);
     const hash = randomBytes(32);
     const hash1 = randomBytes(32);
     assert(cp.add(1, hash.toString('hex')));

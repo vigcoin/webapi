@@ -5,16 +5,18 @@ import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
 import { medianValue } from '../../util/math';
 import { Difficulty } from '../difficulty';
+import { TransactionValidator } from '../transaction/validator';
 import { IBlockEntry, uint64, usize } from '../types';
 import { Block } from './block';
-import { TransactionValidator } from '../transaction/validator';
+import { BlockchainMessage, EBlockchainMessage } from './messages';
 
 export class AlternativeBlockchain {
   public static handle(
     context: P2pConnectionContext,
     id: IHash,
     block: IBlock,
-    bvc: IBlockVerificationContext
+    bvc: IBlockVerificationContext,
+    send: boolean
   ): boolean {
     const height = context.blockchain.getHeightByBlock(block);
     if (height === 0) {
@@ -23,6 +25,21 @@ export class AlternativeBlockchain {
           id.toString('hex') +
           ' (as alternative) have wrong miner transaction'
       );
+      bvc.verificationFailed = true;
+      return false;
+    }
+
+    if (
+      !context.blockchain.checkpoint.isAllowed(
+        context.blockchain.height,
+        height
+      )
+    ) {
+      logger.info('Block with id: ' + id.toString('hex'));
+      logger.info(
+        " can't be accepted for alternative chain, block height: " + height
+      );
+      logger.info(' blockchain height: ' + context.blockchain.height);
       bvc.verificationFailed = true;
       return false;
     }
@@ -65,7 +82,8 @@ export class AlternativeBlockchain {
         id,
         block,
         mainHeight,
-        bvc
+        bvc,
+        send
       );
     }
 
@@ -77,7 +95,8 @@ export class AlternativeBlockchain {
     id: IHash,
     block: IBlock,
     mainHeight: uint64,
-    bvc: IBlockVerificationContext
+    bvc: IBlockVerificationContext,
+    send: boolean
   ): boolean {
     // we have new block in alternative chain
     // build alternative subchain, front -> mainchain, back -> alternative head
@@ -141,12 +160,7 @@ export class AlternativeBlockchain {
     }
 
     const height = alterChain.length ? iter.height + 1 : mainHeight + 1;
-
-    if (!context.blockchain.checkpoint.check(height, id)) {
-      logger.error('CHECKPOINT VALIDATION FAILED');
-      bvc.verificationFailed = true;
-      return false;
-    }
+    const isACheckpoint = context.blockchain.checkpoint.check(height, id);
 
     // Always check PoW for alternative blocks
 
@@ -190,7 +204,7 @@ export class AlternativeBlockchain {
       block,
       height,
       // tslint:disable-next-line:object-literal-sort-keys
-      difficulty: currentDifficulty,
+      difficulty: cumulativeDifficulty,
       generatedCoins: 0,
       size: 0,
       transactions: [],
@@ -199,44 +213,159 @@ export class AlternativeBlockchain {
     context.blockchain.alternativeChain.set(id, newBe);
     alterChain.push(newBe);
 
-    // if (is_a_checkpoint) {
-    //   //do reorganize!
-    //   logger(INFO, BRIGHT_GREEN) <<
-    //     "###### REORGANIZE on height: " << alt_chain.front() -> second.height << " of " << m_blocks.size() - 1 <<
-    //     ", checkpoint is found in alternative chain on height " << bei.height;
-    //   bool r = switch_to_alternative_blockchain(alt_chain, true);
-    //   if (r) {
-    //     bvc.m_added_to_main_chain = true;
-    //     bvc.m_switched_to_alt_chain = true;
-    //   } else {
-    //     bvc.m_verifivation_failed = true;
-    //   }
-    //   return r;
-    // } else if (m_blocks.back().cumulative_difficulty < bei.cumulative_difficulty) //check if difficulty bigger then in main chain
-    // {
-    //   //do reorganize!
-    //   logger(INFO, BRIGHT_GREEN) <<
-    //     "###### REORGANIZE on height: " << alt_chain.front() -> second.height << " of " << m_blocks.size() - 1 << " with cum_difficulty " << m_blocks.back().cumulative_difficulty
-    //     << ENDL << " alternative blockchain size: " << alt_chain.size() << " with cum_difficulty " << bei.cumulative_difficulty;
-    //   bool r = switch_to_alternative_blockchain(alt_chain, false);
-    //   if (r) {
-    //     bvc.m_added_to_main_chain = true;
-    //     bvc.m_switched_to_alt_chain = true;
-    //   } else {
-    //     bvc.m_verifivation_failed = true;
-    //   }
-    //   return r;
-    // } else {
-    //   logger(INFO, BRIGHT_BLUE) <<
-    //     "----- BLOCK ADDED AS ALTERNATIVE ON HEIGHT " << bei.height
-    //     << ENDL << "id:\t" << id
-    //     << ENDL << "PoW:\t" << proof_of_work
-    //     << ENDL << "difficulty:\t" << current_diff;
-    //   if (sendNewAlternativeBlockMessage) {
-    //     sendMessage(BlockchainMessage(NewAlternativeBlockMessage(id)));
-    //   }
-    //   return true;
+    if (isACheckpoint) {
+      // Do reorganization!
+      logger.info(
+        '###### REORGANIZE on height: ' +
+          alterChain[0].height +
+          ' of ' +
+          (context.blockchain.height - 1) +
+          ', checkpoint is found in alternative chain on height ' +
+          newBe.height
+      );
+      if (AlternativeBlockchain.switchTo(alterChain, true)) {
+        bvc.addedToMainChain = true;
+        bvc.switchedToAltChain = true;
+        return true;
+      } else {
+        bvc.verificationFailed = true;
+        return false;
+      }
+    } else {
+      // Check if difficulty bigger than in the main chain
+      if (
+        context.blockchain.get(context.blockchain.height).difficulty <
+        newBe.difficulty
+      ) {
+        // Do reorganization!
+        logger.info(
+          '###### REORGANIZE on height: ' +
+            alterChain[0].height +
+            ' of ' +
+            (context.blockchain.height - 1) +
+            ' with cum_difficulty ' +
+            context.blockchain.get(context.blockchain.height).difficulty
+        );
+
+        logger.info(
+          ' alternative blockchain size: ' +
+            alterChain.length +
+            ' with cum_difficulty ' +
+            newBe.difficulty
+        );
+        if (AlternativeBlockchain.switchTo(alterChain, true)) {
+          bvc.addedToMainChain = true;
+          bvc.switchedToAltChain = true;
+          return true;
+        } else {
+          bvc.verificationFailed = true;
+          return false;
+        }
+      } else {
+        logger.info(
+          '----- BLOCK ADDED AS ALTERNATIVE ON HEIGHT ' + newBe.height
+        );
+        logger.info('id:\t' + id);
+        logger.info(
+          'PoW: \t' + context.blockchain.getLongHash(block).toString('hex')
+        );
+        logger.info('Difficulty :\t' + currentDifficulty);
+        if (send) {
+          const messager = new BlockchainMessage(
+            EBlockchainMessage.NEW_ALTERNATIVE_BLOCK_MESSAGE
+          );
+          messager.send();
+        }
+        return true;
+      }
+    }
+  }
+
+  public static switchTo(
+    alterChain: IBlockEntry[],
+    discardDisconnected: boolean
+  ): boolean {
+    if (!alterChain.length) {
+      logger.error('Empty chain!');
+      return false;
+    }
+
+    const height = alterChain[0].height;
+
+    // Disconnect old chain
+
+    const disconnectedChain: IBlock[] = [];
+    // for ()
+
+    // std::lock_guard<decltype(m_blockchain_lock)> lk(m_blockchain_lock);
+
+    // size_t split_height = alt_chain.front()->second.height;
+
+    // if (!(m_blocks.size() > split_height)) {
+    //   logger(ERROR, BRIGHT_RED) << "switch_to_alternative_blockchain: blockchain size is lower than split height";
+    //   return false;
     // }
+
+    // //disconnecting old chain
+    // std::list<block_t> disconnected_chain;
+    // for (size_t i = m_blocks.size() - 1; i >= split_height; i--) {
+    //   block_t b = m_blocks[i].bl;
+    //   popBlock(Block::getHash(b));
+    //   //if (!(r)) { logger(ERROR, BRIGHT_RED) << "failed to remove block on chain switching"; return false; }
+    //   disconnected_chain.push_front(b);
+    // }
+
+    // //connecting new alternative chain
+    // for (auto alt_ch_iter = alt_chain.begin(); alt_ch_iter != alt_chain.end(); alt_ch_iter++) {
+    //   auto ch_ent = *alt_ch_iter;
+    //   block_verification_context_t bvc = boost::value_initialized<block_verification_context_t>();
+    //   bool r = pushBlock(ch_ent->second.bl, bvc);
+    //   if (!r || !bvc.m_added_to_main_chain) {
+    //     logger(INFO, BRIGHT_WHITE) << "Failed to switch to alternative blockchain";
+    //     rollback_blockchain_switching(disconnected_chain, split_height);
+    //     //add_block_as_invalid(ch_ent->second, Block::getHash(ch_ent->second.bl));
+    //     logger(INFO, BRIGHT_WHITE) << "The block was inserted as invalid while connecting new alternative chain,  block_id: " << Block::getHash(ch_ent->second.bl);
+    //     m_orthanBlocksIndex.remove(ch_ent->second.bl);
+    //     m_alternative_chains.erase(ch_ent);
+
+    //     for (auto alt_ch_to_orph_iter = ++alt_ch_iter; alt_ch_to_orph_iter != alt_chain.end(); alt_ch_to_orph_iter++) {
+    //       //block_verification_context_t bvc = boost::value_initialized<block_verification_context_t>();
+    //       //add_block_as_invalid((*alt_ch_iter)->second, (*alt_ch_iter)->first);
+    //       m_orthanBlocksIndex.remove((*alt_ch_to_orph_iter)->second.bl);
+    //       m_alternative_chains.erase(*alt_ch_to_orph_iter);
+    //     }
+
+    //     return false;
+    //   }
+    // }
+
+    // if (!discard_disconnected_chain) {
+    //   //pushing old chain as alternative chain
+    //   for (auto& old_ch_ent : disconnected_chain) {
+    //     block_verification_context_t bvc = boost::value_initialized<block_verification_context_t>();
+    //     bool r = handle_alternative_block(old_ch_ent, Block::getHash(old_ch_ent), bvc, false);
+    //     if (!r) {
+    //       logger(ERROR, BRIGHT_RED) << ("Failed to push ex-main chain blocks to alternative chain ");
+    //       rollback_blockchain_switching(disconnected_chain, split_height);
+    //       return false;
+    //     }
+    //   }
+    // }
+
+    // std::vector<hash_t> blocksFromCommonRoot;
+    // blocksFromCommonRoot.reserve(alt_chain.size() + 1);
+    // blocksFromCommonRoot.push_back(alt_chain.front()->second.bl.previousBlockHash);
+
+    // //removing all_chain entries from alternative chain
+    // for (auto ch_ent : alt_chain) {
+    //   blocksFromCommonRoot.push_back(Block::getHash(ch_ent->second.bl));
+    //   m_orthanBlocksIndex.remove(ch_ent->second.bl);
+    //   m_alternative_chains.erase(ch_ent);
+    // }
+
+    // sendMessage(BlockchainMessage(ChainSwitchMessage(std::move(blocksFromCommonRoot))));
+
+    // logger(INFO, BRIGHT_GREEN) << "REORGANIZE SUCCESS! on height: " << split_height << ", new blockchain size: " << m_blocks.size();
     return true;
   }
 
