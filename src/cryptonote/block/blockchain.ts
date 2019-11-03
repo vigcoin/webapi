@@ -25,6 +25,8 @@ import {
   uint64,
   usize,
 } from '../types';
+
+import { Payment } from '../transaction/payment';
 import { AlternativeBlockchain } from './alternative';
 import { Block } from './block';
 import { BlockIndex } from './block-index';
@@ -75,6 +77,7 @@ export class BlockChain {
   private transactionPairs: Map<IHash, ITransactionIndex> = new Map();
   private spendKeys: Set<IKeyImage> = new Set();
   private outputs: Map<uint64, IOutputIndexPair[]> = new Map();
+  private payment: Payment = new Payment();
 
   private multiSignatureOutputs: Map<
     uint64,
@@ -451,13 +454,7 @@ export class BlockChain {
         };
         for (let j = 0; j < i; j++) {
           if (
-            !context.mempool.addTx(
-              context,
-              transactions[i - 1 - j],
-              txe.blobSize,
-              tvc,
-              true
-            )
+            !context.mempool.addTx(context, transactions[i - 1 - j], tvc, true)
           ) {
             throw new Error(
               'Blockchain::loadTransactions, failed to add transaction to pool'
@@ -553,5 +550,194 @@ export class BlockChain {
   public checkProofOfWork(block: IBlock, difficulty: uint64): boolean {
     const hash = this.getLongHash(block);
     return CNCheckHash(hash, difficulty);
+  }
+
+  public pop(context: P2pConnectionContext, idx: number): IBlock {
+    const block = this.get(idx).block;
+    if (!this.height) {
+      logger.error('Attempt to pop block from empty blockchain.');
+      return;
+    }
+    const transactions: ITransaction[] = [];
+    const lastBlock = this.get(this.height - 1);
+    const maxLength = lastBlock.transactions.length - 1;
+    for (let i = 0; i < maxLength; i++) {
+      transactions.push(lastBlock.transactions[i + 1].tx);
+    }
+
+    this.saveTransactions(context, transactions);
+    this.popTransactions(
+      lastBlock,
+      Transaction.hash(lastBlock.block.transaction)
+    );
+
+    return block;
+
+    // std::vector<transaction_t> transactions(m_blocks.back().transactions.size() - 1);
+    // for (size_t i = 0; i < m_blocks.back().transactions.size() - 1; ++i) {
+    //   transactions[i] = m_blocks.back().transactions[1 + i].tx;
+    // }
+
+    // saveTransactions(transactions);
+
+    // popTransactions(m_blocks.back(), BinaryArray::objectHash(m_blocks.back().bl.baseTransaction));
+
+    // m_timestampIndex.remove(m_blocks.back().bl.timestamp, blockHash);
+    // m_generatedTransactionsIndex.remove(m_blocks.back().bl);
+
+    // m_blocks.pop_back();
+    // m_blockIndex.pop();
+
+    // assert(m_blockIndex.size() == m_blocks.size());
+  }
+
+  public saveTransactions(
+    context: P2pConnectionContext,
+    transactions: ITransaction[]
+  ) {
+    const tvc: ITxVerificationContext = {
+      addedToPool: false,
+      shouldBeRelayed: false,
+      txFeeTooSmall: false,
+      verifivationFailed: false,
+      verifivationImpossible: false,
+    };
+    for (const tx of transactions) {
+      assert(context.mempool.addTx(context, tx, tvc, true));
+    }
+  }
+
+  public popTransactions(be: IBlockEntry, hash: IHash) {
+    for (let i = 0; i < be.transactions.length - 1; i--) {
+      this.popTransaction(
+        be.transactions[be.transactions.length - 1 - i].tx,
+        be.block.transactionHashes[be.transactions.length - 2 - i]
+      );
+    }
+  }
+
+  public popTransaction(transaction: ITransaction, hash: IHash) {
+    const transactionIndex = this.transactionPairs.get(hash);
+    for (
+      let outputIndex = 0;
+      outputIndex < transaction.prefix.outputs.length;
+      outputIndex++
+    ) {
+      const output =
+        transaction.prefix.outputs[
+          transaction.prefix.outputs.length - 1 - outputIndex
+        ];
+      switch (output.tag) {
+        case ETransactionIOType.KEY:
+          {
+            const amountOutputs = this.outputs.get(output.amount);
+            if (!amountOutputs.length) {
+              logger.error(
+                'Blockchain consistency broken - cannot find specific amount in outputs map.'
+              );
+              continue;
+            }
+            const last = amountOutputs[amountOutputs.length - 1];
+            if (
+              last.txIdx.block !== transactionIndex.block ||
+              last.txIdx.transaction !== transactionIndex.transaction
+            ) {
+              logger.error(
+                'Blockchain consistency broken - invalid transaction index.'
+              );
+              continue;
+            }
+
+            if (
+              last.outputIdx !==
+              transaction.prefix.outputs.length - 1 - outputIndex
+            ) {
+              logger.error(
+                'Blockchain consistency broken - invalid output index.'
+              );
+              continue;
+            }
+            amountOutputs.pop();
+            if (!amountOutputs.length) {
+              this.outputs.delete(output.amount);
+            }
+          }
+          break;
+        case ETransactionIOType.SIGNATURE:
+          {
+            const amountOutputs = this.multiSignatureOutputs.get(output.amount);
+            if (!amountOutputs.length) {
+              logger.error(
+                'Blockchain consistency broken - cannot find specific amount in outputs map.'
+              );
+              continue;
+            }
+            const last = amountOutputs[amountOutputs.length - 1];
+            if (last.isUsed) {
+              logger.error(
+                'Blockchain consistency broken - attempting to remove used output.'
+              );
+              continue;
+            }
+            if (
+              last.transactionIndex.block !== transactionIndex.block ||
+              last.transactionIndex.transaction !== transactionIndex.transaction
+            ) {
+              logger.error(
+                'Blockchain consistency broken - invalid transaction index.'
+              );
+              continue;
+            }
+
+            if (
+              last.outputIndex !==
+              transaction.prefix.outputs.length - 1 - outputIndex
+            ) {
+              logger.error(
+                'Blockchain consistency broken - invalid output index.'
+              );
+              continue;
+            }
+            amountOutputs.pop();
+            if (!amountOutputs.length) {
+              this.multiSignatureOutputs.delete(output.amount);
+            }
+          }
+          break;
+      }
+    }
+    for (const input of transaction.prefix.inputs) {
+      switch (input.tag) {
+        case ETransactionIOType.KEY:
+          {
+            const inputKey = input.target as IInputKey;
+            if (this.spendKeys.has(inputKey.keyImage)) {
+              this.spendKeys.delete(inputKey.keyImage);
+            }
+          }
+          break;
+        case ETransactionIOType.SIGNATURE:
+          {
+            const inputSignature = input.target as IInputSignature;
+            const amountOutputs = this.multiSignatureOutputs.get(
+              inputSignature.amount
+            );
+            if (!amountOutputs[inputSignature.outputIndex].isUsed) {
+              logger.error(
+                'Blockchain consistency broken - multisignature output not marked as used.'
+              );
+            }
+            amountOutputs[inputSignature.outputIndex].isUsed = false;
+          }
+          break;
+      }
+    }
+    this.payment.remove(transaction);
+    if (!this.transactionPairs.has(hash)) {
+      logger.error(
+        'Blockchain consistency broken - cannot find transaction by hash.'
+      );
+    }
+    this.transactionPairs.delete(hash);
   }
 }

@@ -223,7 +223,7 @@ export class AlternativeBlockchain {
           ', checkpoint is found in alternative chain on height ' +
           newBe.height
       );
-      if (AlternativeBlockchain.switchTo(alterChain, true)) {
+      if (AlternativeBlockchain.switchTo(context, alterChain, true)) {
         bvc.addedToMainChain = true;
         bvc.switchedToAltChain = true;
         return true;
@@ -253,7 +253,7 @@ export class AlternativeBlockchain {
             ' with cum_difficulty ' +
             newBe.difficulty
         );
-        if (AlternativeBlockchain.switchTo(alterChain, true)) {
+        if (AlternativeBlockchain.switchTo(context, alterChain, true)) {
           bvc.addedToMainChain = true;
           bvc.switchedToAltChain = true;
           return true;
@@ -282,6 +282,7 @@ export class AlternativeBlockchain {
   }
 
   public static switchTo(
+    context: P2pConnectionContext,
     alterChain: IBlockEntry[],
     discardDisconnected: boolean
   ): boolean {
@@ -290,21 +291,21 @@ export class AlternativeBlockchain {
       return false;
     }
 
-    const height = alterChain[0].height;
+    const splitHeight = alterChain[0].height;
+    if (context.blockchain.height < splitHeight) {
+      logger.error(
+        'switch_to_alternative_blockchain: blockchain size is lower than split height'
+      );
+      return false;
+    }
 
     // Disconnect old chain
 
     const disconnectedChain: IBlock[] = [];
-    // for ()
-
-    // std::lock_guard<decltype(m_blockchain_lock)> lk(m_blockchain_lock);
-
-    // size_t split_height = alt_chain.front()->second.height;
-
-    // if (!(m_blocks.size() > split_height)) {
-    //   logger(ERROR, BRIGHT_RED) << "switch_to_alternative_blockchain: blockchain size is lower than split height";
-    //   return false;
-    // }
+    for (let i = context.blockchain.height - 1; i >= splitHeight; i--) {
+      const block = context.blockchain.pop(context, i);
+      disconnectedChain.push(block);
+    }
 
     // //disconnecting old chain
     // std::list<block_t> disconnected_chain;

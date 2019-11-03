@@ -228,17 +228,15 @@ export class MemoryPool extends EventEmitter {
     keptByBlock: boolean
   ) {
     const tx = Transaction.read(new BufferStreamReader(txBuffer));
-    return this.addTx(context, tx, txBuffer.length, tvc, keptByBlock);
+    return this.addTx(context, tx, tvc, keptByBlock);
   }
 
   public addTx(
     context: P2pConnectionContext,
     tx: ITransaction,
-    size: usize,
     tvc: ITxVerificationContext,
     keptByBlock: boolean
   ): boolean {
-    // const tx = Transaction.read(new BufferStreamReader(txBuffer));
     const hash = Transaction.hash(tx);
     const preHash = TransactionPrefix.hash(tx.prefix);
 
@@ -308,6 +306,7 @@ export class MemoryPool extends EventEmitter {
       }
       logger.info('Impossible to validate');
     }
+    const size = Transaction.toBuffer(tx).length;
     if (!keptByBlock) {
       if (!TransactionValidator.checkSize(context, size)) {
         logger.info('tx too big, rejected');
