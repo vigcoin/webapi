@@ -85,6 +85,11 @@ export class BlockIndex {
     return this._height;
   }
 
+  public popOffsets() {
+    this.offsets.pop();
+    this.writeHeight(this.offsets.length);
+  }
+
   public has(hash: IHash) {
     return this.blockHashes.indexOf(hash) !== -1;
   }

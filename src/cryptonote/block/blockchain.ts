@@ -5,7 +5,7 @@ import { CNCheckHash, CNSlowHash, IHash, IKeyImage } from '../../crypto/types';
 import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
 import { medianValue } from '../../util/math';
-import { unixNow } from '../../util/time';
+import { fromUnixTimeStamp, unixNow } from '../../util/time';
 import { Transaction } from '../transaction/index';
 import {
   ETransactionIOType,
@@ -26,7 +26,9 @@ import {
   usize,
 } from '../types';
 
-import { Payment } from '../transaction/payment';
+import { GeneratedTransaction } from '../indexing/generated-transactions';
+import { Payment } from '../indexing/payment';
+import { TimeStamp } from '../indexing/timestamp';
 import { AlternativeBlockchain } from './alternative';
 import { Block } from './block';
 import { BlockIndex } from './block-index';
@@ -70,7 +72,7 @@ export class BlockChain {
   private currency: Configuration.ICCurrency;
   private blockIndex: BlockIndex;
   private block: Block;
-  private offsets: uint64[];
+  // private offsets: uint64[];
   private cumulativeBlockSizeLimit: usize = 0;
 
   // caches
@@ -78,6 +80,8 @@ export class BlockChain {
   private spendKeys: Set<IKeyImage> = new Set();
   private outputs: Map<uint64, IOutputIndexPair[]> = new Map();
   private payment: Payment = new Payment();
+  private timestamp: TimeStamp = new TimeStamp();
+  private generatedTransaction: GeneratedTransaction = new GeneratedTransaction();
 
   private multiSignatureOutputs: Map<
     uint64,
@@ -93,7 +97,6 @@ export class BlockChain {
     this.block = new Block(this.files.data);
     this.hardfork = new Hardfork(config.hardforks);
     this.checkpoint = new CheckPoint(config.checkpoints);
-    this.offsets = [0];
   }
 
   public genesis() {
@@ -103,12 +106,7 @@ export class BlockChain {
   public init() {
     this.blockIndex.init();
     if (!this.blockIndex.empty()) {
-      const items = this.blockIndex.getOffsets();
-      let offset = 0;
-      for (const item of items) {
-        offset += item;
-        this.offsets.push(offset);
-      }
+      this.block.init(this.blockIndex.getOffsets());
     }
     this.initialized = true;
   }
@@ -196,7 +194,7 @@ export class BlockChain {
     assert(this.initialized);
     assert(index >= 0);
     assert(index < this.height);
-    return this.block.read(this.offsets[index], this.offsets[index + 1]);
+    return this.block.get(index);
   }
 
   get height(): uint64 {
@@ -571,24 +569,16 @@ export class BlockChain {
       Transaction.hash(lastBlock.block.transaction)
     );
 
+    this.timestamp.remove(
+      fromUnixTimeStamp(lastBlock.block.header.timestamp),
+      Block.hash(block)
+    );
+
+    this.generatedTransaction.remove(block);
+    this.block.pop();
+    this.blockIndex.popOffsets();
+    assert(this.blockIndex.height === this.block.height);
     return block;
-
-    // std::vector<transaction_t> transactions(m_blocks.back().transactions.size() - 1);
-    // for (size_t i = 0; i < m_blocks.back().transactions.size() - 1; ++i) {
-    //   transactions[i] = m_blocks.back().transactions[1 + i].tx;
-    // }
-
-    // saveTransactions(transactions);
-
-    // popTransactions(m_blocks.back(), BinaryArray::objectHash(m_blocks.back().bl.baseTransaction));
-
-    // m_timestampIndex.remove(m_blocks.back().bl.timestamp, blockHash);
-    // m_generatedTransactionsIndex.remove(m_blocks.back().bl);
-
-    // m_blocks.pop_back();
-    // m_blockIndex.pop();
-
-    // assert(m_blockIndex.size() == m_blocks.size());
   }
 
   public saveTransactions(

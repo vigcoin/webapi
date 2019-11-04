@@ -1,11 +1,8 @@
-import { Hash } from '../../crypto/hash';
 import { IHash } from '../../crypto/types';
 import { MultiMap } from '../../util/map';
-import { BufferStreamReader } from '../serialize/reader';
-import { BufferStreamWriter } from '../serialize/writer';
+import { TransactionExtra } from '../transaction/extra';
+import { Transaction } from '../transaction/index';
 import { ITransaction } from '../types';
-import { ITransactionExtraNonce, TransactionExtra } from './extra';
-import { Transaction } from './index';
 
 export class Payment {
   private map: MultiMap<IHash, IHash> = new MultiMap();

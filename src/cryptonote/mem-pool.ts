@@ -9,12 +9,12 @@ import { toUnixTimeStamp } from '../util/time';
 import { BufferStreamReader } from './serialize/reader';
 import { TransactionAmount } from './transaction/amount';
 import { TransactionDetails } from './transaction/detail';
-import { Payment } from './transaction/payment';
-import { TimeStamp } from './transaction/timestamp';
 import { TransactionValidator } from './transaction/validator';
 
 import { parameters } from '../config';
 import { P2pConnectionContext } from '../p2p/connection';
+import { Payment } from './indexing/payment';
+import { TimeStamp } from './indexing/timestamp';
 import { Transaction } from './transaction/index';
 import { TransactionPrefix } from './transaction/prefix';
 import {

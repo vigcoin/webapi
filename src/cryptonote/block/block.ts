@@ -12,7 +12,13 @@ import { CNFashHash, HASH_LENGTH, IHash } from '../../crypto/types';
 import { BufferStreamReader } from '../serialize/reader';
 import { BufferStreamWriter } from '../serialize/writer';
 import { Transaction } from '../transaction';
-import { IBlock, IBlockEntry, IBlockHeader, ITransaction } from '../types';
+import {
+  IBlock,
+  IBlockEntry,
+  IBlockHeader,
+  ITransaction,
+  uint64,
+} from '../types';
 
 export class Block {
   public static writeBlockHeader(
@@ -143,9 +149,11 @@ export class Block {
   }
 
   private filename: string;
+  private offsets: uint64[];
 
   constructor(filename: string) {
     this.filename = filename;
+    this.offsets = [0];
   }
 
   public empty(): boolean {
@@ -199,5 +207,28 @@ export class Block {
     const fd = openSync(this.filename, 'r+');
     writeSync(fd, writer.getBuffer(), offset);
     closeSync(fd);
+  }
+
+  public init(items: uint64[]) {
+    let offset = 0;
+    for (const item of items) {
+      offset += item;
+      this.offsets.push(offset);
+    }
+  }
+
+  public get(index: number) {
+    return this.read(this.offsets[index], this.offsets[index + 1]);
+  }
+
+  public pop() {
+    const offset = this.offsets.pop();
+    const fd = openSync(this.filename, 'r+');
+    writeSync(fd, '', offset);
+    closeSync(fd);
+  }
+
+  get height() {
+    return this.offsets.length;
   }
 }
