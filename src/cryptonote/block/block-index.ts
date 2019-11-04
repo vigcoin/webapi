@@ -170,4 +170,9 @@ export class BlockIndex {
     assert(this.blockHashes.length);
     return this.blockHashes[this.blockHashes.length - 1];
   }
+
+  get tail() {
+    assert(this.blockHashes.length);
+    return this.blockHashes[this.blockHashes.length - 1];
+  }
 }

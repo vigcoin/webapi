@@ -101,23 +101,23 @@ export class AlternativeBlockchain {
     // we have new block in alternative chain
     // build alternative subchain, front -> mainchain, back -> alternative head
 
-    const alterChain: IBlockEntry[] = [];
+    const alterChains: IBlockEntry[] = [];
     const timestampes = [];
 
     let iter = context.blockchain.alternativeChain.get(id);
     while (iter) {
-      alterChain.push(iter);
+      alterChains.push(iter);
       timestampes.push(iter.block.header.timestamp);
       iter = context.blockchain.alternativeChain.get(iter.block.header.preHash);
     }
 
-    if (alterChain.length) {
+    if (alterChains.length) {
       // make sure that it has right connection to main chain
-      if (context.blockchain.height <= alterChain.length) {
+      if (context.blockchain.height <= alterChains.length) {
         logger.error('main blockchain wrong height');
         return false;
       }
-      const be = alterChain[alterChain.length - 1];
+      const be = alterChains[alterChains.length - 1];
       const preHash = Block.hash(context.blockchain.get(be.height - 1).block);
       if (!preHash.equals(be.block.header.preHash)) {
         logger.error('alternative chain have wrong connection to main chain');
@@ -159,14 +159,14 @@ export class AlternativeBlockchain {
       return false;
     }
 
-    const height = alterChain.length ? iter.height + 1 : mainHeight + 1;
+    const height = alterChains.length ? iter.height + 1 : mainHeight + 1;
     const isACheckpoint = context.blockchain.checkpoint.check(height, id);
 
     // Always check PoW for alternative blocks
 
     const currentDifficulty = Difficulty.nextDifficultyForAlternativeChain(
       context,
-      alterChain,
+      alterChains,
       height
     );
     if (!currentDifficulty) {
@@ -195,7 +195,7 @@ export class AlternativeBlockchain {
       return false;
     }
 
-    let cumulativeDifficulty = alterChain.length
+    let cumulativeDifficulty = alterChains.length
       ? iter.difficulty
       : context.blockchain.get(mainHeight).difficulty;
     cumulativeDifficulty += currentDifficulty;
@@ -211,19 +211,19 @@ export class AlternativeBlockchain {
     };
 
     context.blockchain.alternativeChain.set(id, newBe);
-    alterChain.push(newBe);
+    alterChains.push(newBe);
 
     if (isACheckpoint) {
       // Do reorganization!
       logger.info(
         '###### REORGANIZE on height: ' +
-          alterChain[0].height +
+          alterChains[0].height +
           ' of ' +
           (context.blockchain.height - 1) +
           ', checkpoint is found in alternative chain on height ' +
           newBe.height
       );
-      if (AlternativeBlockchain.switchTo(context, alterChain, true)) {
+      if (AlternativeBlockchain.switchTo(context, alterChains, true)) {
         bvc.addedToMainChain = true;
         bvc.switchedToAltChain = true;
         return true;
@@ -240,7 +240,7 @@ export class AlternativeBlockchain {
         // Do reorganization!
         logger.info(
           '###### REORGANIZE on height: ' +
-            alterChain[0].height +
+            alterChains[0].height +
             ' of ' +
             (context.blockchain.height - 1) +
             ' with cum_difficulty ' +
@@ -249,11 +249,11 @@ export class AlternativeBlockchain {
 
         logger.info(
           ' alternative blockchain size: ' +
-            alterChain.length +
+            alterChains.length +
             ' with cum_difficulty ' +
             newBe.difficulty
         );
-        if (AlternativeBlockchain.switchTo(context, alterChain, true)) {
+        if (AlternativeBlockchain.switchTo(context, alterChains, true)) {
           bvc.addedToMainChain = true;
           bvc.switchedToAltChain = true;
           return true;
@@ -283,15 +283,15 @@ export class AlternativeBlockchain {
 
   public static switchTo(
     context: P2pConnectionContext,
-    alterChain: IBlockEntry[],
+    alterChains: IBlockEntry[],
     discardDisconnected: boolean
   ): boolean {
-    if (!alterChain.length) {
+    if (!alterChains.length) {
       logger.error('Empty chain!');
       return false;
     }
 
-    const splitHeight = alterChain[0].height;
+    const splitHeight = alterChains[0].height;
     if (context.blockchain.height < splitHeight) {
       logger.error(
         'switch_to_alternative_blockchain: blockchain size is lower than split height'
@@ -307,14 +307,18 @@ export class AlternativeBlockchain {
       disconnectedChain.push(block);
     }
 
-    // //disconnecting old chain
-    // std::list<block_t> disconnected_chain;
-    // for (size_t i = m_blocks.size() - 1; i >= split_height; i--) {
-    //   block_t b = m_blocks[i].bl;
-    //   popBlock(Block::getHash(b));
-    //   //if (!(r)) { logger(ERROR, BRIGHT_RED) << "failed to remove block on chain switching"; return false; }
-    //   disconnected_chain.push_front(b);
-    // }
+    // Connecting new alternative chain
+
+    for (const alter of alterChains) {
+      const bvc: IBlockVerificationContext = {
+        addedToMainChain: false,
+        alreadyExists: false,
+        markedAsOrphaned: false,
+        switchedToAltChain: false,
+        verificationFailed: false,
+      };
+      context.blockchain.pushBlock(context, alter.block, bvc);
+    }
 
     // //connecting new alternative chain
     // for (auto alt_ch_iter = alt_chain.begin(); alt_ch_iter != alt_chain.end(); alt_ch_iter++) {

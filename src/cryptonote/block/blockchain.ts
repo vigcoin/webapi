@@ -581,6 +581,8 @@ export class BlockChain {
     return block;
   }
 
+  // Transactions
+
   public saveTransactions(
     context: P2pConnectionContext,
     transactions: ITransaction[]
@@ -729,5 +731,261 @@ export class BlockChain {
       );
     }
     this.transactionPairs.delete(hash);
+  }
+
+  public loadTransaction(context: P2pConnectionContext, block: IBlock) {
+    const transactions: ITransaction[] = [];
+
+    for (let i = 0; i < block.transactionHashes.length; i++) {
+      const hash = block.transactionHashes[i];
+      const td = context.mempool.takeTx(hash);
+      if (!td) {
+        const tvc: ITxVerificationContext = {
+          addedToPool: false,
+          shouldBeRelayed: false,
+          txFeeTooSmall: false,
+          verifivationFailed: false,
+          verifivationImpossible: false,
+        };
+        for (let j = 0; j < i; j++) {
+          assert(
+            context.mempool.addTx(context, transactions[i - 1 - j], tvc, true)
+          );
+        }
+        return;
+      }
+      transactions.push(td.tx);
+    }
+    return transactions;
+  }
+
+  public pushBlock(
+    context: P2pConnectionContext,
+    block: IBlock,
+    bvc: IBlockVerificationContext
+  ) {
+    const transactions = this.loadTransaction(context, block);
+
+    if (!transactions) {
+      bvc.verificationFailed = true;
+      return false;
+    }
+
+    // if (!pushBlock(blockData, transactions, bvc)) {
+    //   saveTransactions(transactions);
+    //   return false;
+    // }
+
+    return true;
+  }
+
+  public pushBlockWithTransactions(
+    context: P2pConnectionContext,
+    transactions: ITransaction[],
+    block: IBlock,
+    bvc: IBlockVerificationContext
+  ) {
+    const start = unixNow();
+
+    const hash = Block.hash(block);
+    if (this.blockIndex.has(hash)) {
+      logger.error(
+        'Block ' + hash.toString('hex') + ' already exists in blockchain.'
+      );
+      bvc.verificationFailed = true;
+      return false;
+    }
+
+    if (!block.header.preHash.equals(this.blockIndex.tail)) {
+      logger.error(
+        'Block ' +
+          hash.toString('hex') +
+          '  has wrong previousBlockHash: ' +
+          block.header.preHash.toString('hex') +
+          ', expected: ' +
+          this.blockIndex.tail.toString('hex')
+      );
+      bvc.verificationFailed = true;
+      return false;
+    }
+
+    if (!this.checkTimestamp(block)) {
+      logger.error(
+        'Block ' + hash + ' has invalid timestamp: ' + block.header.timestamp
+      );
+      bvc.verificationFailed = true;
+      return false;
+    }
+
+    // std::lock_guard<decltype(m_blockchain_lock)> lk(m_blockchain_lock);
+
+    // auto blockProcessingStart = std::chrono::steady_clock::now();
+
+    // hash_t blockHash = Block::getHash(blockData);
+
+    // auto targetTimeStart = std::chrono::steady_clock::now();
+    // difficulty_t currentDifficulty = getDifficultyForNextBlock();
+    // auto target_calculating_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - targetTimeStart).count();
+
+    // if (!(currentDifficulty)) {
+    //   logger(ERROR, BRIGHT_RED) << "!!!!!!!!! difficulty overhead !!!!!!!!!";
+    //   return false;
+    // }
+
+    // auto longhashTimeStart = std::chrono::steady_clock::now();
+    // hash_t proof_of_work = NULL_HASH;
+    // if (m_checkpoints.isCheckpoint(getHeight())) {
+    //   if (!m_checkpoints.check(getHeight(), blockHash)) {
+    //     logger(ERROR, BRIGHT_RED) <<
+    //       "CHECKPOINT VALIDATION FAILED";
+    //     bvc.m_verifivation_failed = true;
+    //     return false;
+    //   }
+    // } else {
+    //   if (!Block::checkProofOfWork(blockData, currentDifficulty, proof_of_work)) {
+    //     logger(INFO, BRIGHT_WHITE) <<
+    //       "Block " << blockHash << ", has too weak proof of work: " << proof_of_work << ", expected difficulty: " << currentDifficulty;
+    //     bvc.m_verifivation_failed = true;
+    //     return false;
+    //   }
+    // }
+
+    // auto longhash_calculating_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - longhashTimeStart).count();
+
+    // if (!prevalidate_miner_transaction(blockData, static_cast<uint32_t>(m_blocks.size()))) {
+    //   logger(INFO, BRIGHT_WHITE) <<
+    //     "Block " << blockHash << " failed to pass prevalidation";
+    //   bvc.m_verifivation_failed = true;
+    //   return false;
+    // }
+
+    // hash_t minerTransactionHash = BinaryArray::objectHash(blockData.baseTransaction);
+
+    // block_entry_t block;
+    // block.bl = blockData;
+    // block.transactions.resize(1);
+    // block.transactions[0].tx = blockData.baseTransaction;
+    // transaction_index_t transactionIndex = { static_cast<uint32_t>(m_blocks.size()), static_cast<uint16_t>(0) };
+    // pushTransaction(block, minerTransactionHash, transactionIndex);
+
+    // size_t coinbase_blob_size = BinaryArray::size(blockData.baseTransaction);
+    // size_t cumulative_block_size = coinbase_blob_size;
+    // uint64_t fee_summary = 0;
+    // for (size_t i = 0; i < transactions.size(); ++i) {
+    //   const hash_t& tx_id = blockData.transactionHashes[i];
+    //   block.transactions.resize(block.transactions.size() + 1);
+    //   size_t blob_size = 0;
+    //   uint64_t fee = 0;
+    //   block.transactions.back().tx = transactions[i];
+
+    //   blob_size = BinaryArray::to(block.transactions.back().tx).size();
+    //   fee = getInputAmount(block.transactions.back().tx) - getOutputAmount(block.transactions.back().tx);
+    //   if (!checkTransactionInputs(block.transactions.back().tx)) {
+    //     logger(INFO, BRIGHT_WHITE) <<
+    //       "Block " << blockHash << " has at least one transaction with wrong inputs: " << tx_id;
+    //     bvc.m_verifivation_failed = true;
+
+    //     block.transactions.pop_back();
+    //     popTransactions(block, minerTransactionHash);
+    //     return false;
+    //   }
+
+    //   ++transactionIndex.transaction;
+    //   pushTransaction(block, tx_id, transactionIndex);
+
+    //   cumulative_block_size += blob_size;
+    //   fee_summary += fee;
+    // }
+
+    // if (!checkCumulativeBlockSize(blockHash, cumulative_block_size, m_blocks.size())) {
+    //   bvc.m_verifivation_failed = true;
+    //   return false;
+    // }
+
+    // int64_t emissionChange = 0;
+    // uint64_t reward = 0;
+    // uint64_t already_generated_coins = m_blocks.empty() ? 0 : m_blocks.back().already_generated_coins;
+    // if (!validate_miner_transaction(blockData, static_cast<uint32_t>(m_blocks.size()), cumulative_block_size, already_generated_coins, fee_summary, reward, emissionChange)) {
+    //   logger(INFO, BRIGHT_WHITE) << "Block " << blockHash << " has invalid miner transaction";
+    //   bvc.m_verifivation_failed = true;
+    //   popTransactions(block, minerTransactionHash);
+    //   return false;
+    // }
+
+    // block.height = static_cast<uint32_t>(m_blocks.size());
+    // block.block_cumulative_size = cumulative_block_size;
+    // block.cumulative_difficulty = currentDifficulty;
+    // block.already_generated_coins = already_generated_coins + emissionChange;
+    // if (m_blocks.size() > 0) {
+    //   block.cumulative_difficulty += m_blocks.back().cumulative_difficulty;
+    // }
+
+    // pushBlock(block);
+
+    // auto block_processing_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - blockProcessingStart).count();
+
+    // logger(DEBUGGING) <<
+    //   "+++++ BLOCK SUCCESSFULLY ADDED" << ENDL << "id:\t" << blockHash
+    //   << ENDL << "PoW:\t" << proof_of_work
+    //   << ENDL << "HEIGHT " << block.height << ", difficulty:\t" << currentDifficulty
+    //   << ENDL << "block reward: " << m_currency.formatAmount(reward) << ", fee = " << m_currency.formatAmount(fee_summary)
+    //   << ", coinbase_blob_size: " << coinbase_blob_size << ", cumulative size: " << cumulative_block_size
+    //   << ", " << block_processing_time << "(" << target_calculating_time << "/" << longhash_calculating_time << ")ms";
+
+    // bvc.m_added_to_main_chain = true;
+
+    // update_next_comulative_size_limit();
+
+    // return true;
+  }
+
+  public checkTimestamp(block: IBlock) {
+    if (
+      block.header.timestamp >
+      this.getAdjustedTime() + parameters.CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT
+    ) {
+      logger.error(
+        'Timestamp of block with id: ' +
+          Block.hash(block).toString('hex') +
+          ', ' +
+          block.header.timestamp +
+          ', bigger than adjusted time + 2 hours'
+      );
+      return false;
+    }
+    const timestamps = [];
+    let offset =
+      this.height <= parameters.BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW
+        ? 0
+        : this.height - parameters.BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW;
+    for (; offset !== this.height; offset++) {
+      timestamps.push(this.get(offset).block.header.timestamp);
+    }
+    return this.checkTimestamps(block, timestamps);
+  }
+
+  public checkTimestamps(block: IBlock, timestamps: uint64[]) {
+    if (timestamps.length < parameters.BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW) {
+      return true;
+    }
+
+    const median = medianValue(timestamps);
+    if (block.header.timestamp < median) {
+      logger.error(
+        'Timestamp of block with id: ' +
+          Block.hash(block) +
+          ', ' +
+          block.header.timestamp +
+          ', less than median of last ' +
+          parameters.BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW +
+          ' blocks, ' +
+          median
+      );
+      return false;
+    }
+    return true;
+  }
+  public getAdjustedTime(): uint64 {
+    return unixNow();
   }
 }
