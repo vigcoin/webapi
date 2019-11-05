@@ -9,6 +9,16 @@ export class Difficulty {
   public static blocksCount() {
     return parameters.DIFFICULTY_CUT + parameters.DIFFICULTY_LAG;
   }
+
+  public static next(timestamps: uint64[], cumulativeDifficulties: uint64[]) {
+    const target = parameters.DIFFICULTY_TARGET;
+    const win = parameters.DIFFICULTY_WINDOW;
+    const cut = parameters.DIFFICULTY_CUT;
+    const lag = parameters.DIFFICULTY_LAG;
+
+    const diff = new CryptonoteDifficulty(target, cut, lag, win);
+    return diff.next(timestamps, cumulativeDifficulties);
+  }
   public static nextDifficultyForAlternativeChain(
     context: P2pConnectionContext,
     alterChain: IBlockEntry[],
@@ -75,13 +85,27 @@ export class Difficulty {
         }
       }
     }
+    return Difficulty.next(timestamps, cumulativeDifficulties);
+  }
 
-    const target = parameters.DIFFICULTY_TARGET;
-    const win = parameters.DIFFICULTY_WINDOW;
-    const cut = parameters.DIFFICULTY_CUT;
-    const lag = parameters.DIFFICULTY_LAG;
+  public static nextDifficultyForBlock(context: P2pConnectionContext) {
+    let offset = 0;
+    if (context.blockchain.height > Difficulty.blocksCount()) {
+      offset = context.blockchain.height - Difficulty.blocksCount();
+    }
 
-    const diff = new CryptonoteDifficulty(target, cut, lag, win);
-    return diff.next(timestamps, cumulativeDifficulties);
+    if (offset === 0) {
+      ++offset;
+    }
+
+    const timestamps = [];
+    const cumulativeDifficulties = [];
+
+    for (; offset < context.blockchain.height; offset++) {
+      const be = context.blockchain.get(offset);
+      timestamps.push(be.block.header.timestamp);
+      cumulativeDifficulties.push(be.difficulty);
+    }
+    return Difficulty.next(timestamps, cumulativeDifficulties);
   }
 }

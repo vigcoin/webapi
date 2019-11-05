@@ -293,9 +293,7 @@ export class MemoryPool extends EventEmitter {
       !TransactionValidator.checkInputs(
         context,
         tx,
-        hash,
-        preHash,
-        keptByBlock,
+        // keptByBlock,
         checkInfo
       )
     ) {

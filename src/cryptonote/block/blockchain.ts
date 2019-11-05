@@ -6,7 +6,13 @@ import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
 import { medianValue } from '../../util/math';
 import { fromUnixTimeStamp, unixNow } from '../../util/time';
+import { Difficulty } from '../difficulty';
+import { GeneratedTransaction } from '../indexing/generated-transactions';
+import { Payment } from '../indexing/payment';
+import { TimeStamp } from '../indexing/timestamp';
+import { TransactionAmount } from '../transaction/amount';
 import { Transaction } from '../transaction/index';
+import { TransactionValidator } from '../transaction/validator';
 import {
   ETransactionIOType,
   IBlock,
@@ -16,6 +22,7 @@ import {
   IInputKey,
   IInputSignature,
   ITransaction,
+  ITransactionCheckInfo,
   ITransactionDetails,
   ITransactionEntry,
   ITransactionIndex,
@@ -26,9 +33,6 @@ import {
   usize,
 } from '../types';
 
-import { GeneratedTransaction } from '../indexing/generated-transactions';
-import { Payment } from '../indexing/payment';
-import { TimeStamp } from '../indexing/timestamp';
 import { AlternativeBlockchain } from './alternative';
 import { Block } from './block';
 import { BlockIndex } from './block-index';
@@ -599,6 +603,72 @@ export class BlockChain {
     }
   }
 
+  public pushTransaction(
+    be: IBlockEntry,
+    hash: IHash,
+    index: ITransactionIndex
+  ) {}
+
+  // bool Blockchain::pushTransaction(block_entry_t& block, const hash_t& transactionHash, transaction_index_t transactionIndex) {
+  //   auto result = m_transactionMap.insert(std::make_pair(transactionHash, transactionIndex));
+  //   if (!result.second) {
+  //     logger(ERROR, BRIGHT_RED) <<
+  //       "Duplicate transaction was pushed to blockchain.";
+  //     return false;
+  //   }
+
+  //   transaction_entry_t& transaction = block.transactions[transactionIndex.transaction];
+
+  //   if (!checkMultisignatureInputsDiff(transaction.tx)) {
+  //     logger(ERROR, BRIGHT_RED) <<
+  //       "Double spending transaction was pushed to blockchain.";
+  //     m_transactionMap.erase(transactionHash);
+  //     return false;
+  //   }
+
+  //   for (size_t i = 0; i < transaction.tx.inputs.size(); ++i) {
+  //     if (transaction.tx.inputs[i].type() == typeid(key_input_t)) {
+  //       auto result = m_spent_keys.insert(::boost::get<key_input_t>(transaction.tx.inputs[i]).keyImage);
+  //       if (!result.second) {
+  //         logger(ERROR, BRIGHT_RED) <<
+  //           "Double spending transaction was pushed to blockchain.";
+  //         for (size_t j = 0; j < i; ++j) {
+  //           m_spent_keys.erase(::boost::get<key_input_t>(transaction.tx.inputs[i - 1 - j]).keyImage);
+  //         }
+
+  //         m_transactionMap.erase(transactionHash);
+  //         return false;
+  //       }
+  //     }
+  //   }
+
+  //   for (const auto& inv : transaction.tx.inputs) {
+  //     if (inv.type() == typeid(multi_signature_input_t)) {
+  //       const multi_signature_input_t& in = ::boost::get<multi_signature_input_t>(inv);
+  //       auto& amountOutputs = m_multisignatureOutputs[in.amount];
+  //       amountOutputs[in.outputIndex].isUsed = true;
+  //     }
+  //   }
+
+  //   transaction.m_global_output_indexes.resize(transaction.tx.outputs.size());
+  //   for (uint16_t output = 0; output < transaction.tx.outputs.size(); ++output) {
+  //     if (transaction.tx.outputs[output].target.type() == typeid(key_output_t)) {
+  //       auto& amountOutputs = m_outputs[transaction.tx.outputs[output].amount];
+  //       transaction.m_global_output_indexes[output] = static_cast<uint32_t>(amountOutputs.size());
+  //       amountOutputs.push_back(std::make_pair<>(transactionIndex, output));
+  //     } else if (transaction.tx.outputs[output].target.type() == typeid(multi_signature_output_t)) {
+  //       auto& amountOutputs = m_multisignatureOutputs[transaction.tx.outputs[output].amount];
+  //       transaction.m_global_output_indexes[output] = static_cast<uint32_t>(amountOutputs.size());
+  //       multisignature_output_usage_t outputUsage = { transactionIndex, output, false };
+  //       amountOutputs.push_back(outputUsage);
+  //     }
+  //   }
+
+  //   m_paymentIdIndex.add(transaction.tx);
+
+  //   return true;
+  // }
+
   public popTransactions(be: IBlockEntry, hash: IHash) {
     for (let i = 0; i < be.transactions.length - 1; i--) {
       this.popTransaction(
@@ -771,10 +841,10 @@ export class BlockChain {
       return false;
     }
 
-    // if (!pushBlock(blockData, transactions, bvc)) {
-    //   saveTransactions(transactions);
-    //   return false;
-    // }
+    if (!this.pushBlockWithTransactions(context, transactions, block, bvc)) {
+      this.saveTransactions(context, transactions);
+      return false;
+    }
 
     return true;
   }
@@ -817,90 +887,116 @@ export class BlockChain {
       return false;
     }
 
+    const targetTimeStart = new Date();
+    const currentDiff = Difficulty.nextDifficultyForBlock(context);
+    if (!currentDiff) {
+      logger.error('!!!!!!!!! difficulty overhead !!!!!!!!!');
+      return false;
+    }
+    const targetCalculateTime =
+      new Date().getTime() - targetTimeStart.getTime();
+    const longHashTimeStart = new Date();
+
+    if (this.checkpoint.has(this.height)) {
+      if (!this.checkpoint.check(this.height, hash)) {
+        logger.error('CHECKPOINT VALIDATION FAILED');
+        bvc.verificationFailed = true;
+        return false;
+      }
+    } else {
+      if (!this.checkProofOfWork(block, currentDiff)) {
+        logger.error(
+          'Block ' +
+            hash.toString('hex') +
+            ', has too weak proof of work: ' +
+            this.getLongHash(block).toString('hex') +
+            ', expected difficulty: ' +
+            currentDiff
+        );
+        bvc.verificationFailed = true;
+        return false;
+      }
+    }
+
+    const longHashCalculateTime =
+      new Date().getTime() - longHashTimeStart.getTime();
+    if (!TransactionValidator.prevalidateMiner(block, this.height)) {
+      logger.error(
+        'Block ' + hash.toString('hex') + ' failed to pass prevalidation'
+      );
+      bvc.verificationFailed = true;
+      return false;
+    }
+
+    const minerTxHash = Transaction.hash(block.transaction);
+
+    const be: IBlockEntry = {
+      block,
+      difficulty: 0,
+      generatedCoins: 0,
+      height: 0,
+      size: 0,
+      transactions: [{ tx: block.transaction, globalOutputIndexes: [] }],
+    };
+
+    const index: ITransactionIndex = {
+      block: this.height,
+      transaction: 0,
+    };
+
+    this.pushTransaction(be, hash, index);
+
+    const coinbaseBlobSize = Transaction.toBuffer(block.transaction).length;
+    let cumulativeBlockSize = coinbaseBlobSize;
+    let feeSummary = 0;
+
+    for (let i = 0; i < transactions.length; i++) {
+      const txHash = block.transactionHashes[i];
+      const tx = transactions[i];
+      const blobSize = Transaction.toBuffer(tx).length;
+      const fee =
+        TransactionAmount.getInput(tx) - TransactionAmount.getOutput(tx);
+      const checkInfo: ITransactionCheckInfo = {
+        lastFailedBlock: {
+          height: 0,
+          id: Buffer.alloc(0),
+        },
+        maxUsedBlock: {
+          height: 0,
+          id: Buffer.alloc(0),
+        },
+      };
+      if (!TransactionValidator.checkInputs(context, tx, checkInfo)) {
+        logger.error(
+          'Block ' +
+            hash.toString('hex') +
+            ' has at least one transaction with wrong inputs: ' +
+            txHash.toString('hex')
+        );
+        bvc.verificationFailed = true;
+        this.popTransactions(be, minerTxHash);
+        return false;
+      }
+      index.transaction++;
+      be.transactions.push({ tx: transactions[i], globalOutputIndexes: [] });
+      this.pushTransaction(be, txHash, index);
+      cumulativeBlockSize += blobSize;
+      feeSummary += fee;
+    }
+
+    if (!this.checkCumulativeSize(hash, cumulativeBlockSize, this.height)) {
+      bvc.verificationFailed = true;
+      return false;
+    }
+
+    const emissionChange = 0;
+    const reward = 0;
+    const alreadyGeneratedCoins =
+      context.blockchain.height === 0
+        ? 0
+        : context.blockchain.block.last.generatedCoins;
+
     // std::lock_guard<decltype(m_blockchain_lock)> lk(m_blockchain_lock);
-
-    // auto blockProcessingStart = std::chrono::steady_clock::now();
-
-    // hash_t blockHash = Block::getHash(blockData);
-
-    // auto targetTimeStart = std::chrono::steady_clock::now();
-    // difficulty_t currentDifficulty = getDifficultyForNextBlock();
-    // auto target_calculating_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - targetTimeStart).count();
-
-    // if (!(currentDifficulty)) {
-    //   logger(ERROR, BRIGHT_RED) << "!!!!!!!!! difficulty overhead !!!!!!!!!";
-    //   return false;
-    // }
-
-    // auto longhashTimeStart = std::chrono::steady_clock::now();
-    // hash_t proof_of_work = NULL_HASH;
-    // if (m_checkpoints.isCheckpoint(getHeight())) {
-    //   if (!m_checkpoints.check(getHeight(), blockHash)) {
-    //     logger(ERROR, BRIGHT_RED) <<
-    //       "CHECKPOINT VALIDATION FAILED";
-    //     bvc.m_verifivation_failed = true;
-    //     return false;
-    //   }
-    // } else {
-    //   if (!Block::checkProofOfWork(blockData, currentDifficulty, proof_of_work)) {
-    //     logger(INFO, BRIGHT_WHITE) <<
-    //       "Block " << blockHash << ", has too weak proof of work: " << proof_of_work << ", expected difficulty: " << currentDifficulty;
-    //     bvc.m_verifivation_failed = true;
-    //     return false;
-    //   }
-    // }
-
-    // auto longhash_calculating_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - longhashTimeStart).count();
-
-    // if (!prevalidate_miner_transaction(blockData, static_cast<uint32_t>(m_blocks.size()))) {
-    //   logger(INFO, BRIGHT_WHITE) <<
-    //     "Block " << blockHash << " failed to pass prevalidation";
-    //   bvc.m_verifivation_failed = true;
-    //   return false;
-    // }
-
-    // hash_t minerTransactionHash = BinaryArray::objectHash(blockData.baseTransaction);
-
-    // block_entry_t block;
-    // block.bl = blockData;
-    // block.transactions.resize(1);
-    // block.transactions[0].tx = blockData.baseTransaction;
-    // transaction_index_t transactionIndex = { static_cast<uint32_t>(m_blocks.size()), static_cast<uint16_t>(0) };
-    // pushTransaction(block, minerTransactionHash, transactionIndex);
-
-    // size_t coinbase_blob_size = BinaryArray::size(blockData.baseTransaction);
-    // size_t cumulative_block_size = coinbase_blob_size;
-    // uint64_t fee_summary = 0;
-    // for (size_t i = 0; i < transactions.size(); ++i) {
-    //   const hash_t& tx_id = blockData.transactionHashes[i];
-    //   block.transactions.resize(block.transactions.size() + 1);
-    //   size_t blob_size = 0;
-    //   uint64_t fee = 0;
-    //   block.transactions.back().tx = transactions[i];
-
-    //   blob_size = BinaryArray::to(block.transactions.back().tx).size();
-    //   fee = getInputAmount(block.transactions.back().tx) - getOutputAmount(block.transactions.back().tx);
-    //   if (!checkTransactionInputs(block.transactions.back().tx)) {
-    //     logger(INFO, BRIGHT_WHITE) <<
-    //       "Block " << blockHash << " has at least one transaction with wrong inputs: " << tx_id;
-    //     bvc.m_verifivation_failed = true;
-
-    //     block.transactions.pop_back();
-    //     popTransactions(block, minerTransactionHash);
-    //     return false;
-    //   }
-
-    //   ++transactionIndex.transaction;
-    //   pushTransaction(block, tx_id, transactionIndex);
-
-    //   cumulative_block_size += blob_size;
-    //   fee_summary += fee;
-    // }
-
-    // if (!checkCumulativeBlockSize(blockHash, cumulative_block_size, m_blocks.size())) {
-    //   bvc.m_verifivation_failed = true;
-    //   return false;
-    // }
 
     // int64_t emissionChange = 0;
     // uint64_t reward = 0;

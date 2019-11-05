@@ -29,6 +29,7 @@ import { TransactionAmount } from './amount';
 import { Transaction } from './index';
 import { TransactionInput } from './input';
 import { TransactionOutput } from './output';
+import { TransactionPrefix } from './prefix';
 
 export class TransactionValidator {
   // Check Transaction Overflow
@@ -222,7 +223,7 @@ export class TransactionValidator {
     input: IInputSignature,
     hash: IHash,
     preHash: IHash,
-    signatures: ISignature[][]
+    signatures: ISignature[]
   ): boolean {
     assert(input.count === signatures.length);
     if (!context.blockchain.hasSignature(input.amount)) {
@@ -314,7 +315,7 @@ export class TransactionValidator {
     input: IInputKey,
     preHash: IHash,
     outKeys: ITransactionOutput[],
-    signatures: ISignature[][],
+    signatures: ISignature[],
     checkInfo: ITransactionCheckInfo
   ): boolean {
     if (!context.blockchain.hasOutput(input.amount)) {
@@ -404,9 +405,7 @@ export class TransactionValidator {
     }
     let sigBuffer = Buffer.alloc(0);
     for (const signature of signatures) {
-      for (const buffer of signature) {
-        sigBuffer = Buffer.concat([sigBuffer, buffer]);
-      }
+      sigBuffer = Buffer.concat([sigBuffer, signature]);
     }
     return CryptoSignature.checkRing(
       preHash,
@@ -420,11 +419,10 @@ export class TransactionValidator {
   public static checkInputs(
     context: P2pConnectionContext,
     tx: ITransaction,
-    hash: IHash,
-    preHash: IHash,
-    keptByBlock: boolean,
     checkInfo: ITransactionCheckInfo
   ): boolean {
+    const preHash = TransactionPrefix.hash(tx.prefix);
+    const hash = Transaction.hash(tx);
     let inputIndex = 0;
     for (const input of tx.prefix.inputs) {
       switch (input.tag) {
@@ -451,15 +449,15 @@ export class TransactionValidator {
                 key,
                 preHash,
                 outputKeys,
-                tx.signatures,
+                tx.signatures[inputIndex],
                 checkInfo
               )
             ) {
               logger.info('Failed to check ring signature for tx ' + hash);
               return false;
             }
-            inputIndex++;
           }
+          inputIndex++;
           break;
         case ETransactionIOType.SIGNATURE:
           {
@@ -470,13 +468,13 @@ export class TransactionValidator {
                 key,
                 hash,
                 preHash,
-                tx.signatures
+                tx.signatures[inputIndex]
               )
             ) {
               return false;
             }
-            inputIndex++;
           }
+          inputIndex++;
           break;
         default: {
           logger.info('tx : ' + hash + ' contains input of unsupported type.');

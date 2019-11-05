@@ -231,4 +231,8 @@ export class Block {
   get height() {
     return this.offsets.length;
   }
+
+  get last() {
+    return this.get(this.height - 1);
+  }
 }
