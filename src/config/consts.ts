@@ -49,6 +49,16 @@ export namespace parameters {
 
   export const BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW = 60;
 
+  // TODO Specify total number of available coins
+  // TODO ((uint64_t)(-1)) equals to 18446744073709551616 coins
+  // TODO or you can define number explicitly UINT64_C(858986905600000000)
+  export const MONEY_SUPPLY = 10000000000000000;
+
+  // Premined percentage
+  export const PREMINED_PERCENTAGE = 20;
+  export const EMISSION_SPEED_FACTOR = 18;
+  assert(EMISSION_SPEED_FACTOR <= 8 * 8, 'Bad EMISSION_SPEED_FACTOR');
+
   // TODO: Define number of blocks for block size median calculation
   export const CRYPTONOTE_REWARD_BLOCKS_WINDOW = 100;
   // Size of block (bytes) after which reward for block calculated using block size
