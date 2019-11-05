@@ -21,6 +21,7 @@ import {
   IInputBase,
   IInputKey,
   IInputSignature,
+  IOutputIndexPair,
   ITransaction,
   ITransactionCheckInfo,
   ITransactionDetails,
@@ -28,7 +29,6 @@ import {
   ITransactionIndex,
   ITransactionMultisignatureOutputUsage,
   ITxVerificationContext,
-  uint16,
   uint64,
   usize,
 } from '../types';
@@ -38,11 +38,6 @@ import { Block } from './block';
 import { BlockIndex } from './block-index';
 import { CheckPoint } from './checkpoint';
 import { Hardfork } from './hardfork';
-
-interface IOutputIndexPair {
-  txIdx: ITransactionIndex;
-  outputIdx: uint16;
-}
 
 export class BlockChain {
   public static genesis(block: Configuration.ICBlock): Configuration.IGenesis {
@@ -607,67 +602,89 @@ export class BlockChain {
     be: IBlockEntry,
     hash: IHash,
     index: ITransactionIndex
-  ) {}
+  ) {
+    if (this.transactionPairs.has(hash)) {
+      logger.error('Duplicate transaction was pushed to blockchain.');
+      return false;
+    }
+    this.transactionPairs.set(hash, index);
+    const transaction = be.transactions[index.transaction];
+    if (
+      !TransactionValidator.checkMulitSignatureDuplication(
+        transaction.tx.prefix
+      )
+    ) {
+      logger.error('Double spending transaction was pushed to blockchain.');
+      this.transactionPairs.delete(hash);
+      return false;
+    }
 
-  // bool Blockchain::pushTransaction(block_entry_t& block, const hash_t& transactionHash, transaction_index_t transactionIndex) {
-  //   auto result = m_transactionMap.insert(std::make_pair(transactionHash, transactionIndex));
-  //   if (!result.second) {
-  //     logger(ERROR, BRIGHT_RED) <<
-  //       "Duplicate transaction was pushed to blockchain.";
-  //     return false;
-  //   }
+    for (let i = 0; i < transaction.tx.prefix.inputs.length; i++) {
+      const input = transaction.tx.prefix.inputs[i];
+      switch (input.tag) {
+        case ETransactionIOType.KEY:
+          const key = input.target as IInputKey;
+          if (this.spendKeys.has(key.keyImage)) {
+            logger.error(
+              'Double spending transaction was pushed to blockchain.'
+            );
+            for (let j = 0; j < i; j++) {
+              const tempInput = transaction.tx.prefix.inputs[i - 1 - j];
+              const tempKey = tempInput.target as IInputKey;
+              this.spendKeys.delete(tempKey.keyImage);
+            }
+            this.transactionPairs.delete(hash);
+            return false;
+          }
+          break;
+      }
+    }
 
-  //   transaction_entry_t& transaction = block.transactions[transactionIndex.transaction];
+    for (const inv of transaction.tx.prefix.inputs) {
+      switch (inv.tag) {
+        case ETransactionIOType.SIGNATURE:
+          const inputSignature = inv.target as IInputSignature;
+          const amountOutputs: ITransactionMultisignatureOutputUsage[] = this
+            .multiSignatureOutputs[inputSignature.amount];
+          amountOutputs[inputSignature.outputIndex].isUsed = true;
+          break;
+      }
+    }
 
-  //   if (!checkMultisignatureInputsDiff(transaction.tx)) {
-  //     logger(ERROR, BRIGHT_RED) <<
-  //       "Double spending transaction was pushed to blockchain.";
-  //     m_transactionMap.erase(transactionHash);
-  //     return false;
-  //   }
+    // transaction.globalOutputIndexes
+    for (let i = 0; i < transaction.tx.prefix.outputs.length; i++) {
+      const output = transaction.tx.prefix.outputs[i];
+      switch (output.tag) {
+        case ETransactionIOType.KEY:
+          {
+            const amountOutputs: IOutputIndexPair[] = this.outputs[
+              output.amount
+            ];
+            transaction.globalOutputIndexes.push(amountOutputs.length);
+            amountOutputs.push({
+              outputIdx: i,
+              txIdx: index,
+            });
+          }
+          break;
+        case ETransactionIOType.SIGNATURE:
+          {
+            const amountOutputs: ITransactionMultisignatureOutputUsage[] = this
+              .multiSignatureOutputs[output.amount];
+            transaction.globalOutputIndexes.push(amountOutputs.length);
+            amountOutputs.push({
+              isUsed: false,
+              outputIndex: i,
+              transactionIndex: index,
+            });
+          }
+          break;
+      }
+    }
 
-  //   for (size_t i = 0; i < transaction.tx.inputs.size(); ++i) {
-  //     if (transaction.tx.inputs[i].type() == typeid(key_input_t)) {
-  //       auto result = m_spent_keys.insert(::boost::get<key_input_t>(transaction.tx.inputs[i]).keyImage);
-  //       if (!result.second) {
-  //         logger(ERROR, BRIGHT_RED) <<
-  //           "Double spending transaction was pushed to blockchain.";
-  //         for (size_t j = 0; j < i; ++j) {
-  //           m_spent_keys.erase(::boost::get<key_input_t>(transaction.tx.inputs[i - 1 - j]).keyImage);
-  //         }
-
-  //         m_transactionMap.erase(transactionHash);
-  //         return false;
-  //       }
-  //     }
-  //   }
-
-  //   for (const auto& inv : transaction.tx.inputs) {
-  //     if (inv.type() == typeid(multi_signature_input_t)) {
-  //       const multi_signature_input_t& in = ::boost::get<multi_signature_input_t>(inv);
-  //       auto& amountOutputs = m_multisignatureOutputs[in.amount];
-  //       amountOutputs[in.outputIndex].isUsed = true;
-  //     }
-  //   }
-
-  //   transaction.m_global_output_indexes.resize(transaction.tx.outputs.size());
-  //   for (uint16_t output = 0; output < transaction.tx.outputs.size(); ++output) {
-  //     if (transaction.tx.outputs[output].target.type() == typeid(key_output_t)) {
-  //       auto& amountOutputs = m_outputs[transaction.tx.outputs[output].amount];
-  //       transaction.m_global_output_indexes[output] = static_cast<uint32_t>(amountOutputs.size());
-  //       amountOutputs.push_back(std::make_pair<>(transactionIndex, output));
-  //     } else if (transaction.tx.outputs[output].target.type() == typeid(multi_signature_output_t)) {
-  //       auto& amountOutputs = m_multisignatureOutputs[transaction.tx.outputs[output].amount];
-  //       transaction.m_global_output_indexes[output] = static_cast<uint32_t>(amountOutputs.size());
-  //       multisignature_output_usage_t outputUsage = { transactionIndex, output, false };
-  //       amountOutputs.push_back(outputUsage);
-  //     }
-  //   }
-
-  //   m_paymentIdIndex.add(transaction.tx);
-
-  //   return true;
-  // }
+    this.payment.add(transaction.tx);
+    return true;
+  }
 
   public popTransactions(be: IBlockEntry, hash: IHash) {
     for (let i = 0; i < be.transactions.length - 1; i--) {

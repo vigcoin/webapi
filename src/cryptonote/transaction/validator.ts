@@ -33,7 +33,6 @@ import { TransactionPrefix } from './prefix';
 
 export class TransactionValidator {
   // Check Transaction Overflow
-
   public static checkMoneyOverflowInputs(prefix: ITransactionPrefix): boolean {
     let money = 0;
     for (const input of prefix.inputs) {
@@ -124,6 +123,7 @@ export class TransactionValidator {
     return true;
   }
 
+  // checkMultisignatureInputsDiff
   public static checkKeyImageDuplication(tx: ITransaction) {
     const images = {};
     for (const input of tx.prefix.inputs) {

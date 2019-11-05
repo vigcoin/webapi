@@ -159,6 +159,11 @@ export interface ITransactionIndex {
   transaction: uint16;
 }
 
+export interface IOutputIndexPair {
+  txIdx: ITransactionIndex;
+  outputIdx: uint16;
+}
+
 export interface ITransactionMultisignatureOutputUsage {
   transactionIndex: ITransactionIndex;
   outputIndex: uint16;
