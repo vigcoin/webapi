@@ -33,13 +33,14 @@ import {
   usize,
 } from '../types';
 
+import { EventEmitter } from 'events';
 import { AlternativeBlockchain } from './alternative';
 import { Block } from './block';
 import { BlockIndex } from './block-index';
 import { CheckPoint } from './checkpoint';
 import { Hardfork } from './hardfork';
 
-export class BlockChain {
+export class BlockChain extends EventEmitter {
   public static genesis(block: Configuration.ICBlock): Configuration.IGenesis {
     const genesisBlock = Block.genesis(block);
     const genesisBlockHash = Block.hash(genesisBlock);
@@ -64,6 +65,7 @@ export class BlockChain {
   }
 
   public alternativeChain: Map<IHash, IBlockEntry> = new Map();
+  public orphanBlocks: Map<IHash, IBlock> = new Map();
   public checkpoint: CheckPoint;
   public hardfork: Hardfork;
 
@@ -90,6 +92,7 @@ export class BlockChain {
   private initialized = false;
 
   constructor(config: Configuration.ICCurrency) {
+    super();
     this.currency = config;
     this.files = config.blockFiles;
     this.blockIndex = new BlockIndex(this.files.index);
@@ -846,6 +849,19 @@ export class BlockChain {
     return transactions;
   }
 
+  public pushBlockEntry(context: P2pConnectionContext, be: IBlockEntry) {
+    const hash = Block.hash(be.block);
+    this.block.push(be);
+    this.blockIndex.push(hash);
+
+    this.timestamp.add(fromUnixTimeStamp(be.block.header.timestamp), hash);
+    this.generatedTransaction.add(be.block);
+
+    assert(this.blockIndex.height === this.block.height);
+
+    return true;
+  }
+
   public pushBlock(
     context: P2pConnectionContext,
     block: IBlock,
@@ -872,7 +888,7 @@ export class BlockChain {
     block: IBlock,
     bvc: IBlockVerificationContext
   ) {
-    const start = unixNow();
+    const start = new Date();
 
     const hash = Block.hash(block);
     if (this.blockIndex.has(hash)) {
@@ -1005,51 +1021,59 @@ export class BlockChain {
       bvc.verificationFailed = true;
       return false;
     }
-
-    const emissionChange = 0;
-    const reward = 0;
     const alreadyGeneratedCoins =
       context.blockchain.height === 0
         ? 0
         : context.blockchain.block.last.generatedCoins;
+    const rewardInfo = TransactionValidator.validateMinerTransaction(
+      context,
+      block,
+      cumulativeBlockSize,
+      alreadyGeneratedCoins,
+      feeSummary
+    );
+    if (false === rewardInfo) {
+      logger.info('Block ' + hash + ' has invalid miner transaction');
+      bvc.verificationFailed = true;
+      this.popTransactions(be, minerTxHash);
+      return false;
+    }
+    be.height = this.height;
+    be.size = cumulativeBlockSize;
+    be.generatedCoins = alreadyGeneratedCoins + rewardInfo.emission;
+    be.difficulty = currentDiff;
 
-    // std::lock_guard<decltype(m_blockchain_lock)> lk(m_blockchain_lock);
+    if (this.height > 0) {
+      be.difficulty += this.block.last.difficulty;
+    }
+    this.pushBlockEntry(context, be);
 
-    // int64_t emissionChange = 0;
-    // uint64_t reward = 0;
-    // uint64_t already_generated_coins = m_blocks.empty() ? 0 : m_blocks.back().already_generated_coins;
-    // if (!validate_miner_transaction(blockData, static_cast<uint32_t>(m_blocks.size()), cumulative_block_size, already_generated_coins, fee_summary, reward, emissionChange)) {
-    //   logger(INFO, BRIGHT_WHITE) << "Block " << blockHash << " has invalid miner transaction";
-    //   bvc.m_verifivation_failed = true;
-    //   popTransactions(block, minerTransactionHash);
-    //   return false;
-    // }
+    const end = new Date().getTime() - start.getTime();
+    logger.info('+++++ BLOCK SUCCESSFULLY ADDED');
+    logger.info('id:\t' + hash);
+    logger.info('Pow:\t' + this.getLongHash(block).toString('hex'));
+    logger.info('HEIGHT ' + be.height + ', difficulty:\t' + currentDiff);
+    logger.info(
+      'block reward: ' +
+        TransactionAmount.format(rewardInfo.reward) +
+        ', fee = ' +
+        TransactionAmount.format(feeSummary) +
+        ', coinbase_blob_size: ' +
+        coinbaseBlobSize +
+        ', cumulative size: ' +
+        cumulativeBlockSize +
+        ', ' +
+        end +
+        '(' +
+        targetCalculateTime +
+        '/' +
+        longHashCalculateTime +
+        ')ms'
+    );
 
-    // block.height = static_cast<uint32_t>(m_blocks.size());
-    // block.block_cumulative_size = cumulative_block_size;
-    // block.cumulative_difficulty = currentDifficulty;
-    // block.already_generated_coins = already_generated_coins + emissionChange;
-    // if (m_blocks.size() > 0) {
-    //   block.cumulative_difficulty += m_blocks.back().cumulative_difficulty;
-    // }
-
-    // pushBlock(block);
-
-    // auto block_processing_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - blockProcessingStart).count();
-
-    // logger(DEBUGGING) <<
-    //   "+++++ BLOCK SUCCESSFULLY ADDED" << ENDL << "id:\t" << blockHash
-    //   << ENDL << "PoW:\t" << proof_of_work
-    //   << ENDL << "HEIGHT " << block.height << ", difficulty:\t" << currentDifficulty
-    //   << ENDL << "block reward: " << m_currency.formatAmount(reward) << ", fee = " << m_currency.formatAmount(fee_summary)
-    //   << ", coinbase_blob_size: " << coinbase_blob_size << ", cumulative size: " << cumulative_block_size
-    //   << ", " << block_processing_time << "(" << target_calculating_time << "/" << longhash_calculating_time << ")ms";
-
-    // bvc.m_added_to_main_chain = true;
-
-    // update_next_comulative_size_limit();
-
-    // return true;
+    bvc.addedToMainChain = true;
+    this.updateNextCumulativeBlockSizeLimit();
+    return true;
   }
 
   public checkTimestamp(block: IBlock) {
@@ -1098,6 +1122,7 @@ export class BlockChain {
     }
     return true;
   }
+
   public getAdjustedTime(): uint64 {
     return unixNow();
   }

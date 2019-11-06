@@ -550,12 +550,9 @@ export class TransactionValidator {
   public static validateMinerTransaction(
     context: P2pConnectionContext,
     block: IBlock,
-    height: uint64,
     cumulativeBlockSize: usize,
     alreadyGeneratedCoins: uint64,
-    fee: uint64,
-    reward: uint64,
-    emissionChange: int64
+    fee: uint64
   ) {
     let minerReward = 0;
     for (const output of block.transaction.prefix.outputs) {
@@ -566,35 +563,40 @@ export class TransactionValidator {
     );
 
     const blocksSizeMedian = medianValue(lastBlocksSizes);
+    const rewardInfo = Block.getReward(
+      blocksSizeMedian,
+      cumulativeBlockSize,
+      alreadyGeneratedCoins,
+      fee
+    );
+    if (rewardInfo === false) {
+      logger.info(
+        'block size ' +
+          cumulativeBlockSize +
+          ' is bigger than allowed for this blockchain'
+      );
+      return false;
+    }
+    const { reward, emission: emissionChange } = rewardInfo;
+
+    if (minerReward > reward) {
+      logger.info(
+        'Coinbase transaction spend too much money: ' +
+          TransactionAmount.format(minerReward) +
+          ', block reward is ' +
+          TransactionAmount.format(reward)
+      );
+      return false;
+    }
+    if (minerReward < reward) {
+      logger.info(
+        "Coinbase transaction doesn't use full amount of block reward: spent " +
+          TransactionAmount.format(minerReward) +
+          ', block reward is ' +
+          TransactionAmount.format(reward)
+      );
+      return false;
+    }
+    return rewardInfo;
   }
-
-  // bool Blockchain::validate_miner_transaction(const block_t& b, uint32_t height, size_t cumulativeBlockSize,
-  //   uint64_t alreadyGeneratedCoins, uint64_t fee,
-  //   uint64_t& reward, int64_t& emissionChange) {
-  //   uint64_t minerReward = 0;
-  //   for (auto& o : b.baseTransaction.outputs) {
-  //     minerReward += o.amount;
-  //   }
-
-  //   std::vector<size_t> lastBlocksSizes;
-  //   get_last_n_blocks_sizes(lastBlocksSizes, m_currency.rewardBlocksWindow());
-  //   size_t blocksSizeMedian = math::medianValue(lastBlocksSizes);
-
-  //   if (!m_currency.getBlockReward(blocksSizeMedian, cumulativeBlockSize, alreadyGeneratedCoins, fee, reward, emissionChange)) {
-  //     logger(INFO, BRIGHT_WHITE) << "block size " << cumulativeBlockSize << " is bigger than allowed for this blockchain";
-  //     return false;
-  //   }
-
-  //   if (minerReward > reward) {
-  //     logger(ERROR, BRIGHT_RED) << "Coinbase transaction spend too much money: " << m_currency.formatAmount(minerReward) <<
-  //       ", block reward is " << m_currency.formatAmount(reward);
-  //     return false;
-  //   } else if (minerReward < reward) {
-  //     logger(ERROR, BRIGHT_RED) << "Coinbase transaction doesn't use full amount of block reward: spent " <<
-  //       m_currency.formatAmount(minerReward) << ", block reward is " << m_currency.formatAmount(reward);
-  //     return false;
-  //   }
-
-  //   return true;
-  // }
 }

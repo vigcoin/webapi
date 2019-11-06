@@ -1,3 +1,4 @@
+import { Amount } from '@vigcoin/neon';
 import * as assert from 'assert';
 import {
   closeSync,
@@ -18,7 +19,6 @@ import {
   IBlock,
   IBlockEntry,
   IBlockHeader,
-  int64,
   ITransaction,
   uint64,
   usize,
@@ -152,6 +152,55 @@ export class Block {
     }
   }
 
+  public static getReward(
+    medianSize: usize,
+    currentBlockSize: usize,
+    alreadyGeneratedCoins: uint64,
+    fee: uint64
+  ) {
+    assert(alreadyGeneratedCoins <= parameters.MONEY_SUPPLY);
+    assert(parameters.EMISSION_SPEED_FACTOR > 0);
+    assert(parameters.EMISSION_SPEED_FACTOR <= 8 * 8);
+    // tslint:disable-next-line:no-bitwise
+    let baseReward =
+      // tslint:disable-next-line:no-bitwise
+      (parameters.MONEY_SUPPLY - alreadyGeneratedCoins) >>>
+      parameters.EMISSION_SPEED_FACTOR;
+    if (alreadyGeneratedCoins === 0) {
+      baseReward =
+        (parameters.MONEY_SUPPLY * parameters.PREMINED_PERCENTAGE) / 100;
+    }
+    if (alreadyGeneratedCoins + baseReward >= parameters.MONEY_SUPPLY) {
+      baseReward = 0;
+    }
+    if (medianSize < parameters.CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE) {
+      medianSize = parameters.CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE;
+    }
+
+    if (currentBlockSize > 2 * medianSize) {
+      logger.error(
+        'Block cumulative size is too big: ' +
+          currentBlockSize +
+          ', expected less than ' +
+          2 * medianSize
+      );
+      return false;
+    }
+
+    const penalizedBaseReward = Amount.getPenalized(
+      baseReward,
+      medianSize,
+      currentBlockSize
+    );
+    const penalizedFee = Amount.getPenalized(fee, medianSize, currentBlockSize);
+    const emission = penalizedBaseReward - (fee - penalizedFee);
+    const reward = penalizedBaseReward + penalizedFee;
+    return {
+      emission,
+      reward,
+    };
+  }
+
   private filename: string;
   private offsets: uint64[];
 
@@ -211,6 +260,7 @@ export class Block {
     const fd = openSync(this.filename, 'r+');
     writeSync(fd, writer.getBuffer(), offset);
     closeSync(fd);
+    return writer.getBuffer().length;
   }
 
   public init(items: uint64[]) {
@@ -232,6 +282,12 @@ export class Block {
     closeSync(fd);
   }
 
+  public push(be: IBlockEntry) {
+    const offset = this.offsets[this.offsets.length - 1];
+    const length = this.write(be, offset);
+    this.offsets.push(offset + length);
+  }
+
   get height() {
     return this.offsets.length;
   }
@@ -239,96 +295,4 @@ export class Block {
   get last() {
     return this.get(this.height - 1);
   }
-
-  public getPenalizedAmount(
-    amount: uint64,
-    medianSize: usize,
-    currentBlockSize: usize
-  ) {
-    assert(currentBlockSize <= 2 * medianSize);
-    assert(medianSize <= 0xffffffff);
-    assert(currentBlockSize <= 0xffffffff);
-    if (amount === 0) {
-      return 0;
-    }
-    if (currentBlockSize <= medianSize) {
-      return amount;
-    }
-  }
-
-  //   uint64_t getPenalizedAmount(uint64_t amount, size_t medianSize, size_t currentBlockSize)
-  // {
-
-  //   uint64_t productHi;
-  //   uint64_t productLo = mul128(amount, currentBlockSize * (UINT64_C(2) * medianSize - currentBlockSize), &productHi);
-
-  //   uint64_t penalizedAmountHi;
-  //   uint64_t penalizedAmountLo;
-  //   div128_32(productHi, productLo, static_cast<uint32_t>(medianSize), &penalizedAmountHi, &penalizedAmountLo);
-  //   div128_32(penalizedAmountHi, penalizedAmountLo, static_cast<uint32_t>(medianSize), &penalizedAmountHi, &penalizedAmountLo);
-
-  //   assert(0 == penalizedAmountHi);
-  //   assert(penalizedAmountLo < amount);
-
-  //   return penalizedAmountLo;
-  // }
-
-  public getReward(
-    medianSize: usize,
-    currentBlockSize: usize,
-    alreadyGeneratedCoins: uint64,
-    fee: uint64,
-    reward: uint64,
-    emissionChange: int64
-  ) {
-    assert(alreadyGeneratedCoins <= parameters.MONEY_SUPPLY);
-    assert(parameters.EMISSION_SPEED_FACTOR > 0);
-    assert(parameters.EMISSION_SPEED_FACTOR <= 8 * 8);
-    // tslint:disable-next-line:no-bitwise
-    let baseReward =
-      // tslint:disable-next-line:no-bitwise
-      (parameters.MONEY_SUPPLY - alreadyGeneratedCoins) >>>
-      parameters.EMISSION_SPEED_FACTOR;
-    if (alreadyGeneratedCoins === 0) {
-      baseReward =
-        (parameters.MONEY_SUPPLY * parameters.PREMINED_PERCENTAGE) / 100;
-    }
-    if (alreadyGeneratedCoins + baseReward >= parameters.MONEY_SUPPLY) {
-      baseReward = 0;
-    }
-    if (medianSize < parameters.CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE) {
-      medianSize = parameters.CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE;
-    }
-
-    if (currentBlockSize > 2 * medianSize) {
-      logger.error(
-        'Block cumulative size is too big: ' +
-          currentBlockSize +
-          ', expected less than ' +
-          2 * medianSize
-      );
-      return false;
-    }
-
-    // const penalizedBaseReward =
-  }
-
-  //   bool Currency:: getBlockReward(size_t medianSize, size_t currentBlockSize, uint64_t alreadyGeneratedCoins,
-  //     uint64_t fee, uint64_t &reward, int64_t &emissionChange) const
-  // {
-
-  //   medianSize = std:: max(medianSize, m_blockGrantedFullRewardZone);
-  //   if (currentBlockSize > UINT64_C(2) * medianSize) {
-  //     logger(TRACE) << "Block cumulative size is too big: " << currentBlockSize << ", expected less than " << 2 * medianSize;
-  //     return false;
-  //   }
-
-  //   uint64_t penalizedBaseReward = getPenalizedAmount(baseReward, medianSize, currentBlockSize);
-  //   uint64_t penalizedFee = getPenalizedAmount(fee, medianSize, currentBlockSize);
-
-  //   emissionChange = penalizedBaseReward - (fee - penalizedFee);
-  //   reward = penalizedBaseReward + penalizedFee;
-
-  //   return true;
-  // }
 }

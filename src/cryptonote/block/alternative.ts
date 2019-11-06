@@ -1,12 +1,18 @@
 import { parameters } from '../../config';
 import { IHash } from '../../crypto/types';
-import { IBlock, IBlockVerificationContext } from '../../cryptonote/types';
 import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
 import { medianValue } from '../../util/math';
 import { Difficulty } from '../difficulty';
+import { BLOCKCHAIN_EVENT_CHAIN_SWITCHED } from '../events';
 import { TransactionValidator } from '../transaction/validator';
-import { IBlockEntry, uint64, usize } from '../types';
+import {
+  IBlock,
+  IBlockEntry,
+  IBlockVerificationContext,
+  uint64,
+  usize,
+} from '../types';
 import { Block } from './block';
 import { BlockchainMessage, EBlockchainMessage } from './messages';
 
@@ -317,60 +323,74 @@ export class AlternativeBlockchain {
         switchedToAltChain: false,
         verificationFailed: false,
       };
-      context.blockchain.pushBlock(context, alter.block, bvc);
+      const res = context.blockchain.pushBlock(context, alter.block, bvc);
+
+      if (!res || !bvc.addedToMainChain) {
+        logger.info('Failed to switch to alternative blockchain');
+        AlternativeBlockchain.rollback(context, disconnectedChain, splitHeight);
+        logger.info(
+          'The block was inserted as invalid while connecting new alternative chain,  block_id: ' +
+            Block.hash(alter.block)
+        );
+        const hash = Block.hash(alter.block);
+        context.blockchain.orphanBlocks.delete(hash);
+        context.blockchain.alternativeChain.delete(hash);
+        return false;
+      }
     }
 
-    // //connecting new alternative chain
-    // for (auto alt_ch_iter = alt_chain.begin(); alt_ch_iter != alt_chain.end(); alt_ch_iter++) {
-    //   auto ch_ent = *alt_ch_iter;
-    //   block_verification_context_t bvc = boost::value_initialized<block_verification_context_t>();
-    //   bool r = pushBlock(ch_ent->second.bl, bvc);
-    //   if (!r || !bvc.m_added_to_main_chain) {
-    //     logger(INFO, BRIGHT_WHITE) << "Failed to switch to alternative blockchain";
-    //     rollback_blockchain_switching(disconnected_chain, split_height);
-    //     //add_block_as_invalid(ch_ent->second, Block::getHash(ch_ent->second.bl));
-    //     logger(INFO, BRIGHT_WHITE) << "The block was inserted as invalid while connecting new alternative chain,  block_id: " << Block::getHash(ch_ent->second.bl);
-    //     m_orthanBlocksIndex.remove(ch_ent->second.bl);
-    //     m_alternative_chains.erase(ch_ent);
+    if (!discardDisconnected) {
+      // pushing old chain as alternative chain
+      for (const disconnected of disconnectedChain) {
+        const bvc: IBlockVerificationContext = {
+          addedToMainChain: false,
+          alreadyExists: false,
+          markedAsOrphaned: false,
+          switchedToAltChain: false,
+          verificationFailed: false,
+        };
+        const res = AlternativeBlockchain.handle(
+          context,
+          Block.hash(disconnected),
+          disconnected,
+          bvc,
+          false
+        );
+        if (!res) {
+          logger.error(
+            'Failed to push ex-main chain blocks to alternative chain '
+          );
+          AlternativeBlockchain.rollback(
+            context,
+            disconnectedChain,
+            splitHeight
+          );
+          return false;
+        }
+      }
+    }
 
-    //     for (auto alt_ch_to_orph_iter = ++alt_ch_iter; alt_ch_to_orph_iter != alt_chain.end(); alt_ch_to_orph_iter++) {
-    //       //block_verification_context_t bvc = boost::value_initialized<block_verification_context_t>();
-    //       //add_block_as_invalid((*alt_ch_iter)->second, (*alt_ch_iter)->first);
-    //       m_orthanBlocksIndex.remove((*alt_ch_to_orph_iter)->second.bl);
-    //       m_alternative_chains.erase(*alt_ch_to_orph_iter);
-    //     }
+    const blocksFromCommonRoot: IHash[] = [];
+    // removing all_chain entries from alternative chain
 
-    //     return false;
-    //   }
-    // }
+    for (const alter of alterChains) {
+      const hash = Block.hash(alter.block);
+      blocksFromCommonRoot.push(hash);
+      context.blockchain.orphanBlocks.delete(hash);
+      context.blockchain.alternativeChain.delete(hash);
+    }
 
-    // if (!discard_disconnected_chain) {
-    //   //pushing old chain as alternative chain
-    //   for (auto& old_ch_ent : disconnected_chain) {
-    //     block_verification_context_t bvc = boost::value_initialized<block_verification_context_t>();
-    //     bool r = handle_alternative_block(old_ch_ent, Block::getHash(old_ch_ent), bvc, false);
-    //     if (!r) {
-    //       logger(ERROR, BRIGHT_RED) << ("Failed to push ex-main chain blocks to alternative chain ");
-    //       rollback_blockchain_switching(disconnected_chain, split_height);
-    //       return false;
-    //     }
-    //   }
-    // }
+    context.blockchain.emit(
+      BLOCKCHAIN_EVENT_CHAIN_SWITCHED,
+      blocksFromCommonRoot
+    );
 
-    // std::vector<hash_t> blocksFromCommonRoot;
-    // blocksFromCommonRoot.reserve(alt_chain.size() + 1);
-    // blocksFromCommonRoot.push_back(alt_chain.front()->second.bl.previousBlockHash);
-
-    // //removing all_chain entries from alternative chain
-    // for (auto ch_ent : alt_chain) {
-    //   blocksFromCommonRoot.push_back(Block::getHash(ch_ent->second.bl));
-    //   m_orthanBlocksIndex.remove(ch_ent->second.bl);
-    //   m_alternative_chains.erase(ch_ent);
-    // }
-
-    // sendMessage(BlockchainMessage(ChainSwitchMessage(std::move(blocksFromCommonRoot))));
-
-    // logger(INFO, BRIGHT_GREEN) << "REORGANIZE SUCCESS! on height: " << split_height << ", new blockchain size: " << m_blocks.size();
+    logger.info(
+      'REORGANIZE SUCCESS! on height: ' +
+        splitHeight +
+        ', new blockchain size: ' +
+        context.blockchain.height
+    );
     return true;
   }
 
@@ -426,4 +446,36 @@ export class AlternativeBlockchain {
     } while (startTopHeight !== stopOffset);
     return true;
   }
+
+  public static rollback(
+    context: P2pConnectionContext,
+    originalChain: IBlock[],
+    rollbackHeight: usize
+  ) {
+    // remove failed subchain
+    for (let i = context.blockchain.height - 1; i >= rollbackHeight; i--) {
+      context.blockchain.pop(context, i);
+    }
+    // return back original chain
+    for (const block of originalChain) {
+      const bvc: IBlockVerificationContext = {
+        addedToMainChain: false,
+        alreadyExists: false,
+        markedAsOrphaned: false,
+        switchedToAltChain: false,
+        verificationFailed: false,
+      };
+      const res = context.blockchain.pushBlock(context, block, bvc);
+      if (!(res && bvc.addedToMainChain)) {
+        logger.error(
+          'PANIC!!! failed to add (again) block while chain switching during the rollback!'
+        );
+        return false;
+      }
+    }
+    logger.info('Rollback success.');
+    return true;
+  }
+
+  private chain: Map<IHash, IBlockEntry> = new Map();
 }
