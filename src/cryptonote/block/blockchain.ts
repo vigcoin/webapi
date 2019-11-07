@@ -34,6 +34,10 @@ import {
 } from '../types';
 
 import { EventEmitter } from 'events';
+import {
+  BLOCKCHAIN_EVENT_NEW_BLOCK,
+  BLOCKCHAIN_EVENT_UPDATED,
+} from '../events';
 import { AlternativeBlockchain } from './alternative';
 import { Block } from './block';
 import { BlockIndex } from './block-index';
@@ -281,6 +285,10 @@ export class BlockChain extends EventEmitter {
     return (input.target as IInputBase).blockIndex;
   }
 
+  public getBlockIdByHeight(height: uint64) {
+    return this.blockIndex.getHash(height);
+  }
+
   public getTransactionsWithMissed(
     txs: IHash[],
     missed: IHash[]
@@ -326,31 +334,26 @@ export class BlockChain extends EventEmitter {
         return false;
       }
       let result = false;
-      if (!block.header.preHash.equals(this.getTailId())) {
+      // check that block refers to chain tail
+      if (!block.header.preHash.equals(context.blockchain.getTailId())) {
         bvc.addedToMainChain = false;
         result = AlternativeBlockchain.handle(context, id, block, bvc, true);
       } else {
-        // result = pushBlock()
+        result = this.pushBlock(context, block, bvc);
+        if (result) {
+          this.emit(BLOCKCHAIN_EVENT_NEW_BLOCK, id);
+        }
       }
-      // check that block refers to chain tail
-      // if (!(bl.previousBlockHash == getTailId())) {
-      //   //chain switching or wrong block
-      //   bvc.m_added_to_main_chain = false;
-      //   add_result = handle_alternative_block(bl, id, bvc);
-      // } else {
-      //   add_result = pushBlock(bl, bvc);
-      //   if (add_result) {
-      //     sendMessage(BlockchainMessage(NewBlockMessage(id)));
-      //   }
-      // }
-      // block.
+      if (result && bvc.addedToMainChain) {
+        this.emit(BLOCKCHAIN_EVENT_UPDATED);
+      }
+      return result;
     } catch (e) {
       logger.info(
         'Failed to get block hash, possible block has invalid format'
       );
       return false;
     }
-    return true;
   }
 
   public hasOutput(amount: uint64) {
@@ -1126,4 +1129,35 @@ export class BlockChain extends EventEmitter {
   public getAdjustedTime(): uint64 {
     return unixNow();
   }
+
+  public transactionByIndex(index: ITransactionIndex) {
+    const block = this.get(index.block);
+    return block.transactions[index.transaction];
+  }
+
+  public getBlockChainTransactions(transactionHashes: IHash[]) {
+    const txs = [];
+    const missed = [];
+    for (const hash of transactionHashes) {
+      if (this.transactionPairs.has(hash)) {
+        txs.push(this.transactionByIndex(this.transactionPairs.get(hash)).tx);
+      } else {
+        missed.push(hash);
+      }
+    }
+    return {
+      missed,
+      txs,
+    };
+  }
+
+  // public getTransactions(
+  //   context: P2pConnectionContext,
+  //   transactionHashes: IHash[], checkPool: boolean = false) {
+  //   const result = this.getBlockChainTransactions(transactionHashes);
+  //   if(checkPool) {
+  //     return context.mempool.getTransactionsFiltered(missed);
+  //   }
+  //   return result;
+  // }
 }

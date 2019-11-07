@@ -16,6 +16,7 @@ import { BufferStreamWriter } from '../../serialize/writer';
 import { TransactionProtocol } from '../../transaction/protocol';
 import { IBlockVerificationContext, uint32 } from '../../types';
 import { CN_COMMANDS_POOL_BASE, IBlockCompletEntry } from '../defines';
+import { NSRequestChain } from './request-chain';
 
 // tslint:disable-next-line:no-namespace
 export namespace NSNewBlock {
@@ -61,17 +62,48 @@ export namespace NSNewBlock {
         switchedToAltChain: false,
         verificationFailed: true,
       };
+      TransactionProtocol.onIncomingBlob(
+        context,
+        request.blockCompleteEntry.block,
+        bvc,
+        true,
+        true
+      );
 
-      if (
-        !TransactionProtocol.onIncomingBlob(
-          context,
-          request.blockCompleteEntry.block,
-          bvc,
-          true
-        )
-      ) {
+      if (bvc.verificationFailed) {
+        logger.info(
+          'Block verification failed, dropping connection: ' +
+            context.peerId.toString('hex')
+        );
+        context.state = ConnectionState.SHUTDOWN;
+        return 1;
       }
 
+      if (bvc.addedToMainChain) {
+        request.hop++;
+        // TODO: Add here announce protocol usage
+        const writer = new BufferStreamWriter();
+        NSNewBlock.Writer.request(writer, request);
+        context.cm.relay(writer.getBuffer());
+        if (bvc.switchedToAltChain) {
+          context.handler.requestMissingPoolTransactions(context);
+        }
+      } else {
+        if (bvc.markedAsOrphaned) {
+          context.state = ConnectionState.SYNCHRONIZING;
+          const ids = context.blockchain.buildSparseChain();
+          const requestChain: NSRequestChain.IRequest = {
+            blockHashes: ids,
+          };
+          logger.info(
+            '-->>NOTIFY_REQUEST_CHAIN: m_block_ids.size()=' +
+              requestChain.blockHashes.length
+          );
+          const writer = new BufferStreamWriter();
+          NSRequestChain.Writer.request(writer, requestChain);
+          context.socket.write(writer.getBuffer());
+        }
+      }
       return true;
     }
   }

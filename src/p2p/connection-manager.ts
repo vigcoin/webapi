@@ -223,4 +223,19 @@ export class ConnectionManager extends EventEmitter {
       version: Version.CURRENT,
     };
   }
+
+  public relay(buffer: Buffer, exculdedId: Buffer = null) {
+    this.connections.forEach((con, key) => {
+      if (exculdedId && con.id.equals(exculdedId)) {
+        return;
+      }
+      if (
+        con.peerId &&
+        (con.state === ConnectionState.NORMAL ||
+          con.state === ConnectionState.SYNCHRONIZING)
+      ) {
+        con.socket.write(buffer);
+      }
+    });
+  }
 }

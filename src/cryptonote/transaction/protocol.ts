@@ -4,14 +4,15 @@ import { IHash } from '../../crypto/types';
 import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
 import { Block } from '../block/block';
+import { NSNewBlock } from '../protocol/commands/new-block';
+import { IBlockCompletEntry } from '../protocol/defines';
 import { BufferStreamReader } from '../serialize/reader';
+import { BufferStreamWriter } from '../serialize/writer';
 import {
   IBlock,
   IBlockVerificationContext,
-  ITransaction,
   ITxVerificationContext,
 } from '../types';
-import { TransactionPrefix } from './prefix';
 import { TransactionValidator } from './validator';
 
 export class TransactionProtocol {
@@ -19,7 +20,8 @@ export class TransactionProtocol {
     context: P2pConnectionContext,
     blockBuffer: Buffer,
     bvc: IBlockVerificationContext,
-    keptByBlock: boolean
+    minerControl: boolean,
+    relayBlock: boolean
   ): boolean {
     if (blockBuffer.length > parameters.CRYPTONOTE_MAX_BLOCK_BLOB_SIZE) {
       logger.info(
@@ -31,7 +33,67 @@ export class TransactionProtocol {
       const block: IBlock = Block.readBlock(
         new BufferStreamReader(blockBuffer)
       );
+      if (minerControl) {
+        // context.blockchain.stopMining();
+      }
       context.blockchain.addNew(context, block, bvc);
+      if (minerControl) {
+        // context.blockchain.update_block_template_and_resume_mining();
+      }
+
+      if (relayBlock && bvc.addedToMainChain) {
+        const result = context.blockchain.getTransactions(
+          context,
+          block.transactionHashes
+        );
+        if (
+          !result.missedTxs.length &&
+          context.blockchain
+            .getBlockIdByHeight(context.blockchain.getHeightByBlock(block))
+            .equals(Block.hash(block))
+        ) {
+          logger.info(
+            'Block added, but it seems that reorganize just happened after that, do not relay this block'
+          );
+        } else {
+          if (
+            !(
+              result.blockTxs.length === block.transactionHashes.length &&
+              result.missedTxs.length === 0
+            )
+          ) {
+            logger.error(
+              "can't find some transactions in found block:" +
+                Block.hash(block) +
+                ' txs.size()=' +
+                result.blockTxs.length +
+                ', b.transactionHashes.size()=' +
+                block.transactionHashes.length +
+                ', missed_txs.size()' +
+                result.missedTxs.length
+            );
+            return false;
+          }
+
+          const txs = [];
+          for (const tx of result.blockTxs) {
+            txs.push(Transaction.toBuffer(tx).toString('hex'));
+          }
+          const be: IBlockCompletEntry = {
+            block: blockBuffer,
+            txs,
+          };
+          const request: NSNewBlock.IRequest = {
+            blockCompleteEntry: be,
+            currentBlockHeight: context.blockchain.height,
+            hop: 0,
+          };
+          const writer = new BufferStreamWriter();
+          NSNewBlock.Writer.request(writer, request);
+          context.cm.relay(writer.getBuffer());
+        }
+      }
+      return true;
     } catch (e) {
       logger.info('Failed to parse and validate new block');
       return false;
