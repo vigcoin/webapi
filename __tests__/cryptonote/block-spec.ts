@@ -26,7 +26,7 @@ describe('test raw block', () => {
     expect(block.header.version.minor === 0).toBeTruthy();
     expect(block.header.version.patch === 0).toBeTruthy();
     expect(block.header.timestamp === 0).toBeTruthy();
-    expect(block.header.preHash.equals(new Buffer(32))).toBeTruthy();
+    expect(block.header.preHash.equals(Buffer.alloc(32))).toBeTruthy();
     expect(block.transactionHashes.length === 0).toBeTruthy();
 
     expect(block.transaction.prefix.version === 1).toBeTruthy();
@@ -43,7 +43,7 @@ describe('test raw block', () => {
     expect(input.blockIndex === 0).toBeTruthy();
     expect(
       block.transaction.prefix.extra.equals(
-        new Buffer(
+        Buffer.from(
           [
             0xe5,
             0x69,

@@ -313,7 +313,7 @@ describe('test json stream', () => {
     const stream = new BufferStreamReader(Buffer.from(buffer));
     const json: any = readJSON(stream);
     assert(String(json.status) === 'OK');
-    const newPeerId = new Buffer([
+    const newPeerId = Buffer.from([
       0xbc,
       0xab,
       0x85,
@@ -651,7 +651,7 @@ describe('test json stream', () => {
       },
       payload: {
         currentHeight: 1,
-        hash: new Buffer([
+        hash: Buffer.from([
           1,
           2,
           3,

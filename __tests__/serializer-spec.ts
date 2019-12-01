@@ -6,15 +6,15 @@ import { BufferStreamWriter } from '../src/cryptonote/serialize/writer';
 
 describe('test serializer', () => {
   test('Should write/read types and Buffer', async () => {
-    const writer = new BufferStreamWriter(new Buffer(8));
+    const writer = new BufferStreamWriter(Buffer.alloc(8));
     // tslint:disable-next-line:no-bitwise
     const uint8 = 1 << 7;
     const uint16 = 0xffff;
     const uint32 = 0xffffffff;
     const t = Buffer.from([0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08]);
     const d = new Date();
-    const b = new Buffer([1, 2, 3]);
-    const h = new Buffer(HASH_LENGTH);
+    const b = Buffer.from([1, 2, 3]);
+    const h = Buffer.alloc(HASH_LENGTH);
     h[1] = 1;
     h[3] = 2;
     writer.writeUInt8(uint8);
@@ -59,7 +59,7 @@ describe('test serializer', () => {
   });
 
   test('Should shift buffer', async () => {
-    const writer = new BufferStreamWriter(new Buffer(8));
+    const writer = new BufferStreamWriter(Buffer.alloc(8));
     const buffer = writer.shiftBuffer(Buffer.from([0xaa, 0xbb]));
     buffer.equals(Buffer.from([0x55, 0x01]));
     const buffer1 = writer.shiftBuffer(Buffer.from([0x55, 0x01]));
@@ -122,28 +122,28 @@ describe('test serializer', () => {
   });
 
   test('Should write/read varint 1', async () => {
-    const writer = new BufferStreamWriter(new Buffer(8));
+    const writer = new BufferStreamWriter(Buffer.alloc(8));
     writer.writeVarint(1);
     const reader = new BufferStreamReader(writer.getBuffer());
     assert(1 === reader.readVarint());
   });
 
   test('Should write/read varint 128', async () => {
-    const writer = new BufferStreamWriter(new Buffer(8));
+    const writer = new BufferStreamWriter(Buffer.alloc(8));
     writer.writeVarint(128);
     const reader = new BufferStreamReader(writer.getBuffer());
     assert(128 === reader.readVarint());
   });
 
   test('Should write/read varint 129', async () => {
-    const writer = new BufferStreamWriter(new Buffer(8));
+    const writer = new BufferStreamWriter(Buffer.alloc(8));
     writer.writeVarint(129);
     const reader = new BufferStreamReader(writer.getBuffer());
     assert(129 === reader.readVarint());
   });
 
   test('Should write/read varint unit32', async () => {
-    const writer = new BufferStreamWriter(new Buffer(8));
+    const writer = new BufferStreamWriter(Buffer.alloc(8));
     writer.writeVarint(0xffff);
     const reader = new BufferStreamReader(writer.getBuffer());
     assert(0xffff === reader.readVarint());
@@ -151,14 +151,14 @@ describe('test serializer', () => {
 
   test('Should write/read varint unit63', async () => {
     const t = new Date().getDate();
-    const writer = new BufferStreamWriter(new Buffer(8));
+    const writer = new BufferStreamWriter(Buffer.alloc(8));
     writer.writeVarint(t);
     const reader = new BufferStreamReader(writer.getBuffer());
     assert(t === reader.readVarint());
   });
 
   test('Should get shift value', async () => {
-    const reader = new BufferStreamReader(new Buffer(0));
+    const reader = new BufferStreamReader(Buffer.alloc(0));
     assert(268435456 === reader.getShiftValue(28, 1));
     assert(536870912 === reader.getShiftValue(28, 2));
     const buffer = reader.getBuffer();
