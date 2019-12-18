@@ -1,5 +1,5 @@
+import { IHash } from '@vigcoin/crypto';
 import { parameters } from '../../config';
-import { IHash } from '../../crypto/types';
 import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
 import { medianValue } from '../../util/math';

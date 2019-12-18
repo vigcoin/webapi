@@ -1,4 +1,4 @@
-import { Wallet } from '@vigcoin/neon';
+import { Wallet } from '@vigcoin/crypto';
 
 export = {
   urls: ['/wallet/create'],

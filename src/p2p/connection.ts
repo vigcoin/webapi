@@ -1,7 +1,7 @@
+import { IHash } from '@vigcoin/crypto';
 import { randomBytes } from 'crypto';
 import { EventEmitter } from 'events';
 import { createConnection, Socket } from 'net';
-import { IHash } from '../crypto/types';
 import { BlockChain } from '../cryptonote/block/blockchain';
 import { Hardfork } from '../cryptonote/block/hardfork';
 import { MemoryPool } from '../cryptonote/mem-pool';

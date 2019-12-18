@@ -1,4 +1,4 @@
-import { CNFashHash, IHash } from '../../crypto/types';
+import { CNFashHash, IHash } from '@vigcoin/crypto';
 import { BufferStreamReader } from '../serialize/reader';
 import { BufferStreamWriter } from '../serialize/writer';
 import {

@@ -1,6 +1,5 @@
+import { CNFashHash, IHash, ISignature } from '@vigcoin/crypto';
 import assert = require('assert');
-import { parameters } from '../../config';
-import { CNFashHash, IHash, ISignature } from '../../crypto/types';
 import { BufferStreamReader } from '../serialize/reader';
 import { BufferStreamWriter } from '../serialize/writer';
 import { TransactionPrefix } from '../transaction/prefix';

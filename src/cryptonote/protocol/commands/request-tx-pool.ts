@@ -1,5 +1,5 @@
+import { IHash } from '@vigcoin/crypto';
 import * as assert from 'assert';
-import { IHash } from '../../../crypto/types';
 import {
   BIN_KV_SERIALIZE_TYPE_STRING,
   readJSON,

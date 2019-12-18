@@ -1,4 +1,4 @@
-import { IHash } from '../../crypto/types';
+import { IHash } from '@vigcoin/crypto';
 import { MultiMap } from '../../util/map';
 import { TransactionExtra } from '../transaction/extra';
 import { Transaction } from '../transaction/index';

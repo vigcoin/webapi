@@ -1,7 +1,7 @@
+import { CNCheckHash, CNSlowHash, IHash, IKeyImage } from '@vigcoin/crypto';
 import * as assert from 'assert';
 import { parameters } from '../../config';
 import { Configuration } from '../../config/types';
-import { CNCheckHash, CNSlowHash, IHash, IKeyImage } from '../../crypto/types';
 import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
 import { medianValue } from '../../util/math';
@@ -546,8 +546,9 @@ export class BlockChain extends EventEmitter {
   }
 
   public getLongHash(block: IBlock): IHash {
-    const buffer = Block.toBuffer(block);
-    return CNSlowHash(buffer, this.hardfork.getVariant(block));
+    const buffer: Buffer = Block.toBuffer(block);
+    const variant = this.hardfork.getVariant(block);
+    return Buffer.from(CNSlowHash(buffer, variant), 'hex');
   }
 
   public checkProofOfWork(block: IBlock, difficulty: uint64): boolean {

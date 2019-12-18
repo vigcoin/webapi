@@ -1,6 +1,5 @@
-import * as assert from 'assert';
+import { CryptonoteDifficulty } from '@vigcoin/crypto';
 import { parameters } from '../config';
-import { CryptonoteDifficulty } from '../crypto/types';
 import { logger } from '../logger';
 import { P2pConnectionContext } from '../p2p/connection';
 import { IBlockEntry, uint64 } from './types';
@@ -23,7 +22,7 @@ export class Difficulty {
     context: P2pConnectionContext,
     alterChain: IBlockEntry[],
     height: uint64
-  ) {
+  ): number {
     const timestamps: uint64[] = [];
     const cumulativeDifficulties: uint64[] = [];
     const blocksCount = Difficulty.blocksCount();
@@ -63,7 +62,7 @@ export class Difficulty {
             Difficulty.blocksCount() +
             ']'
         );
-        return false;
+        return 0;
       }
       for (const aci of alterChain) {
         timestamps.push(aci.block.header.timestamp);
@@ -85,7 +84,7 @@ export class Difficulty {
         }
       }
     }
-    return Difficulty.next(timestamps, cumulativeDifficulties);
+    return parseInt(Difficulty.next(timestamps, cumulativeDifficulties), 10);
   }
 
   public static nextDifficultyForBlock(context: P2pConnectionContext) {
@@ -106,6 +105,6 @@ export class Difficulty {
       timestamps.push(be.block.header.timestamp);
       cumulativeDifficulties.push(be.difficulty);
     }
-    return Difficulty.next(timestamps, cumulativeDifficulties);
+    return parseInt(Difficulty.next(timestamps, cumulativeDifficulties), 10);
   }
 }

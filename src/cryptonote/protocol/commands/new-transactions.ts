@@ -1,4 +1,4 @@
-import { IHash } from '../../../crypto/types';
+import { IHash } from '@vigcoin/crypto';
 import {
   BIN_KV_SERIALIZE_FLAG_ARRAY,
   BIN_KV_SERIALIZE_TYPE_STRING,

@@ -1,5 +1,4 @@
-import * as assert from 'assert';
-import { IHash } from '../crypto/types';
+import { IHash } from '@vigcoin/crypto';
 import { int32, uint32, uint64, UINT64, uint8 } from './types';
 
 export type IPeerIDType = UINT64; // uint64

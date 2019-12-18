@@ -1,5 +1,5 @@
+import { HASH_LENGTH } from '@vigcoin/crypto';
 import assert = require('assert');
-import { HASH_LENGTH } from '../src/crypto/types';
 import { PurgeZeroByte } from '../src/cryptonote/serialize/common';
 import { BufferStreamReader } from '../src/cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../src/cryptonote/serialize/writer';

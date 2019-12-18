@@ -1,5 +1,5 @@
+import { HASH_LENGTH, IHash } from '@vigcoin/crypto';
 import assert = require('assert');
-import { HASH_LENGTH, IHash } from '../../crypto/types';
 import { INT64, UINT64 } from '../types';
 import { PurgeZeroByte } from './common';
 

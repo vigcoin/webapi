@@ -1,4 +1,4 @@
-import { Wallet } from '@vigcoin/neon';
+import { Wallet } from '@vigcoin/crypto';
 import { unlinkSync } from 'fs';
 import { tmpdir } from 'os';
 import { resolve } from 'path';

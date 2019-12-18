@@ -1,6 +1,6 @@
+import { HASH_LENGTH, IHash } from '@vigcoin/crypto';
 import * as assert from 'assert';
 import { Configuration } from '../../config/types';
-import { HASH_LENGTH, IHash } from '../../crypto/types';
 import { logger } from '../../logger';
 import { uint64 } from '../types';
 

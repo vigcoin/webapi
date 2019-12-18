@@ -1,4 +1,4 @@
-import { Amount } from '@vigcoin/neon';
+import { Amount, CNFashHash, HASH_LENGTH, IHash } from '@vigcoin/crypto';
 import * as assert from 'assert';
 import {
   closeSync,
@@ -10,7 +10,6 @@ import {
 } from 'fs';
 import { parameters } from '../../config';
 import { Configuration } from '../../config/types';
-import { CNFashHash, HASH_LENGTH, IHash } from '../../crypto/types';
 import { logger } from '../../logger';
 import { BufferStreamReader } from '../serialize/reader';
 import { BufferStreamWriter } from '../serialize/writer';

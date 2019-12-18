@@ -1,12 +1,12 @@
-import * as assert from 'assert';
-import * as crypto from 'crypto';
-import { parameters } from '../../config';
 import {
   CryptoSignature,
   IHash,
   ISignature,
   IsPublicKey,
-} from '../../crypto/types';
+} from '@vigcoin/crypto';
+import * as assert from 'assert';
+import * as crypto from 'crypto';
+import { parameters } from '../../config';
 import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
 import { medianValue } from '../../util/math';
@@ -17,7 +17,6 @@ import {
   IInputBase,
   IInputKey,
   IInputSignature,
-  int64,
   IOutputKey,
   IOutputSignature,
   ITransaction,
@@ -99,7 +98,7 @@ export class TransactionValidator {
           if (signature.count > signature.keys.length) {
             return 'Multisignature output with invalid required signature count';
           }
-          for (const key in signature.keys) {
+          for (const key of signature.keys) {
             if (!IsPublicKey(key)) {
               return 'Multisignature output with invalid public key';
             }
@@ -332,6 +331,7 @@ export class TransactionValidator {
     const absoluteOffsets = TransactionOutput.toAbsolute(input.outputIndexes);
     const pair = context.blockchain.getOutput(input.amount);
     let count = 0;
+    const keys: Buffer[] = [];
     for (const offset of absoluteOffsets) {
       if (offset >= pair.length) {
         logger.error(
@@ -412,7 +412,8 @@ export class TransactionValidator {
     return CryptoSignature.checkRing(
       preHash,
       input.keyImage,
-      outKeys,
+      // outKeys,
+      keys,
       outKeys.length,
       sigBuffer
     );

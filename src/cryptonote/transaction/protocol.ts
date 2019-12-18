@@ -1,6 +1,6 @@
+import { IHash } from '@vigcoin/crypto';
 import { Transaction } from '.';
 import { parameters } from '../../config';
-import { IHash } from '../../crypto/types';
 import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
 import { Block } from '../block/block';

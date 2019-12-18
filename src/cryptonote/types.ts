@@ -1,4 +1,4 @@
-import { IHash, IKeyImage, IPublicKey, ISignature } from '../crypto/types';
+import { IHash, IKeyImage, IPublicKey, ISignature } from '@vigcoin/crypto';
 
 export type uint64 = number;
 export type uint32 = number;

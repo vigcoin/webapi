@@ -1,4 +1,4 @@
-import { IHash } from '../crypto/types';
+import { IHash } from '@vigcoin/crypto';
 import {
   IBlock as IBlockTypes,
   uint16,

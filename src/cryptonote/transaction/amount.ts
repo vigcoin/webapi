@@ -1,4 +1,3 @@
-import { Amount } from '@vigcoin/neon';
 import { parameters } from '../../config';
 import { logger } from '../../logger';
 import {

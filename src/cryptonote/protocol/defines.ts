@@ -1,4 +1,4 @@
-import { IHash } from '../../crypto/types';
+import { IHash } from '@vigcoin/crypto';
 import { ITransactionPrefix } from '../types';
 export const CN_COMMANDS_POOL_BASE = 2000;
 

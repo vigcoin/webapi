@@ -1,3 +1,4 @@
+import { CNFashHash, IHash } from '@vigcoin/crypto';
 import * as assert from 'assert';
 import { EventEmitter } from 'events';
 import { parameters } from '../../config';
@@ -6,7 +7,6 @@ import {
   BLOCKCHAIN_SYNCHRONZIED,
   PEERS_COUNT_UPDATED,
 } from '../../config/events';
-import { CNFashHash, IHash } from '../../crypto/types';
 import { Block } from '../../cryptonote/block/block';
 import { BlockChain } from '../../cryptonote/block/blockchain';
 import { MemoryPool } from '../../cryptonote/mem-pool';

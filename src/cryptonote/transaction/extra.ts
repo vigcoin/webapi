@@ -1,5 +1,5 @@
+import { HASH_LENGTH, IPublicKey } from '@vigcoin/crypto';
 import * as assert from 'assert';
-import { HASH_LENGTH, IPublicKey } from '../../crypto/types';
 import { BufferStreamReader } from '../serialize/reader';
 import { ITransaction, usize } from '../types';
 

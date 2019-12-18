@@ -1,8 +1,8 @@
+import { Hash } from '@vigcoin/crypto';
 import * as assert from 'assert';
 import { readFileSync } from 'fs';
 import * as path from 'path';
 import { parameters } from '../../src/config';
-import { Hash } from '../../src/crypto/hash';
 import { Payment } from '../../src/cryptonote/indexing/payment';
 import { BufferStreamReader } from '../../src/cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';

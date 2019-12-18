@@ -1,5 +1,5 @@
+import { IHash } from '@vigcoin/crypto';
 import { EventEmitter } from 'events';
-import { IHash } from '../../crypto/types';
 
 export enum SyncState {
   IDLE = 0,
