@@ -1,3 +1,4 @@
+import { IP2PStorage, Store } from '@vigcoin/p2p';
 import {
   Configuration,
   INetwork,
@@ -9,6 +10,7 @@ import {
 } from '@vigcoin/types';
 import { randomBytes } from 'crypto';
 import { EventEmitter } from 'events';
+import { closeSync, existsSync, openSync } from 'fs';
 import { createServer, Server, Socket } from 'net';
 import * as path from 'path';
 import { p2p } from '../config';
@@ -19,7 +21,6 @@ import { P2PConfig } from './config';
 import { ConnectionManager } from './connection-manager';
 import { PeerManager } from './peer-manager';
 import { Handler } from './protocol/handler';
-import { P2PStore } from './store';
 
 export class P2PServer extends EventEmitter {
   get version(): uint8 {
@@ -37,7 +38,7 @@ export class P2PServer extends EventEmitter {
     this.peerId = id;
   }
   public p2pConfig: P2PConfig;
-  public p2pStore: P2PStore;
+  public p2pStore: Store;
   public serializeFile: string;
   public pm: PeerManager;
 
@@ -106,7 +107,7 @@ export class P2PServer extends EventEmitter {
       clearTimeout(timer);
       const interval = setInterval(async () => {
         // await this.startConnection();
-        P2PStore.saveStore(this);
+        this.writeStore();
       }, 60 * 30 * 1000);
     }, 0);
   }
@@ -141,13 +142,16 @@ export class P2PServer extends EventEmitter {
       this.p2pConfig.dataDir,
       this.p2pConfig.filename
     );
+    this.p2pStore = new Store(this.serializeFile);
 
     // create a random id if persistance file not existed
-    if (!P2PStore.getStore(this)) {
+    if (!existsSync(this.serializeFile)) {
       this.id = randomBytes(8);
       logger.info(
         'Random P2PState Peer ID Created : ' + this.id.toString('hex')
       );
+    } else {
+      this.readStore();
     }
 
     for (const peer of this.p2pConfig.peers) {
@@ -186,6 +190,48 @@ export class P2PServer extends EventEmitter {
         });
       });
     }
+  }
+
+  public readStore() {
+    if (existsSync(this.serializeFile)) {
+      logger.info('Found P2PState File : ' + this.serializeFile);
+      logger.info('Reading P2PState from File : ' + this.serializeFile);
+      if (!this.p2pStore) {
+        this.p2pStore = new Store(this.serializeFile);
+      }
+      const ips: IP2PStorage = this.p2pStore.read();
+      this.version = ips.version;
+      this.id = ips.id;
+      this.pm.version = ips.peers.version;
+      this.pm.white = ips.peers.white;
+      this.pm.gray = ips.peers.gray;
+      logger.info(
+        'Finished Reading P2PState from File : ' + this.serializeFile
+      );
+    }
+  }
+
+  public writeStore() {
+    const version = this.version;
+    const id = this.id;
+    const peers = {
+      gray: this.pm.gray,
+      version: this.pm.version,
+      white: this.pm.white,
+    };
+
+    const file = this.serializeFile;
+    if (!existsSync(file)) {
+      closeSync(openSync(file, 'w+'));
+    }
+    logger.info('Saveing P2PState file : ' + file);
+
+    this.p2pStore.write({
+      id,
+      peers,
+      version,
+    });
+    logger.info('Finished writing P2PState to File : ' + file);
   }
 
   protected async startServer() {

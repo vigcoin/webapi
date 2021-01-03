@@ -1,4 +1,5 @@
 import { Configuration, INetwork, IPeer, IPeerEntry } from '@vigcoin/types';
+import { IP } from '@vigcoin/util';
 import * as assert from 'assert';
 import { randomBytes } from 'crypto';
 import { createConnection, createServer } from 'net';
@@ -18,7 +19,6 @@ import {
 import { ConnectionManager } from '../../src/p2p/connection-manager';
 import { Handler } from '../../src/p2p/protocol/handler';
 import { getBlockFile, getDefaultAppDir } from '../../src/util/fs';
-import { IP } from '@vigcoin/util';
 
 describe('test connections', () => {
   const network: INetwork = {

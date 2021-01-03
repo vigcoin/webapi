@@ -15,6 +15,7 @@ import {
 import { data as mainnet } from '../../src/init/net-types/mainnet';
 
 import { Configuration, IPeerNodeData } from '@vigcoin/types';
+import { IP } from '@vigcoin/util';
 import { randomBytes } from 'crypto';
 import * as path from 'path';
 import { cryptonote } from '../../src/config';
@@ -25,7 +26,6 @@ import { ConnectionContext, ConnectionState } from '../../src/p2p/connection';
 import { ConnectionManager } from '../../src/p2p/connection-manager';
 import { Handler } from '../../src/p2p/protocol/handler';
 import { getBlockFile } from '../../src/util/fs';
-import { IP } from '@vigcoin/util';
 
 const dir = path.resolve(__dirname, '../vigcoin');
 const config: Configuration.ICCurrency = {

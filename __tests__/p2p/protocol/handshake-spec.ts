@@ -1,4 +1,5 @@
 import { Configuration, IPeer } from '@vigcoin/types';
+import { IP } from '@vigcoin/util';
 import * as assert from 'assert';
 import { randomBytes } from 'crypto';
 import { createConnection, createServer } from 'net';
@@ -15,9 +16,7 @@ import { P2PConfig } from '../../../src/p2p/config';
 import { ConnectionManager } from '../../../src/p2p/connection-manager';
 import { handshake } from '../../../src/p2p/protocol';
 import { Handler } from '../../../src/p2p/protocol/handler';
-import { P2PStore } from '../../../src/p2p/store';
 import { getBlockFile } from '../../../src/util/fs';
-import { IP } from '@vigcoin/util';
 
 const peerId = randomBytes(8);
 const networkId = cryptonote.NETWORK_ID;
@@ -94,7 +93,8 @@ describe('test p2p handshake', () => {
   it('should handshake to just take peerlist with local p2p server', done => {
     const p2pServer = getP2PServer(dir, testnet);
     p2pServer.serializeFile = p2pFile;
-    const store = P2PStore.getStore(p2pServer);
+
+    p2pServer.readStore();
 
     const pm2 = p2pServer.pm;
 
@@ -127,7 +127,7 @@ describe('test p2p handshake', () => {
 
     p2pServer.serializeFile = p2pFile;
 
-    const store = P2PStore.getStore(p2pServer);
+    p2pServer.readStore();
 
     const pm2 = p2pServer.pm;
 

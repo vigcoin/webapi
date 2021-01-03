@@ -135,6 +135,14 @@
   dependencies:
     neon-cli "^0.2.0"
 
+"@vigcoin/p2p@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@vigcoin/p2p/-/p2p-0.1.0.tgz#ea159c03d9b5748a9c32a4e86d0fea5dc76986fb"
+  integrity sha512-MPqoym+pnBfhiUNkebMtmsW7Gx2DvYpintcCvMy0bVLaEwzi0ZeApqnZXj7RN4xVd+sz16LVPtInFCIhLNma9w==
+  dependencies:
+    "@vigcoin/serializer" "^0.1.0"
+    "@vigcoin/types" "^0.1.1"
+
 "@vigcoin/serializer@^0.1.0":
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/@vigcoin/serializer/-/serializer-0.1.0.tgz#dbdfb9b53b7dc4dc8b966b3de27b76d8d41a649c"

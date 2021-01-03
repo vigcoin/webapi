@@ -1,6 +1,6 @@
+import { IP } from '@vigcoin/util';
 import * as assert from 'assert';
 import { PeerList, PeerManager } from '../../src/p2p/peer-manager';
-import { IP } from '@vigcoin/util';
 
 describe('test peer', () => {
   const lastSeen = new Date();
