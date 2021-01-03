@@ -41,7 +41,7 @@
     "@types/uuid": "^3.4.4",
     "@vigcoin/crypto": "^0.6.5",
     "@vigcoin/p2p": "^0.1.0",
-    "@vigcoin/serializer": "^0.1.0",
+    "@vigcoin/serializer": "^0.1.1",
     "@vigcoin/types": "^0.1.1",
     "@vigcoin/util": "^0.1.0",
     "braces": "^3.0.2",

@@ -150,6 +150,13 @@
   dependencies:
     "@vigcoin/types" "^0.1.1"
 
+"@vigcoin/serializer@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@vigcoin/serializer/-/serializer-0.1.1.tgz#0cc1149f38625768637c59d6f0e2d944552b2e74"
+  integrity sha512-+w1+vwjHCHwnhchEm1yi7CPEyk08hG3VLm8wLlMrZUjEETHdjeUzyZK3rMdVGnPohlffwzam19cbaEEnKOlMUA==
+  dependencies:
+    "@vigcoin/types" "^0.1.1"
+
 "@vigcoin/types@^0.1.1":
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/@vigcoin/types/-/types-0.1.1.tgz#b1d2674d899b15ee7e4a867847b5b08b331c5cde"

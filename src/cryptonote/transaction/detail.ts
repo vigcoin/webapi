@@ -1,6 +1,5 @@
 import { BufferStreamReader } from '@vigcoin/serializer';
 import { IBlockInfo, ITransactionDetails } from '@vigcoin/types';
-import { readBufferDate } from '../../util/time';
 import { Transaction } from './index';
 
 export class TransactionDetails {
@@ -14,7 +13,7 @@ export class TransactionDetails {
     const lastFailedBlock = TransactionDetails.readBlockInfo(reader);
     const keptByBlock = reader.readBoolean();
     const timeBuffer = reader.readVarintUInt64();
-    const receiveTime = readBufferDate(timeBuffer);
+    const receiveTime = reader.readBufferDate(timeBuffer);
     return {
       blobSize,
       checkInfo: {
