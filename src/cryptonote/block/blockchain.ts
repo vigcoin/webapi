@@ -19,12 +19,12 @@ import {
   uint64,
   usize,
 } from '@vigcoin/types';
+import { fromUnixTimeStamp, unixNow } from '@vigcoin/util';
 import * as assert from 'assert';
 import { parameters } from '../../config';
 import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
 import { medianValue } from '../../util/math';
-import { fromUnixTimeStamp, unixNow } from '../../util/time';
 import { Difficulty } from '../difficulty';
 import { GeneratedTransaction } from '../indexing/generated-transactions';
 import { Payment } from '../indexing/payment';
