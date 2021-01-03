@@ -1,7 +1,7 @@
 import { Configuration, INetwork, IPeer } from '@vigcoin/types';
 import * as assert from 'assert';
 import * as path from 'path';
-import { BufferStreamReader } from '../../../../src/cryptonote/serialize/reader';
+import { BufferStreamReader } from '@vigcoin/serializer';
 import { getBlockChain } from '../../../../src/init/blockchain';
 import { getBlockFile } from '../../../../src/util/fs';
 

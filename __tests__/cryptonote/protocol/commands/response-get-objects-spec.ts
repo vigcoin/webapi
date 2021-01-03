@@ -3,7 +3,7 @@ import * as assert from 'assert';
 import { readFileSync } from 'fs';
 import * as path from 'path';
 import { NSResponseGetObjects } from '../../../../src/cryptonote/protocol/commands/response-get-objects';
-import { BufferStreamReader } from '../../../../src/cryptonote/serialize/reader';
+import { BufferStreamReader } from '@vigcoin/serializer';
 import { getBlockChain } from '../../../../src/init/blockchain';
 import { getBlockFile } from '../../../../src/util/fs';
 

@@ -1,6 +1,6 @@
+import { BufferStreamReader } from '@vigcoin/serializer';
 import { IBlockInfo, ITransactionDetails } from '@vigcoin/types';
 import { readBufferDate } from '../../util/time';
-import { BufferStreamReader } from '../serialize/reader';
 import { Transaction } from './index';
 
 export class TransactionDetails {

@@ -9,8 +9,8 @@ import { NSRequestGetObjects } from '../../../src/cryptonote/protocol/commands/r
 import { NSRequestTXPool } from '../../../src/cryptonote/protocol/commands/request-tx-pool';
 import { NSResponseChain } from '../../../src/cryptonote/protocol/commands/response-chain';
 import { NSResponseGetObjects } from '../../../src/cryptonote/protocol/commands/response-get-objects';
-import { BufferStreamReader } from '../../../src/cryptonote/serialize/reader';
-import { BufferStreamWriter } from '../../../src/cryptonote/serialize/writer';
+import { BufferStreamReader, BufferStreamWriter } from '@vigcoin/serializer';
+
 import { Command } from '../../../src/p2p/protocol/command';
 import { buffer as newBlockBuffer } from '../../data/new-block';
 import { buffer as newTransactionsBuffer } from '../../data/new-transactions';

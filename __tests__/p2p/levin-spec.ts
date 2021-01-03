@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { createConnection, createServer } from 'net';
 import { BlockChain } from '../../src/cryptonote/block/blockchain';
-import { BufferStreamReader } from '../../src/cryptonote/serialize/reader';
+import { BufferStreamReader, BufferStreamWriter } from '@vigcoin/serializer';
 import { getBlockChain } from '../../src/init/blockchain';
 import { ILevinCommand, LevinProtocol, LevinState } from '../../src/p2p/levin';
 import { handshake, ping, timedsync } from '../../src/p2p/protocol';
@@ -18,7 +18,6 @@ import { Configuration, IPeerNodeData } from '@vigcoin/types';
 import { randomBytes } from 'crypto';
 import * as path from 'path';
 import { cryptonote } from '../../src/config';
-import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';
 import { getMemoryPool } from '../../src/init/mem-pool';
 import { getDefaultPeerManager, getP2PServer } from '../../src/init/p2p';
 import { P2PConfig } from '../../src/p2p/config';

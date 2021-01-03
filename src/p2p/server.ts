@@ -182,7 +182,7 @@ export class P2PServer extends EventEmitter {
             return reject(e);
           }
           logger.info('P2P Server stopped');
-          resolve();
+          resolve(null);
         });
       });
     }

@@ -1,4 +1,5 @@
 import { IHash, IKeyImage } from '@vigcoin/crypto';
+import { BufferStreamReader } from '@vigcoin/serializer';
 import * as assert from 'assert';
 import { EventEmitter } from 'events';
 import { closeSync, existsSync, openSync, readFileSync } from 'fs';
@@ -6,7 +7,6 @@ import { TX_REMOVED_FROM_POOL } from '../config/events';
 import { getLiveTime, isForgetable } from '../init/mem-pool';
 import { logger } from '../logger';
 import { toUnixTimeStamp } from '../util/time';
-import { BufferStreamReader } from './serialize/reader';
 import { TransactionAmount } from './transaction/amount';
 import { TransactionDetails } from './transaction/detail';
 import { TransactionValidator } from './transaction/validator';

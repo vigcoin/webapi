@@ -1,6 +1,6 @@
+import { BufferStreamReader, BufferStreamWriter } from '@vigcoin/serializer';
 import { ICoreSyncData, IPeer, IPeerEntry } from '@vigcoin/types';
-import { BufferStreamReader } from '../../../cryptonote/serialize/reader';
-import { BufferStreamWriter } from '../../../cryptonote/serialize/writer';
+
 import { ConnectionState, P2pConnectionContext } from '../../connection';
 import { ILevinCommand, LevinProtocol } from '../../levin';
 import { PeerManager } from '../../peer-manager';

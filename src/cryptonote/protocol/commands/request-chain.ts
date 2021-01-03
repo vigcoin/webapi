@@ -1,12 +1,12 @@
 import { IHash } from '@vigcoin/crypto';
+import { BufferStreamReader, BufferStreamWriter } from '@vigcoin/serializer';
 import {
   readJSON,
   writeJSONVarint,
   writeKVBlockHeader,
   writeTXList,
 } from '../../../p2p/protocol/json';
-import { BufferStreamReader } from '../../serialize/reader';
-import { BufferStreamWriter } from '../../serialize/writer';
+
 import { CN_COMMANDS_POOL_BASE } from '../defines';
 
 // tslint:disable-next-line:no-namespace

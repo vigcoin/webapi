@@ -1,3 +1,4 @@
+import { BufferStreamReader, BufferStreamWriter } from '@vigcoin/serializer';
 import { IPeerEntry, uint32, uint64, UINT64 } from '@vigcoin/types';
 import {
   closeSync,
@@ -7,8 +8,7 @@ import {
   writeFileSync,
 } from 'fs';
 import * as moment from 'moment';
-import { BufferStreamReader } from '../cryptonote/serialize/reader';
-import { BufferStreamWriter } from '../cryptonote/serialize/writer';
+
 import { logger } from '../logger';
 import { IP } from '../util/ip';
 import { PeerManager } from './peer-manager';

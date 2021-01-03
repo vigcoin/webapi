@@ -1,8 +1,8 @@
+import { BufferStreamReader, BufferStreamWriter } from '@vigcoin/serializer';
 import { IPeerEntry, IPeerIDType, IPeerNodeData } from '@vigcoin/types';
 import * as assert from 'assert';
 import { PING, PROCESSED } from '../../../config/events';
-import { BufferStreamReader } from '../../../cryptonote/serialize/reader';
-import { BufferStreamWriter } from '../../../cryptonote/serialize/writer';
+
 import { logger } from '../../../logger';
 import { IP } from '../../../util/ip';
 import { P2pConnectionContext } from '../../connection';

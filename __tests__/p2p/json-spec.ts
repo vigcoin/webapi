@@ -1,6 +1,6 @@
 import * as assert from 'assert';
-import { BufferStreamReader } from '../../src/cryptonote/serialize/reader';
-import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';
+import { BufferStreamReader, BufferStreamWriter } from '@vigcoin/serializer';
+
 import { handshake } from '../../src/p2p/protocol/commands/handshake';
 import { ping } from '../../src/p2p/protocol/commands/ping';
 import { timedsync } from '../../src/p2p/protocol/commands/timedsync';

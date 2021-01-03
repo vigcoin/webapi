@@ -1,7 +1,7 @@
 import { HASH_LENGTH, IPublicKey } from '@vigcoin/crypto';
+import { BufferStreamReader } from '@vigcoin/serializer';
 import { ITransaction, usize } from '@vigcoin/types';
 import * as assert from 'assert';
-import { BufferStreamReader } from '../serialize/reader';
 
 export const TX_EXTRA_PADDING_MAX_COUNT = 255;
 export const TX_EXTRA_NONCE_MAX_COUNT = 255;

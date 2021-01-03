@@ -1,4 +1,5 @@
 import { CNFashHash, IHash } from '@vigcoin/crypto';
+import { BufferStreamReader, BufferStreamWriter } from '@vigcoin/serializer';
 import { IBlock, ICoreSyncData, ITransaction, uint32 } from '@vigcoin/types';
 import * as assert from 'assert';
 import { EventEmitter } from 'events';
@@ -19,8 +20,7 @@ import { NSRequestTXPool } from '../../cryptonote/protocol/commands/request-tx-p
 import { NSResponseChain } from '../../cryptonote/protocol/commands/response-chain';
 import { NSResponseGetObjects } from '../../cryptonote/protocol/commands/response-get-objects';
 import { IBlockCompletEntry } from '../../cryptonote/protocol/defines';
-import { BufferStreamReader } from '../../cryptonote/serialize/reader';
-import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
+
 import { Transaction } from '../../cryptonote/transaction/index';
 import { logger } from '../../logger';
 import { ConnectionState, P2pConnectionContext } from '../connection';

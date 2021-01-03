@@ -1,4 +1,5 @@
 import { Amount, CNFashHash, HASH_LENGTH, IHash } from '@vigcoin/crypto';
+import { BufferStreamReader, BufferStreamWriter } from '@vigcoin/serializer';
 import {
   Configuration,
   IBlock,
@@ -19,8 +20,6 @@ import {
 } from 'fs';
 import { parameters } from '../../config';
 import { logger } from '../../logger';
-import { BufferStreamReader } from '../serialize/reader';
-import { BufferStreamWriter } from '../serialize/writer';
 import { Transaction } from '../transaction';
 
 export class Block {

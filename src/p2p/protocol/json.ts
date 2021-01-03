@@ -1,3 +1,4 @@
+import { BufferStreamReader, BufferStreamWriter } from '@vigcoin/serializer';
 import {
   ICoreSyncData,
   IPeerEntry,
@@ -5,8 +6,6 @@ import {
   uint8,
 } from '@vigcoin/types';
 import * as assert from 'assert';
-import { BufferStreamReader } from '../../cryptonote/serialize/reader';
-import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 
 const PORTABLE_STORAGE_SIGNATUREA = 0x01011101;
 const PORTABLE_STORAGE_SIGNATUREB = 0x01020101; // bender's nightmare

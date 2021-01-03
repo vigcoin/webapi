@@ -1,3 +1,4 @@
+import { BufferStreamReader, BufferStreamWriter } from '@vigcoin/serializer';
 import {
   ICoreSyncData,
   IPeer,
@@ -7,8 +8,7 @@ import {
 import * as assert from 'assert';
 import { Socket } from 'net';
 import { HANDSHAKE, PROCESSED, TIMED_SYNC } from '../../../config/events';
-import { BufferStreamReader } from '../../../cryptonote/serialize/reader';
-import { BufferStreamWriter } from '../../../cryptonote/serialize/writer';
+
 import { logger } from '../../../logger';
 import { P2pConnectionContext } from '../../connection';
 import { ConnectionManager } from '../../connection-manager';
