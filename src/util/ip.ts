@@ -1,4 +1,4 @@
-import { uint32 } from '../cryptonote/types';
+import { uint32 } from '@vigcoin/types';
 export class IP {
   public static allowLocalIP: boolean = false;
   public static isLoopback(ip: uint32) {

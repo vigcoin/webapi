@@ -1,4 +1,5 @@
 import { CNFashHash, IHash } from '@vigcoin/crypto';
+import { IBlock, ICoreSyncData, ITransaction, uint32 } from '@vigcoin/types';
 import * as assert from 'assert';
 import { EventEmitter } from 'events';
 import { parameters } from '../../config';
@@ -10,7 +11,6 @@ import {
 import { Block } from '../../cryptonote/block/block';
 import { BlockChain } from '../../cryptonote/block/blockchain';
 import { MemoryPool } from '../../cryptonote/mem-pool';
-import { ICoreSyncData } from '../../cryptonote/p2p';
 import { NSNewBlock } from '../../cryptonote/protocol/commands/new-block';
 import { NSNewTransactions } from '../../cryptonote/protocol/commands/new-transactions';
 import { NSRequestChain } from '../../cryptonote/protocol/commands/request-chain';
@@ -22,9 +22,6 @@ import { IBlockCompletEntry } from '../../cryptonote/protocol/defines';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
 import { Transaction } from '../../cryptonote/transaction/index';
-import { TransactionPrefix } from '../../cryptonote/transaction/prefix';
-import { TransactionValidator } from '../../cryptonote/transaction/validator';
-import { IBlock, ITransaction, uint32 } from '../../cryptonote/types';
 import { logger } from '../../logger';
 import { ConnectionState, P2pConnectionContext } from '../connection';
 import { Command } from './command';
@@ -402,7 +399,7 @@ Use \"help\" command to see the list of available commands.
     }
   }
 
-  public onRequestChain() {}
+  // public onRequestChain() {}
 
   public onResponseChain(buffer: Buffer, context: P2pConnectionContext) {
     const request: NSResponseChain.IRequest = NSResponseChain.Reader.request(

@@ -1,5 +1,4 @@
-import { Configuration } from '../../config/types';
-import { IBlock, uint64, uint8 } from '../types';
+import { Configuration, IBlock, uint64, uint8 } from '@vigcoin/types';
 
 export class Hardfork {
   private items: Configuration.ICHardfork[];

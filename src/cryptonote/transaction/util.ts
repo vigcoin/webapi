@@ -1,6 +1,6 @@
+import { uint32, uint64 } from '@vigcoin/types';
 import { parameters } from '../../config';
 import { unixNow } from '../../util/time';
-import { uint32, uint64 } from '../types';
 
 export function decompose(amount: uint64, dustThreshould: uint32) {
   if (amount === 0) {

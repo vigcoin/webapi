@@ -1,4 +1,13 @@
 import { Amount, CNFashHash, HASH_LENGTH, IHash } from '@vigcoin/crypto';
+import {
+  Configuration,
+  IBlock,
+  IBlockEntry,
+  IBlockHeader,
+  ITransaction,
+  uint64,
+  usize,
+} from '@vigcoin/types';
 import * as assert from 'assert';
 import {
   closeSync,
@@ -9,19 +18,10 @@ import {
   writeSync,
 } from 'fs';
 import { parameters } from '../../config';
-import { Configuration } from '../../config/types';
 import { logger } from '../../logger';
 import { BufferStreamReader } from '../serialize/reader';
 import { BufferStreamWriter } from '../serialize/writer';
 import { Transaction } from '../transaction';
-import {
-  IBlock,
-  IBlockEntry,
-  IBlockHeader,
-  ITransaction,
-  uint64,
-  usize,
-} from '../types';
 
 export class Block {
   public static writeBlockHeader(

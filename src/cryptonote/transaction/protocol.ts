@@ -1,4 +1,9 @@
 import { IHash } from '@vigcoin/crypto';
+import {
+  IBlock,
+  IBlockVerificationContext,
+  ITxVerificationContext,
+} from '@vigcoin/types';
 import { Transaction } from '.';
 import { parameters } from '../../config';
 import { logger } from '../../logger';
@@ -8,11 +13,6 @@ import { NSNewBlock } from '../protocol/commands/new-block';
 import { IBlockCompletEntry } from '../protocol/defines';
 import { BufferStreamReader } from '../serialize/reader';
 import { BufferStreamWriter } from '../serialize/writer';
-import {
-  IBlock,
-  IBlockVerificationContext,
-  ITxVerificationContext,
-} from '../types';
 import { TransactionValidator } from './validator';
 
 export class TransactionProtocol {

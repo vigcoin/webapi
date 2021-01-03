@@ -1,9 +1,12 @@
+import {
+  ICoreSyncData,
+  IPeerEntry,
+  IPeerNodeData,
+  uint8,
+} from '@vigcoin/types';
 import * as assert from 'assert';
-import { ICoreSyncData, IPeerEntry, IPeerNodeData } from '../../cryptonote/p2p';
 import { BufferStreamReader } from '../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../cryptonote/serialize/writer';
-import { uint8 } from '../../cryptonote/types';
-import { logger } from '../../logger';
 
 const PORTABLE_STORAGE_SIGNATUREA = 0x01011101;
 const PORTABLE_STORAGE_SIGNATUREB = 0x01020101; // bender's nightmare

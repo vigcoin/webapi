@@ -1,4 +1,4 @@
-import { ICoreSyncData, IPeer, IPeerEntry } from '../../../cryptonote/p2p';
+import { ICoreSyncData, IPeer, IPeerEntry } from '@vigcoin/types';
 import { BufferStreamReader } from '../../../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../../../cryptonote/serialize/writer';
 import { ConnectionState, P2pConnectionContext } from '../../connection';

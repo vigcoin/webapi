@@ -14,11 +14,10 @@ import {
 
 import { data as mainnet } from '../../src/init/net-types/mainnet';
 
+import { Configuration, IPeerNodeData } from '@vigcoin/types';
 import { randomBytes } from 'crypto';
 import * as path from 'path';
 import { cryptonote } from '../../src/config';
-import { Configuration } from '../../src/config/types';
-import { IPeerNodeData } from '../../src/cryptonote/p2p';
 import { BufferStreamWriter } from '../../src/cryptonote/serialize/writer';
 import { getMemoryPool } from '../../src/init/mem-pool';
 import { getDefaultPeerManager, getP2PServer } from '../../src/init/p2p';

@@ -1,8 +1,8 @@
 import { IHash } from '@vigcoin/crypto';
+import { ITransaction } from '@vigcoin/types';
 import { MultiMap } from '../../util/map';
 import { TransactionExtra } from '../transaction/extra';
 import { Transaction } from '../transaction/index';
-import { ITransaction } from '../types';
 
 export class Payment {
   private map: MultiMap<IHash, IHash> = new MultiMap();

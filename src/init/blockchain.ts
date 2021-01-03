@@ -1,4 +1,4 @@
-import { Configuration } from '../config/types';
+import { Configuration } from '@vigcoin/types';
 import { BlockChain } from '../cryptonote/block/blockchain';
 import { getBlockFile } from '../util/fs';
 

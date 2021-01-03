@@ -1,3 +1,4 @@
+import { IBlockVerificationContext, uint32 } from '@vigcoin/types';
 import { logger } from '../../../logger';
 import { ConnectionState, P2pConnectionContext } from '../../../p2p/connection';
 import { Handler as ProtocolHandler } from '../../../p2p/protocol/handler';
@@ -14,7 +15,6 @@ import {
 import { BufferStreamReader } from '../../serialize/reader';
 import { BufferStreamWriter } from '../../serialize/writer';
 import { TransactionProtocol } from '../../transaction/protocol';
-import { IBlockVerificationContext, uint32 } from '../../types';
 import { CN_COMMANDS_POOL_BASE, IBlockCompletEntry } from '../defines';
 import { NSRequestChain } from './request-chain';
 

@@ -1,5 +1,3 @@
-import { parameters } from '../../config';
-import { logger } from '../../logger';
 import {
   ETransactionIOType,
   IInputKey,
@@ -7,7 +5,9 @@ import {
   ITransaction,
   ITransactionInput,
   uint64,
-} from '../types';
+} from '@vigcoin/types';
+import { parameters } from '../../config';
+import { logger } from '../../logger';
 import { decompose } from './util';
 
 export class TransactionAmount {

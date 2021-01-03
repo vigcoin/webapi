@@ -1,13 +1,12 @@
+import { Configuration, INetwork, IPeer } from '@vigcoin/types';
 import * as assert from 'assert';
 import * as path from 'path';
-import { Configuration } from '../../../../src/config/types';
 import { BufferStreamReader } from '../../../../src/cryptonote/serialize/reader';
 import { getBlockChain } from '../../../../src/init/blockchain';
 import { getBlockFile } from '../../../../src/util/fs';
 
 import { p2p } from '../../../../src/config/consts';
 import { BlockChain } from '../../../../src/cryptonote/block/blockchain';
-import { INetwork, IPeer } from '../../../../src/cryptonote/p2p';
 import { NSNewBlock } from '../../../../src/cryptonote/protocol/commands/new-block';
 import { getMemoryPool } from '../../../../src/init/mem-pool';
 import { data as mainnet } from '../../../../src/init/net-types/mainnet';

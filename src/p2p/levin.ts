@@ -1,3 +1,4 @@
+import { int32, uint32, uint64, UINT64 } from '@vigcoin/types';
 import * as assert from 'assert';
 import { EventEmitter } from 'events';
 import { Socket } from 'net';
@@ -5,7 +6,6 @@ import { cryptonote } from '../config';
 import { PROCESSED } from '../config/events';
 import { BufferStreamReader } from '../cryptonote/serialize/reader';
 import { BufferStreamWriter } from '../cryptonote/serialize/writer';
-import { int32, uint32, uint64, UINT64 } from '../cryptonote/types';
 import { logger } from '../logger';
 import { ConnectionState, P2pConnectionContext } from './connection';
 import { handshake, ping, timedsync } from './protocol';

@@ -4,13 +4,6 @@ import {
   ISignature,
   IsPublicKey,
 } from '@vigcoin/crypto';
-import * as assert from 'assert';
-import * as crypto from 'crypto';
-import { parameters } from '../../config';
-import { logger } from '../../logger';
-import { P2pConnectionContext } from '../../p2p/connection';
-import { medianValue } from '../../util/math';
-import { Block } from '../block/block';
 import {
   ETransactionIOType,
   IBlock,
@@ -25,7 +18,14 @@ import {
   ITransactionPrefix,
   uint64,
   usize,
-} from '../types';
+} from '@vigcoin/types';
+import * as assert from 'assert';
+import * as crypto from 'crypto';
+import { parameters } from '../../config';
+import { logger } from '../../logger';
+import { P2pConnectionContext } from '../../p2p/connection';
+import { medianValue } from '../../util/math';
+import { Block } from '../block/block';
 import { TransactionAmount } from './amount';
 import { Transaction } from './index';
 import { TransactionInput } from './input';

@@ -1,11 +1,11 @@
-import * as assert from 'assert';
 import {
   ETransactionIOType,
   IBlock,
   IInputBase,
   uint32,
   uint64,
-} from '../types';
+} from '@vigcoin/types';
+import * as assert from 'assert';
 
 export class GeneratedTransaction {
   private lastGeneratedTxNumber: uint64 = 0;

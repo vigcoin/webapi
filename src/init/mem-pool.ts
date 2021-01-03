@@ -1,5 +1,5 @@
+import { Configuration } from '@vigcoin/types';
 import * as path from 'path';
-import { Configuration } from '../config/types';
 import { MemoryPool } from '../cryptonote/mem-pool';
 
 // seconds, one day

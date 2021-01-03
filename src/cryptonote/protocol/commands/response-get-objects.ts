@@ -1,4 +1,5 @@
 import { IHash } from '@vigcoin/crypto';
+import { uint32 } from '@vigcoin/types';
 import {
   BIN_KV_SERIALIZE_FLAG_ARRAY,
   BIN_KV_SERIALIZE_TYPE_OBJECT,
@@ -13,7 +14,6 @@ import {
 } from '../../../p2p/protocol/json';
 import { BufferStreamReader } from '../../serialize/reader';
 import { BufferStreamWriter } from '../../serialize/writer';
-import { uint32 } from '../../types';
 import { CN_COMMANDS_POOL_BASE, IBlockCompletEntry } from '../defines';
 
 // tslint:disable-next-line:no-namespace

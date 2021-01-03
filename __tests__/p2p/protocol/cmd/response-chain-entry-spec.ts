@@ -6,12 +6,12 @@ import { LevinState } from '../../../../src/p2p/levin';
 
 import { data as mainnet } from '../../../../src/init/net-types/mainnet';
 
+import { Configuration } from '@vigcoin/types';
 import { randomBytes } from 'crypto';
 import { readFileSync } from 'fs';
 import * as path from 'path';
 import { cryptonote } from '../../../../src/config';
 import { PROCESSED } from '../../../../src/config/events';
-import { Configuration } from '../../../../src/config/types';
 import { NSResponseChain } from '../../../../src/cryptonote/protocol/commands/response-chain';
 import { getMemoryPool } from '../../../../src/init/mem-pool';
 import { getDefaultPeerManager, getP2PServer } from '../../../../src/init/p2p';

@@ -1,6 +1,5 @@
-import { HASH_LENGTH, IHash } from '@vigcoin/crypto';
+import { HASH_LENGTH, IHash, INT64, UINT64 } from '@vigcoin/types';
 import assert = require('assert');
-import { INT64, UINT64 } from '../types';
 import { PurgeZeroByte } from './common';
 
 export class BufferStreamWriter {

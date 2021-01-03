@@ -1,4 +1,11 @@
 import { IHash } from '@vigcoin/crypto';
+import {
+  IBlock,
+  IBlockEntry,
+  IBlockVerificationContext,
+  uint64,
+  usize,
+} from '@vigcoin/types';
 import { parameters } from '../../config';
 import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
@@ -6,13 +13,6 @@ import { medianValue } from '../../util/math';
 import { Difficulty } from '../difficulty';
 import { BLOCKCHAIN_EVENT_CHAIN_SWITCHED } from '../events';
 import { TransactionValidator } from '../transaction/validator';
-import {
-  IBlock,
-  IBlockEntry,
-  IBlockVerificationContext,
-  uint64,
-  usize,
-} from '../types';
 import { Block } from './block';
 import { BlockchainMessage, EBlockchainMessage } from './messages';
 

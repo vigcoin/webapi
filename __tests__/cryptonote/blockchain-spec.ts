@@ -1,6 +1,6 @@
+import { Configuration } from '@vigcoin/types';
 import assert = require('assert');
 import * as path from 'path';
-import { Configuration } from '../../src/config/types';
 import { BlockChain } from '../../src/cryptonote/block/blockchain';
 
 import { closeSync, existsSync, openSync, unlinkSync } from 'fs';

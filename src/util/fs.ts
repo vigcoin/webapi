@@ -1,7 +1,7 @@
+import { Configuration } from '@vigcoin/types';
 import { existsSync, mkdirSync } from 'fs';
 import * as _ from 'lodash';
 import * as path from 'path';
-import { Configuration } from '../config/types';
 
 export function getBlockFile(
   dir: string,

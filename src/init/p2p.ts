@@ -1,6 +1,6 @@
+import { Configuration, INetwork, IServerConfig } from '@vigcoin/types';
 import { cryptonote, p2p } from '../config';
-import { Configuration } from '../config/types';
-import { INetwork, IServerConfig, P2PServer } from '../p2p/index';
+import { P2PServer } from '../p2p';
 import { PeerList, PeerManager } from '../p2p/peer-manager';
 import { Handler } from '../p2p/protocol/handler';
 import { getBlockChainInitialized } from './blockchain';

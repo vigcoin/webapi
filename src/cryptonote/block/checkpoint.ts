@@ -1,8 +1,7 @@
 import { HASH_LENGTH, IHash } from '@vigcoin/crypto';
+import { Configuration, uint64 } from '@vigcoin/types';
 import * as assert from 'assert';
-import { Configuration } from '../../config/types';
 import { logger } from '../../logger';
-import { uint64 } from '../types';
 
 export class CheckPoint {
   private points: Map<uint64, IHash> = new Map();

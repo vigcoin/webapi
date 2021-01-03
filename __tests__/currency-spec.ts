@@ -1,5 +1,5 @@
+import { Configuration } from '@vigcoin/types';
 import * as assert from 'assert';
-import { Configuration } from '../src/config/types';
 import { Currency } from '../src/cryptonote/currency';
 import { emptyFiles, haveFiles } from './cryptonote/data';
 

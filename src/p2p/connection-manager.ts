@@ -1,14 +1,14 @@
-import { EventEmitter } from 'events';
-import { Socket } from 'net';
 import {
   INetwork,
   IPeer,
   IPeerEntry,
   IPeerIDType,
   IPeerNodeData,
+  uint8,
   Version,
-} from '../cryptonote/p2p';
-import { uint8 } from '../cryptonote/types';
+} from '@vigcoin/types';
+import { EventEmitter } from 'events';
+import { Socket } from 'net';
 import { logger } from '../logger';
 import { P2PConfig } from './config';
 import { ConnectionState, P2pConnectionContext } from './connection';

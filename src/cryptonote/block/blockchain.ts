@@ -1,19 +1,6 @@
 import { CNCheckHash, CNSlowHash, IHash, IKeyImage } from '@vigcoin/crypto';
-import * as assert from 'assert';
-import { parameters } from '../../config';
-import { Configuration } from '../../config/types';
-import { logger } from '../../logger';
-import { P2pConnectionContext } from '../../p2p/connection';
-import { medianValue } from '../../util/math';
-import { fromUnixTimeStamp, unixNow } from '../../util/time';
-import { Difficulty } from '../difficulty';
-import { GeneratedTransaction } from '../indexing/generated-transactions';
-import { Payment } from '../indexing/payment';
-import { TimeStamp } from '../indexing/timestamp';
-import { TransactionAmount } from '../transaction/amount';
-import { Transaction } from '../transaction/index';
-import { TransactionValidator } from '../transaction/validator';
 import {
+  Configuration,
   ETransactionIOType,
   IBlock,
   IBlockEntry,
@@ -31,7 +18,20 @@ import {
   ITxVerificationContext,
   uint64,
   usize,
-} from '../types';
+} from '@vigcoin/types';
+import * as assert from 'assert';
+import { parameters } from '../../config';
+import { logger } from '../../logger';
+import { P2pConnectionContext } from '../../p2p/connection';
+import { medianValue } from '../../util/math';
+import { fromUnixTimeStamp, unixNow } from '../../util/time';
+import { Difficulty } from '../difficulty';
+import { GeneratedTransaction } from '../indexing/generated-transactions';
+import { Payment } from '../indexing/payment';
+import { TimeStamp } from '../indexing/timestamp';
+import { TransactionAmount } from '../transaction/amount';
+import { Transaction } from '../transaction/index';
+import { TransactionValidator } from '../transaction/validator';
 
 import { EventEmitter } from 'events';
 import {

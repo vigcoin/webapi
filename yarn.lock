@@ -135,6 +135,11 @@
   dependencies:
     neon-cli "^0.2.0"
 
+"@vigcoin/types@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@vigcoin/types/-/types-0.1.1.tgz#b1d2674d899b15ee7e4a867847b5b08b331c5cde"
+  integrity sha512-PXq1Q8bBQytI1L5Ey/NARFXKtGp8lHkm3vlMzkABqCTRjB9oddKhAt/8JxuxMG/8cXUeXMjX4XKALqJ/ZBRtWg==
+
 "JSV@>= 4.0.x":
   version "4.0.2"
   resolved "https://registry.yarnpkg.com/JSV/-/JSV-4.0.2.tgz#d077f6825571f82132f9dffaed587b4029feff57"

@@ -1,5 +1,4 @@
 import * as assert from 'assert';
-import { IPeerEntry } from '../../src/cryptonote/p2p';
 import { PeerList, PeerManager } from '../../src/p2p/peer-manager';
 import { IP } from '../../src/util/ip';
 

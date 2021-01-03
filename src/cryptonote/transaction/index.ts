@@ -1,8 +1,4 @@
 import { CNFashHash, IHash, ISignature } from '@vigcoin/crypto';
-import assert = require('assert');
-import { BufferStreamReader } from '../serialize/reader';
-import { BufferStreamWriter } from '../serialize/writer';
-import { TransactionPrefix } from '../transaction/prefix';
 import {
   ETransactionIOType,
   ITransaction,
@@ -10,7 +6,11 @@ import {
   ITransactionInput,
   ITransactionPrefix,
   usize,
-} from '../types';
+} from '@vigcoin/types';
+import assert = require('assert');
+import { BufferStreamReader } from '../serialize/reader';
+import { BufferStreamWriter } from '../serialize/writer';
+import { TransactionPrefix } from '../transaction/prefix';
 import { TransactionAmount } from './amount';
 import { decompose } from './util';
 

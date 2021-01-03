@@ -1,12 +1,11 @@
+import { Configuration, IPeer } from '@vigcoin/types';
 import * as assert from 'assert';
 import { randomBytes } from 'crypto';
 import { createConnection, createServer } from 'net';
 import * as path from 'path';
 import { cryptonote } from '../../../src/config';
 import { PEERS_COUNT_UPDATED } from '../../../src/config/events';
-import { Configuration } from '../../../src/config/types';
 import { BlockChain } from '../../../src/cryptonote/block/blockchain';
-import { IPeer } from '../../../src/cryptonote/p2p';
 import { getBlockChain } from '../../../src/init/blockchain';
 import { getMemoryPool } from '../../../src/init/mem-pool';
 import { data as mainnet } from '../../../src/init/net-types/mainnet';

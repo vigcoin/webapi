@@ -1,6 +1,10 @@
+import {
+  ETransactionIOType,
+  ITransaction,
+  ITransactionOutput,
+} from '@vigcoin/types';
 import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
-import { ETransactionIOType, ITransaction, ITransactionOutput } from '../types';
 
 export class TransactionInput {
   public static isValidKeyOutput(

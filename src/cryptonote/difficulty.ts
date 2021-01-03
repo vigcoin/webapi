@@ -1,8 +1,8 @@
 import { CryptonoteDifficulty } from '@vigcoin/crypto';
+import { IBlockEntry, uint64 } from '@vigcoin/types';
 import { parameters } from '../config';
 import { logger } from '../logger';
 import { P2pConnectionContext } from '../p2p/connection';
-import { IBlockEntry, uint64 } from './types';
 
 export class Difficulty {
   public static blocksCount() {

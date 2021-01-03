@@ -1,6 +1,5 @@
+import { IPeerEntry, uint32, uint8 } from '@vigcoin/types';
 import * as moment from 'moment';
-import { IPeerEntry } from '../cryptonote/p2p';
-import { uint32, uint8 } from '../cryptonote/types';
 import { logger } from '../logger';
 import { IP } from '../util/ip';
 

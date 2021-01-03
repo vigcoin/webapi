@@ -1,4 +1,4 @@
-import { Configuration } from '../../config/types';
+import { Configuration } from '@vigcoin/types';
 import { IP } from '../../util/ip';
 
 export const data: Configuration.IConfig = {

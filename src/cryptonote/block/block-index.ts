@@ -1,7 +1,7 @@
 import { IHash } from '@vigcoin/crypto';
+import { uint64 } from '@vigcoin/types';
 import * as assert from 'assert';
 import { closeSync, existsSync, openSync, readSync, writeSync } from 'fs';
-import { uint64 } from '../types';
 
 export class BlockIndex {
   private filename: string;

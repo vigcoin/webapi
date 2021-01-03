@@ -1,6 +1,6 @@
+import { Configuration } from '@vigcoin/types';
 import * as assert from 'assert';
 import * as path from 'path';
-import { Configuration } from '../../src/config/types';
 
 // tslint:disable-next-line:no-namespace
 export namespace haveFiles {

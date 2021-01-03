@@ -1,5 +1,5 @@
+import { Configuration } from '@vigcoin/types';
 import { Command } from 'commander';
-import { Configuration } from '../config/types';
 import { data as main } from './net-types/mainnet';
 import { data as test } from './net-types/testnet';
 

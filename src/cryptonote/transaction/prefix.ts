@@ -1,6 +1,4 @@
 import { CNFashHash, IHash } from '@vigcoin/crypto';
-import { BufferStreamReader } from '../serialize/reader';
-import { BufferStreamWriter } from '../serialize/writer';
 import {
   ETransactionIOType,
   IInputBase,
@@ -11,7 +9,9 @@ import {
   ITransactionInputTarget,
   ITransactionOutput,
   ITransactionPrefix,
-} from '../types';
+} from '@vigcoin/types';
+import { BufferStreamReader } from '../serialize/reader';
+import { BufferStreamWriter } from '../serialize/writer';
 
 export class TransactionPrefix {
   public static readInput(reader: BufferStreamReader): ITransactionInput {

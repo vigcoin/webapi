@@ -1,5 +1,5 @@
+import { Configuration } from '@vigcoin/types';
 import * as assert from 'assert';
-import { Configuration } from '../config/types';
 import { BlockChain } from './block/blockchain';
 
 export class Currency {

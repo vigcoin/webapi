@@ -1,17 +1,15 @@
+import { Configuration, INetwork, IPeer, IPeerEntry } from '@vigcoin/types';
 import * as assert from 'assert';
 import { randomBytes } from 'crypto';
 import { createConnection, createServer } from 'net';
 import * as path from 'path';
 import { cryptonote, p2p } from '../../src/config';
-import { Configuration } from '../../src/config/types';
 import { BlockChain } from '../../src/cryptonote/block/blockchain';
-import { IPeerEntry } from '../../src/cryptonote/p2p';
 import { getBlockChain } from '../../src/init/blockchain';
 import { getConfigByType, getType } from '../../src/init/cryptonote';
 import { getMemoryPool } from '../../src/init/mem-pool';
 import { data as mainnet } from '../../src/init/net-types/mainnet';
 import { getDefaultPeerManager, getHandler } from '../../src/init/p2p';
-import { INetwork, IPeer } from '../../src/p2p';
 import { P2PConfig } from '../../src/p2p/config';
 import {
   ConnectionState,

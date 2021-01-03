@@ -1,4 +1,4 @@
-import { uint32 } from '../types';
+import { uint32 } from '@vigcoin/types';
 export class TransactionOutput {
   public static toAbsolute(offsets: uint32[]): uint32[] {
     if (!offsets.length) {

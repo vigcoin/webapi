@@ -4,7 +4,6 @@ import { getBlockFile, getDefaultAppDir } from '../../src/util/fs';
 
 import * as rm from 'rimraf';
 import { promisify } from 'util';
-import { Configuration } from '../../src/config/types';
 
 import { data } from '../../src/init/net-types/testnet';
 

@@ -1,18 +1,18 @@
+import {
+  Configuration,
+  INetwork,
+  IPeer,
+  IPeerEntry,
+  IPeerIDType,
+  IServerConfig,
+  uint8,
+} from '@vigcoin/types';
 import { randomBytes } from 'crypto';
 import { EventEmitter } from 'events';
 import { createServer, Server, Socket } from 'net';
 import * as path from 'path';
 import { p2p } from '../config';
 import { BLOCKCHAIN_SYNCHRONZIED } from '../config/events';
-import { Configuration } from '../config/types';
-import {
-  INetwork,
-  IPeer,
-  IPeerEntry,
-  IPeerIDType,
-  IServerConfig,
-} from '../cryptonote/p2p';
-import { uint8 } from '../cryptonote/types';
 import { logger } from '../logger';
 import { getDefaultAppDir } from '../util/fs';
 import { P2PConfig } from './config';
