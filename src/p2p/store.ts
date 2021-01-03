@@ -9,8 +9,8 @@ import {
 } from 'fs';
 import * as moment from 'moment';
 
+import { IP } from '@vigcoin/util';
 import { logger } from '../logger';
-import { IP } from '../util/ip';
 import { PeerManager } from './peer-manager';
 import { P2PServer } from './server';
 

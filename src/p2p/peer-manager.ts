@@ -1,7 +1,7 @@
 import { IPeerEntry, uint32, uint8 } from '@vigcoin/types';
+import { IP } from '@vigcoin/util';
 import * as moment from 'moment';
 import { logger } from '../logger';
-import { IP } from '../util/ip';
 
 export class PeerList {
   private list: IPeerEntry[] = [];

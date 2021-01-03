@@ -1,5 +1,5 @@
 import { IPeer, IPeerEntry, uint16 } from '@vigcoin/types';
-import { IP } from '../util/ip';
+import { IP } from '@vigcoin/util';
 import { ConnectionContext } from './connection';
 
 export class P2PConfig {

@@ -18,7 +18,7 @@ import {
 import { ConnectionManager } from '../../src/p2p/connection-manager';
 import { Handler } from '../../src/p2p/protocol/handler';
 import { getBlockFile, getDefaultAppDir } from '../../src/util/fs';
-import { IP } from '../../src/util/ip';
+import { IP } from '@vigcoin/util';
 
 describe('test connections', () => {
   const network: INetwork = {

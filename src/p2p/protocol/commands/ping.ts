@@ -3,8 +3,8 @@ import { IPeerEntry, IPeerIDType, IPeerNodeData } from '@vigcoin/types';
 import * as assert from 'assert';
 import { PING, PROCESSED } from '../../../config/events';
 
+import { IP } from '@vigcoin/util';
 import { logger } from '../../../logger';
-import { IP } from '../../../util/ip';
 import { P2pConnectionContext } from '../../connection';
 import { ILevinCommand, LevinProtocol } from '../../levin';
 import { PeerManager } from '../../peer-manager';

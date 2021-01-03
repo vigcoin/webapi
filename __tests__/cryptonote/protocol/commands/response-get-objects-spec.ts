@@ -1,9 +1,9 @@
+import { BufferStreamReader } from '@vigcoin/serializer';
 import { Configuration, INetwork, IPeer } from '@vigcoin/types';
 import * as assert from 'assert';
 import { readFileSync } from 'fs';
 import * as path from 'path';
 import { NSResponseGetObjects } from '../../../../src/cryptonote/protocol/commands/response-get-objects';
-import { BufferStreamReader } from '@vigcoin/serializer';
 import { getBlockChain } from '../../../../src/init/blockchain';
 import { getBlockFile } from '../../../../src/util/fs';
 
@@ -16,7 +16,7 @@ import {
   P2pConnectionContext,
 } from '../../../../src/p2p/connection';
 import { Handler } from '../../../../src/p2p/protocol/handler';
-import { IP } from '../../../../src/util/ip';
+import { IP } from '@vigcoin/util';
 
 const network: INetwork = {
   conectionTimeout: p2p.P2P_DEFAULT_CONNECTION_TIMEOUT,

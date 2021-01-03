@@ -1,7 +1,7 @@
+import { BufferStreamReader, BufferStreamWriter } from '@vigcoin/serializer';
 import * as assert from 'assert';
 import { createConnection, createServer } from 'net';
 import { BlockChain } from '../../src/cryptonote/block/blockchain';
-import { BufferStreamReader, BufferStreamWriter } from '@vigcoin/serializer';
 import { getBlockChain } from '../../src/init/blockchain';
 import { ILevinCommand, LevinProtocol, LevinState } from '../../src/p2p/levin';
 import { handshake, ping, timedsync } from '../../src/p2p/protocol';
@@ -25,7 +25,7 @@ import { ConnectionContext, ConnectionState } from '../../src/p2p/connection';
 import { ConnectionManager } from '../../src/p2p/connection-manager';
 import { Handler } from '../../src/p2p/protocol/handler';
 import { getBlockFile } from '../../src/util/fs';
-import { IP } from '../../src/util/ip';
+import { IP } from '@vigcoin/util';
 
 const dir = path.resolve(__dirname, '../vigcoin');
 const config: Configuration.ICCurrency = {

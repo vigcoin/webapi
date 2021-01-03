@@ -17,7 +17,7 @@ import { handshake } from '../../../src/p2p/protocol';
 import { Handler } from '../../../src/p2p/protocol/handler';
 import { P2PStore } from '../../../src/p2p/store';
 import { getBlockFile } from '../../../src/util/fs';
-import { IP } from '../../../src/util/ip';
+import { IP } from '@vigcoin/util';
 
 const peerId = randomBytes(8);
 const networkId = cryptonote.NETWORK_ID;

@@ -1,5 +1,6 @@
 import { IHash } from '@vigcoin/crypto';
 import { INetwork, IPeer, IPeerIDType, uint32, uint8 } from '@vigcoin/types';
+import { IP } from '@vigcoin/util';
 import { randomBytes } from 'crypto';
 import { EventEmitter } from 'events';
 import { createConnection, Socket } from 'net';
@@ -7,7 +8,6 @@ import { BlockChain } from '../cryptonote/block/blockchain';
 import { Hardfork } from '../cryptonote/block/hardfork';
 import { MemoryPool } from '../cryptonote/mem-pool';
 import { logger } from '../logger';
-import { IP } from '../util/ip';
 import { ConnectionManager } from './connection-manager';
 import { PeerManager } from './peer-manager';
 import { Handler } from './protocol/handler';

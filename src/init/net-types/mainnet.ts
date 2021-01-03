@@ -1,5 +1,5 @@
 import { Configuration } from '@vigcoin/types';
-import { IP } from '../../util/ip';
+import { IP } from '@vigcoin/util';
 
 export const data: Configuration.IConfig = {
   name: 'vigcoin',
