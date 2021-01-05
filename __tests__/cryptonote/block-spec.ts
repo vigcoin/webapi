@@ -1,8 +1,8 @@
+import { BlockIndex } from '@vigcoin/block';
 import { Configuration, IBlock, IInputBase, IOutputKey } from '@vigcoin/types';
 import assert = require('assert');
 import * as path from 'path';
 import { Block } from '../../src/cryptonote/block/block';
-import { BlockIndex } from '../../src/cryptonote/block/block-index';
 
 let block: IBlock;
 

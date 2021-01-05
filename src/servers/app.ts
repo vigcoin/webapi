@@ -36,7 +36,7 @@ export class VApplication {
 
   public async start(port = 8080, ip = 'localhost') {
     return new Promise((resolve, reject) => {
-      this.server = this.app.listen(port, ip, (e) => {
+      this.server = this.app.listen(port, ip, e => {
         if (e) {
           return reject(e);
         }
