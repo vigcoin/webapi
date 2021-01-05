@@ -121,6 +121,13 @@
   dependencies:
     "@types/node" "*"
 
+"@vigcoin/block@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@vigcoin/block/-/block-0.1.1.tgz#eeab53423fa9d590cb8c3fcffe02623a89f81a6d"
+  integrity sha512-1ZaarWQx0QtnpU0khMDU/cr3jW+SO4r37LPx3A60DI2OLYdl+mzT1NEhGC4EC02o7bDBzzGLZKfd8ZSxMtn2qg==
+  dependencies:
+    "@vigcoin/types" "^0.1.1"
+
 "@vigcoin/crypto@^0.6.5":
   version "0.6.5"
   resolved "https://registry.yarnpkg.com/@vigcoin/crypto/-/crypto-0.6.5.tgz#755575db8799f22deb46c35e6ee6b32eeb1dbf80"

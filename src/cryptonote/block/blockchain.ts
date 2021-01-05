@@ -33,6 +33,7 @@ import { TransactionAmount } from '../transaction/amount';
 import { Transaction } from '../transaction/index';
 import { TransactionValidator } from '../transaction/validator';
 
+import { BlockHashes, BlockIndex } from '@vigcoin/block';
 import { EventEmitter } from 'events';
 import {
   BLOCKCHAIN_EVENT_NEW_BLOCK,
@@ -40,7 +41,6 @@ import {
 } from '../events';
 import { AlternativeBlockchain } from './alternative';
 import { Block } from './block';
-import { BlockIndex } from './block-index';
 import { CheckPoint } from './checkpoint';
 import { Hardfork } from './hardfork';
 
@@ -76,6 +76,7 @@ export class BlockChain extends EventEmitter {
   private files: Configuration.ICBlockFile;
   private currency: Configuration.ICCurrency;
   private blockIndex: BlockIndex;
+  private blockHashes: BlockHashes;
   private block: Block;
   // private offsets: uint64[];
   private cumulativeBlockSizeLimit: usize = 0;
@@ -100,6 +101,7 @@ export class BlockChain extends EventEmitter {
     this.currency = config;
     this.files = config.blockFiles;
     this.blockIndex = new BlockIndex(this.files.index);
+    this.blockHashes = new BlockHashes();
     this.block = new Block(this.files.data);
     this.hardfork = new Hardfork(config.hardforks);
     this.checkpoint = new CheckPoint(config.checkpoints);
@@ -123,7 +125,7 @@ export class BlockChain extends EventEmitter {
     for (let i = 0; i < this.height; i++) {
       const be = this.get(i);
       const hash = Block.hash(be.block);
-      this.blockIndex.push(hash);
+      this.blockHashes.push(hash);
       for (let j = 0; j < be.transactions.length; j++) {
         const te = be.transactions[j];
         const txHash = Transaction.hash(te.tx);
@@ -220,7 +222,7 @@ export class BlockChain extends EventEmitter {
   }
 
   public has(hash: IHash) {
-    return this.blockIndex.has(hash);
+    return this.blockHashes.has(hash);
   }
 
   public have(hash: IHash): IBlockEntry {
@@ -267,7 +269,7 @@ export class BlockChain extends EventEmitter {
   }
 
   public getHeightByIndex(hash: IHash) {
-    return this.blockIndex.getHeight(hash);
+    return this.blockHashes.getHeight(hash);
   }
 
   public getHeightByHash(hash: IHash): ITransactionIndex {
@@ -286,7 +288,7 @@ export class BlockChain extends EventEmitter {
   }
 
   public getBlockIdByHeight(height: uint64) {
-    return this.blockIndex.getHash(height);
+    return this.blockHashes.getHash(height);
   }
 
   public getTransactionsWithMissed(
@@ -318,7 +320,7 @@ export class BlockChain extends EventEmitter {
     if (this.blockIndex.height === 0) {
       return Buffer.alloc(0);
     }
-    return this.blockIndex.getTailHash();
+    return this.blockHashes.getTailHash();
   }
 
   public addNew(
@@ -856,7 +858,7 @@ export class BlockChain extends EventEmitter {
   public pushBlockEntry(context: P2pConnectionContext, be: IBlockEntry) {
     const hash = Block.hash(be.block);
     this.block.push(be);
-    this.blockIndex.push(hash);
+    this.blockHashes.push(hash);
 
     this.timestamp.add(fromUnixTimeStamp(be.block.header.timestamp), hash);
     this.generatedTransaction.add(be.block);
@@ -895,7 +897,7 @@ export class BlockChain extends EventEmitter {
     const start = new Date();
 
     const hash = Block.hash(block);
-    if (this.blockIndex.has(hash)) {
+    if (this.blockHashes.has(hash)) {
       logger.error(
         'Block ' + hash.toString('hex') + ' already exists in blockchain.'
       );
@@ -903,14 +905,14 @@ export class BlockChain extends EventEmitter {
       return false;
     }
 
-    if (!block.header.preHash.equals(this.blockIndex.tail)) {
+    if (!block.header.preHash.equals(this.blockHashes.tail)) {
       logger.error(
         'Block ' +
           hash.toString('hex') +
           '  has wrong previousBlockHash: ' +
           block.header.preHash.toString('hex') +
           ', expected: ' +
-          this.blockIndex.tail.toString('hex')
+          this.blockHashes.tail.toString('hex')
       );
       bvc.verificationFailed = true;
       return false;
