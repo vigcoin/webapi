@@ -21,7 +21,7 @@ import { NSResponseChain } from '../../cryptonote/protocol/commands/response-cha
 import { NSResponseGetObjects } from '../../cryptonote/protocol/commands/response-get-objects';
 import { IBlockCompletEntry } from '../../cryptonote/protocol/defines';
 
-import { Transaction } from '../../cryptonote/transaction/index';
+import { Transaction } from '@vigcoin/transaction';
 import { logger } from '../../logger';
 import { ConnectionState, P2pConnectionContext } from '../connection';
 import { Command } from './command';

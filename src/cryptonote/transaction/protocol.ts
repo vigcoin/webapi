@@ -1,11 +1,11 @@
 import { IHash } from '@vigcoin/crypto';
 import { BufferStreamReader, BufferStreamWriter } from '@vigcoin/serializer';
+import { Transaction } from '@vigcoin/transaction';
 import {
   IBlock,
   IBlockVerificationContext,
   ITxVerificationContext,
 } from '@vigcoin/types';
-import { Transaction } from '.';
 import { parameters } from '../../config';
 import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';

@@ -164,6 +164,16 @@
   dependencies:
     "@vigcoin/types" "^0.1.1"
 
+"@vigcoin/transaction@0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@vigcoin/transaction/-/transaction-0.1.1.tgz#ffd320cb08371757f81429dbe3a2f4999fe66f31"
+  integrity sha512-BhgrYm903kV50yDhkThYKT96StUY0rXPxkYxg9gPkSOuwHJxAh5fsgnXJwacVlu/k4fsolIOpEzK7o8qhgzOCg==
+  dependencies:
+    "@vigcoin/crypto" "^0.6.5"
+    "@vigcoin/serializer" "^0.1.1"
+    "@vigcoin/types" "^0.1.1"
+    "@vigcoin/util" "^0.2.1"
+
 "@vigcoin/types@^0.1.1":
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/@vigcoin/types/-/types-0.1.1.tgz#b1d2674d899b15ee7e4a867847b5b08b331c5cde"

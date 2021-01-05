@@ -5,6 +5,11 @@ import {
   IsPublicKey,
 } from '@vigcoin/crypto';
 import {
+  Transaction,
+  TransactionAmount,
+  TransactionPrefix,
+} from '@vigcoin/transaction';
+import {
   ETransactionIOType,
   IBlock,
   IInputBase,
@@ -26,11 +31,8 @@ import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
 import { medianValue } from '../../util/math';
 import { Block } from '../block/block';
-import { TransactionAmount } from './amount';
-import { Transaction } from './index';
 import { TransactionInput } from './input';
 import { TransactionOutput } from './output';
-import { TransactionPrefix } from './prefix';
 
 export class TransactionValidator {
   // Check Transaction Overflow
@@ -216,7 +218,7 @@ export class TransactionValidator {
     if (txBuffer.length > parameters.FUSION_TX_MAX_SIZE) {
       return false;
     }
-    return TransactionAmount.isFusion(transaction);
+    return TransactionAmount.isFusion(transaction, parameters);
   }
 
   public static checkSignatureInput(
@@ -583,18 +585,18 @@ export class TransactionValidator {
     if (minerReward > reward) {
       logger.info(
         'Coinbase transaction spend too much money: ' +
-          TransactionAmount.format(minerReward) +
+          TransactionAmount.format(minerReward, parameters) +
           ', block reward is ' +
-          TransactionAmount.format(reward)
+          TransactionAmount.format(reward, parameters)
       );
       return false;
     }
     if (minerReward < reward) {
       logger.info(
         "Coinbase transaction doesn't use full amount of block reward: spent " +
-          TransactionAmount.format(minerReward) +
+          TransactionAmount.format(minerReward, parameters) +
           ', block reward is ' +
-          TransactionAmount.format(reward)
+          TransactionAmount.format(reward, parameters)
       );
       return false;
     }

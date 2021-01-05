@@ -1,4 +1,5 @@
 import { CNCheckHash, CNSlowHash, IHash, IKeyImage } from '@vigcoin/crypto';
+import { Transaction, TransactionAmount } from '@vigcoin/transaction';
 import {
   Configuration,
   ETransactionIOType,
@@ -29,8 +30,6 @@ import { Difficulty } from '../difficulty';
 import { GeneratedTransaction } from '../indexing/generated-transactions';
 import { Payment } from '../indexing/payment';
 import { TimeStamp } from '../indexing/timestamp';
-import { TransactionAmount } from '../transaction/amount';
-import { Transaction } from '../transaction/index';
 import { TransactionValidator } from '../transaction/validator';
 
 import { BlockHashes, BlockIndex } from '@vigcoin/block';
@@ -1061,9 +1060,9 @@ export class BlockChain extends EventEmitter {
     logger.info('HEIGHT ' + be.height + ', difficulty:\t' + currentDiff);
     logger.info(
       'block reward: ' +
-        TransactionAmount.format(rewardInfo.reward) +
+        TransactionAmount.format(rewardInfo.reward, parameters) +
         ', fee = ' +
-        TransactionAmount.format(feeSummary) +
+        TransactionAmount.format(feeSummary, parameters) +
         ', coinbase_blob_size: ' +
         coinbaseBlobSize +
         ', cumulative size: ' +

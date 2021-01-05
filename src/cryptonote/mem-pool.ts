@@ -1,5 +1,11 @@
 import { IHash, IKeyImage } from '@vigcoin/crypto';
 import { BufferStreamReader } from '@vigcoin/serializer';
+import {
+  Transaction,
+  TransactionAmount,
+  TransactionDetails,
+  TransactionPrefix,
+} from '@vigcoin/transaction';
 import { toUnixTimeStamp } from '@vigcoin/util';
 import * as assert from 'assert';
 import { EventEmitter } from 'events';
@@ -7,8 +13,6 @@ import { closeSync, existsSync, openSync, readFileSync } from 'fs';
 import { TX_REMOVED_FROM_POOL } from '../config/events';
 import { getLiveTime, isForgetable } from '../init/mem-pool';
 import { logger } from '../logger';
-import { TransactionAmount } from './transaction/amount';
-import { TransactionDetails } from './transaction/detail';
 import { TransactionValidator } from './transaction/validator';
 
 import {
@@ -28,8 +32,6 @@ import { parameters } from '../config';
 import { P2pConnectionContext } from '../p2p/connection';
 import { Payment } from './indexing/payment';
 import { TimeStamp } from './indexing/timestamp';
-import { Transaction } from './transaction/index';
-import { TransactionPrefix } from './transaction/prefix';
 
 const CURRENT_MEMPOOL_ARCHIVE_VER = 1;
 
@@ -255,10 +257,12 @@ export class MemoryPool extends EventEmitter {
     const isFusion = TransactionValidator.isFusion(tx, hash);
     if (!keptByBlock && !isFusion && fee < parameters.MINIMUM_FEE) {
       logger.info(
-        'transaction fee is not enough: ' + TransactionAmount.format(fee)
+        'transaction fee is not enough: ' +
+          TransactionAmount.format(fee, parameters)
       );
       logger.info(
-        'minimum fee: ' + TransactionAmount.format(parameters.MINIMUM_FEE)
+        'minimum fee: ' +
+          TransactionAmount.format(parameters.MINIMUM_FEE, parameters)
       );
       tvc.verifivationFailed = true;
       tvc.txFeeTooSmall = true;
