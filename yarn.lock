@@ -121,11 +121,14 @@
   dependencies:
     "@types/node" "*"
 
-"@vigcoin/block@^0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@vigcoin/block/-/block-0.1.1.tgz#eeab53423fa9d590cb8c3fcffe02623a89f81a6d"
-  integrity sha512-1ZaarWQx0QtnpU0khMDU/cr3jW+SO4r37LPx3A60DI2OLYdl+mzT1NEhGC4EC02o7bDBzzGLZKfd8ZSxMtn2qg==
+"@vigcoin/block@0.1.3":
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/@vigcoin/block/-/block-0.1.3.tgz#96f741b5e5ced184a03607f94c8a83432510485f"
+  integrity sha512-H9D94fWsJ3IlkvfGAxlfABFGF5gcSN2zxHGSEnUtM2trLgXaX3tphNyjX9s3dAaqpMH6liPJ7Mtk8+LnZNz9KQ==
   dependencies:
+    "@vigcoin/crypto" "^0.6.5"
+    "@vigcoin/serializer" "^0.1.1"
+    "@vigcoin/transaction" "^0.1.0"
     "@vigcoin/types" "^0.1.1"
 
 "@vigcoin/crypto@^0.6.5":
@@ -164,7 +167,7 @@
   dependencies:
     "@vigcoin/types" "^0.1.1"
 
-"@vigcoin/transaction@0.1.1":
+"@vigcoin/transaction@0.1.1", "@vigcoin/transaction@^0.1.0":
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/@vigcoin/transaction/-/transaction-0.1.1.tgz#ffd320cb08371757f81429dbe3a2f4999fe66f31"
   integrity sha512-BhgrYm903kV50yDhkThYKT96StUY0rXPxkYxg9gPkSOuwHJxAh5fsgnXJwacVlu/k4fsolIOpEzK7o8qhgzOCg==

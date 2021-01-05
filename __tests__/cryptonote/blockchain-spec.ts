@@ -3,8 +3,8 @@ import assert = require('assert');
 import * as path from 'path';
 import { BlockChain } from '../../src/cryptonote/block/blockchain';
 
+import { Block } from '@vigcoin/block';
 import { closeSync, existsSync, openSync, unlinkSync } from 'fs';
-import { Block } from '../../src/cryptonote/block/block';
 import {
   getBlockChain,
   getBlockChainInitialized,

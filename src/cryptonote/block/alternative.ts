@@ -1,3 +1,4 @@
+import { Block } from '@vigcoin/block';
 import { IHash } from '@vigcoin/crypto';
 import {
   IBlock,
@@ -13,7 +14,6 @@ import { medianValue } from '../../util/math';
 import { Difficulty } from '../difficulty';
 import { BLOCKCHAIN_EVENT_CHAIN_SWITCHED } from '../events';
 import { TransactionValidator } from '../transaction/validator';
-import { Block } from './block';
 import { BlockchainMessage, EBlockchainMessage } from './messages';
 
 export class AlternativeBlockchain {

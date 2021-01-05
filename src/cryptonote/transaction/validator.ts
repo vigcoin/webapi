@@ -1,3 +1,4 @@
+import { Block, getReward } from '@vigcoin/block';
 import {
   CryptoSignature,
   IHash,
@@ -30,7 +31,6 @@ import { parameters } from '../../config';
 import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
 import { medianValue } from '../../util/math';
-import { Block } from '../block/block';
 import { TransactionInput } from './input';
 import { TransactionOutput } from './output';
 
@@ -566,11 +566,12 @@ export class TransactionValidator {
     );
 
     const blocksSizeMedian = medianValue(lastBlocksSizes);
-    const rewardInfo = Block.getReward(
+    const rewardInfo = getReward(
       blocksSizeMedian,
       cumulativeBlockSize,
       alreadyGeneratedCoins,
-      fee
+      fee,
+      parameters
     );
     if (rewardInfo === false) {
       logger.info(

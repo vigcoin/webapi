@@ -33,13 +33,13 @@ import { TimeStamp } from '../indexing/timestamp';
 import { TransactionValidator } from '../transaction/validator';
 
 import { BlockHashes, BlockIndex } from '@vigcoin/block';
+import { Block } from '@vigcoin/block';
 import { EventEmitter } from 'events';
 import {
   BLOCKCHAIN_EVENT_NEW_BLOCK,
   BLOCKCHAIN_EVENT_UPDATED,
 } from '../events';
 import { AlternativeBlockchain } from './alternative';
-import { Block } from './block';
 import { CheckPoint } from './checkpoint';
 import { Hardfork } from './hardfork';
 

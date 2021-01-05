@@ -1,3 +1,4 @@
+import { Block } from '@vigcoin/block';
 import { CNFashHash, IHash } from '@vigcoin/crypto';
 import { BufferStreamReader, BufferStreamWriter } from '@vigcoin/serializer';
 import { IBlock, ICoreSyncData, ITransaction, uint32 } from '@vigcoin/types';
@@ -9,7 +10,6 @@ import {
   BLOCKCHAIN_SYNCHRONZIED,
   PEERS_COUNT_UPDATED,
 } from '../../config/events';
-import { Block } from '../../cryptonote/block/block';
 import { BlockChain } from '../../cryptonote/block/blockchain';
 import { MemoryPool } from '../../cryptonote/mem-pool';
 import { NSNewBlock } from '../../cryptonote/protocol/commands/new-block';

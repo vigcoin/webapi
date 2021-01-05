@@ -1,3 +1,4 @@
+import { Block } from '@vigcoin/block';
 import { IHash } from '@vigcoin/crypto';
 import { BufferStreamReader, BufferStreamWriter } from '@vigcoin/serializer';
 import { Transaction } from '@vigcoin/transaction';
@@ -9,7 +10,6 @@ import {
 import { parameters } from '../../config';
 import { logger } from '../../logger';
 import { P2pConnectionContext } from '../../p2p/connection';
-import { Block } from '../block/block';
 import { NSNewBlock } from '../protocol/commands/new-block';
 import { IBlockCompletEntry } from '../protocol/defines';
 

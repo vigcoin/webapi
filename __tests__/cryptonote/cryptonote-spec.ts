@@ -1,5 +1,5 @@
+import { Block } from '@vigcoin/block';
 import { Configuration, IBlock } from '@vigcoin/types';
-import { Block } from '../../src/cryptonote/block/block';
 
 test('Should init genesis', () => {
   const blockConf: Configuration.ICBlock = {
